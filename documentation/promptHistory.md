@@ -158,3 +158,31 @@ as arguições podem ficar onde estão, mas quero perguntas mais simples e diret
    - Divisor elegante *"ou continue com e-mail e senha"*, permitindo tanto login quanto cadastro tradicional com validação clara de erros.
    - Exibição da foto de perfil da conta Google (`photoURL`) no cabeçalho institucional ao lado do nome do docente e badge ativo, com fallback automático para avatar SENAI caso não haja foto.
    - Orientações e tratamento para o domínio autorizado no Firebase Authentication (`147.15.2.73.sslip.io` e `localhost`).
+
+---
+
+## Sessão 08 — 15/11/2026 (09:29)
+
+### Prompt 8 (15/11/2026 - 09:29)
+```text
+/agente-orquestrador /grill-me /goal preciso que cada analise automatica de tcc já seja salva no firebase, e após a atribuição do professor registre a pontuação de cada professor e após  isso a média final. na tela, quando seleciono um tcc para começar a votar devo clicar em um botão para iniciar banca (inclusive deve ser totalizado o tempo de banca), após cada professor concluir a atribuição de pontos deve clicar em encerrar (cada mudança já é salva no localstorage, mas após o salvar salva no firebase). quando o professor titular abre a banca para execução, outros professores logados podem acessar essa banca para atribuir notas. no final, o professor titular só pode fechar a consolidação de médias depois que o outro professor tiver encerrado a banca. estruture isso.
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 08
+1. **Definição de Titularidade (Presidente da Banca):**
+   - O docente responsável configurado no ambiente (`Prof. William Devidé Komel` / `william.komel@docente.senai.br`) atua como **Professor Titular / Presidente da Banca**, detendo a autoridade de *Iniciar Banca* e *Encerrar Banca & Consolidar Média Final*. Os demais professores atuam como *Avaliadores Convidados*.
+2. **Cronômetro Progressivo Sincronizado no Firestore:**
+   - Ao clicar em *"Iniciar Banca"*, o timestamp de início (`iniciado_em`) é registrado em `psof3_sessoes_banca/{grupo_id}`.
+   - Ambas as máquinas visualizam o mesmo cronômetro em tempo real (MM:SS), com alertas visuais graduais baseados no roteiro oficial SENAI de 25–30 minutos (Verde: até 20 min; Amarelo: 20-25 min; Vermelho: acima de 30 min).
+   - Ao encerrar a banca, o tempo total é congelado e salvo na ata oficial (ex.: `28m 14s`).
+3. **Banner de Alerta Ao Vivo ("Live Room"):**
+   - Quando a banca é iniciada pelo titular, todos os professores logados em qualquer aba recebem um banner no topo: *"🔴 BANCA AO VIVO EM ANDAMENTO: [Turma] [Grupo] — [Projeto]"* com botão de 1 clique para entrar na sala da banca e atribuir notas.
+4. **Auto-save no localStorage + Persistência Firebase:**
+   - Cada ajuste de nota/arguição/parecer é persistido em tempo real no `localStorage` do navegador sob chave `psof3_draft_{grupo_id}_{professor_uid}`, prevenindo perdas por instabilidade de rede.
+   - O botão *"Encerrar Minha Avaliação"* valida e grava a avaliação individual no Firestore (`psof3_avaliacoes_professores/{grupo_id}_{professor_uid}`) com flag `concluido: true`.
+5. **Trava de Segurança na Consolidação:**
+   - O Professor Titular só é liberado para fechar a ata final após o segundo professor ter concluído e encerrado suas notas no Firestore (com opção de contingência justificada caso o 2º avaliador esteja ausente).
+6. **Persistência da Análise Automática Prévia no Firebase:**
+   - As notas pré-calculadas e auditoria automática do backend são sincronizadas e armazenadas no Firestore antes da votação para auditoria histórica.
+7. **Documento Final Consolidado da Sessão:**
+   - Salvo em `psof3_sessoes_banca/{grupo_id}` contendo as notas do Titular, notas do Avaliador 2, média simples oficial calculada, pareceres consolidados e duração total da banca.

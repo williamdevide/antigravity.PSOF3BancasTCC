@@ -41,6 +41,7 @@ import {
 import { AboutView } from './components/AboutView';
 import { AgentHub, type AbaAgente } from './components/AgentHub';
 import { AuthModal } from './components/AuthModal';
+import { BannerBancaAoVivo } from './components/BannerBancaAoVivo';
 import { PainelBancaConsolidada } from './components/PainelBancaConsolidada';
 import { APP_VERSION } from './config/version';
 import { api } from './services/api';
@@ -49,6 +50,14 @@ import {
   salvarAvaliacaoNoFirestore,
   escutarAvaliacoesGrupoFirestore,
   calcularMediaBanca,
+  iniciarSessaoBanca,
+  escutarSessaoBanca,
+  escutarTodasSessoesAtivas,
+  encerrarMinhaAvaliacao,
+  encerrarEConsolidarBanca,
+  salvarAnaliseAutomaticaFirestore,
+  salvarDraftLocalStorage,
+  carregarDraftLocalStorage,
 } from './services/bancaMultiAvaliador';
 import type {
   AgentStatus,
@@ -62,6 +71,7 @@ import type {
   RegrasOficiaisResponse,
   ResultadoFinalTipo,
   RubricaItemAvaliacao,
+  SessaoBancaAoVivo,
 } from './types';
 
 const CONFIG_INICIAL: ConfigEnv = {
@@ -147,6 +157,8 @@ export function App() {
   const [usuarioAuth, setUsuarioAuth] = useState<User | null>(null);
   const [authModalAberto, setAuthModalAberto] = useState<boolean>(false);
   const [bancaConsolidada, setBancaConsolidada] = useState<BancaConsolidada | null>(null);
+  const [sessaoAoVivo, setSessaoAoVivo] = useState<SessaoBancaAoVivo | null>(null);
+  const [sessoesAtivas, setSessoesAtivas] = useState<SessaoBancaAoVivo[]>([]);
 
   // Estados editáveis da Ficha MSEP do grupo selecionado
   const [rubricasEdit, setRubricasEdit] = useState<RubricaItemAvaliacao[]>([]);
@@ -259,16 +271,76 @@ export function App() {
 
   const grupoAtual = bancas.find((b) => b.id === grupoSelecionadoId) || bancas[0] || null;
 
-  // Sincronizar estados editáveis quando o grupo selecionado mudar
+  // Determinar se o usuário logado é o Professor Titular / Presidente da Banca
+  const isProfessorTitular = Boolean(
+    usuarioAuth &&
+      ((usuarioAuth.email && usuarioAuth.email.toLowerCase().includes('william.komel')) ||
+        (usuarioAuth.displayName && usuarioAuth.displayName.toLowerCase().includes('william')) ||
+        (env.avaliador_padrao && usuarioAuth.displayName && env.avaliador_padrao.includes(usuarioAuth.displayName))),
+  );
+
+  // Escutar todas as sessões de bancas ao vivo (para o Banner Ao Vivo no topo de todas as telas)
   useEffect(() => {
-    if (grupoAtual) {
+    const unsub = escutarTodasSessoesAtivas((ativas) => {
+      setSessoesAtivas(ativas);
+    });
+    return () => unsub();
+  }, []);
+
+  // Escutar a sessão ao vivo da banca do grupo selecionado no Firestore
+  useEffect(() => {
+    if (!grupoAtual?.id) {
+      setSessaoAoVivo(null);
+      return;
+    }
+    const unsub = escutarSessaoBanca(grupoAtual.id, (sessao) => {
+      setSessaoAoVivo(sessao);
+    });
+    return () => unsub();
+  }, [grupoAtual?.id]);
+
+  // Persistir a análise prévia automática no Firebase Firestore assim que o grupo é selecionado
+  useEffect(() => {
+    if (grupoAtual && grupoAtual.entregue_na_pasta) {
+      void salvarAnaliseAutomaticaFirestore(grupoAtual);
+    }
+  }, [grupoAtual?.id, grupoAtual?.media_nota_final_grupo]);
+
+  // Sincronizar estados editáveis com draft de localStorage ou dados originais
+  useEffect(() => {
+    if (grupoAtual && usuarioAuth) {
+      const draft = carregarDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
+      if (draft && draft.rubricas.length > 0) {
+        setRubricasEdit(draft.rubricas);
+        setIntegrantesEdit(draft.integrantes_notas);
+        setParecerEdit(draft.parecer_tecnico);
+      } else {
+        setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
+        setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
+        setParecerEdit('');
+      }
+      setAvaliadorEdit(usuarioAuth.displayName || grupoAtual.avaliador || env.avaliador_padrao);
+    } else if (grupoAtual) {
       setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
       setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
-      // O texto consolidado do parecer começa vazio para preenchimento das considerações da banca
       setParecerEdit('');
-      setAvaliadorEdit(usuarioAuth?.displayName || grupoAtual.avaliador || env.avaliador_padrao);
+      setAvaliadorEdit(grupoAtual.avaliador || env.avaliador_padrao);
     }
-  }, [grupoAtual?.id, grupoAtual?.atualizado_em, usuarioAuth?.displayName]);
+  }, [grupoAtual?.id, usuarioAuth?.uid]);
+
+  // Auto-save local em tempo real no localStorage para cada alteração das notas/parecer
+  useEffect(() => {
+    if (grupoAtual && usuarioAuth && rubricasEdit.length > 0) {
+      salvarDraftLocalStorage({
+        grupo_id: grupoAtual.id,
+        professor_uid: usuarioAuth.uid,
+        rubricas: rubricasEdit,
+        integrantes_notas: integrantesEdit,
+        parecer_tecnico: parecerEdit,
+        salvo_em: new Date().toISOString(),
+      });
+    }
+  }, [grupoAtual?.id, usuarioAuth?.uid, rubricasEdit, integrantesEdit, parecerEdit]);
 
   // Escutar avaliações dos 2 professores no Firestore em tempo real
   useEffect(() => {
@@ -525,6 +597,136 @@ export function App() {
       setAviso({
         tipo: 'erro',
         texto: err instanceof Error ? err.message : 'Falha ao salvar avaliação.',
+      });
+    } finally {
+      setSalvandoFicha(false);
+    }
+  };
+
+  const handleIniciarBanca = async () => {
+    if (!grupoAtual) return;
+    if (!usuarioAuth) {
+      setAuthModalAberto(true);
+      return;
+    }
+    setSalvandoFicha(true);
+    setAviso(null);
+    try {
+      const res = await iniciarSessaoBanca(grupoAtual, usuarioAuth);
+      setAviso({
+        tipo: res.ok ? 'ok' : 'erro',
+        texto: res.mensagem,
+      });
+    } catch (err) {
+      setAviso({
+        tipo: 'erro',
+        texto: err instanceof Error ? err.message : 'Erro ao iniciar a banca.',
+      });
+    } finally {
+      setSalvandoFicha(false);
+    }
+  };
+
+  const handleEncerrarMinhaAvaliacao = async () => {
+    if (!grupoAtual) return;
+    if (!usuarioAuth) {
+      setAuthModalAberto(true);
+      return;
+    }
+    setSalvandoFicha(true);
+    setAviso(null);
+    try {
+      const recalculados: NotaIndividualIntegrante[] = integrantesEdit.map((ind) => {
+        const calc = calcularStatusFinalAluno(ind);
+        return {
+          ...ind,
+          p1_nota: p1TotalEdit,
+          p2_nota: p2TotalEdit,
+          p3_nota: calc.p3,
+          p4_nota: calc.p4,
+          nota_final: calc.nf,
+          possui_item_insuficiente: calc.insufInd.length > 0,
+          itens_insuficientes: calc.insufInd,
+          resultado: calc.resultado,
+        };
+      });
+
+      const nomeProfessor =
+        usuarioAuth.displayName || avaliadorEdit || usuarioAuth.email?.split('@')[0] || 'Professor Avaliador';
+
+      const mediaFinalGrupoCalculada = Number(
+        (
+          recalculados.reduce((acc, ind) => acc + ind.nota_final, 0) /
+          Math.max(1, recalculados.length)
+        ).toFixed(2),
+      );
+
+      const avaliacaoIndividual: AvaliacaoProfessorIndividual = {
+        grupo_id: grupoAtual.id,
+        professor_uid: usuarioAuth.uid,
+        professor_nome: nomeProfessor,
+        professor_email: usuarioAuth.email || '',
+        rubricas: rubricasEdit,
+        integrantes_notas: recalculados,
+        p1_total: p1TotalEdit,
+        p2_total: p2TotalEdit,
+        p3_grupo_base: p3BaseEdit,
+        nota_final_grupo: mediaFinalGrupoCalculada,
+        parecer_tecnico: parecerEdit,
+        concluido: true,
+        atualizado_em: new Date().toISOString(),
+      };
+
+      const res = await encerrarMinhaAvaliacao(grupoAtual.id, avaliacaoIndividual);
+
+      // Salva também no backend FastAPI local
+      await api.salvarAvaliacao(grupoAtual.id, {
+        avaliador: nomeProfessor,
+        rubricas: rubricasEdit,
+        integrantes_notas: recalculados,
+        parecer_tecnico: parecerEdit,
+        sincronizar_firebase: true,
+      });
+
+      setAviso({
+        tipo: res.ok ? 'ok' : 'erro',
+        texto: res.mensagem,
+      });
+    } catch (err) {
+      setAviso({
+        tipo: 'erro',
+        texto: err instanceof Error ? err.message : 'Falha ao encerrar avaliação.',
+      });
+    } finally {
+      setSalvandoFicha(false);
+    }
+  };
+
+  const handleEncerrarEConsolidarBanca = async (contingencia = false, justificativa = '') => {
+    if (!grupoAtual || !bancaConsolidada) return;
+    if (!usuarioAuth) {
+      setAuthModalAberto(true);
+      return;
+    }
+    setSalvandoFicha(true);
+    setAviso(null);
+    try {
+      const res = await encerrarEConsolidarBanca(
+        grupoAtual.id,
+        bancaConsolidada,
+        usuarioAuth,
+        sessaoAoVivo?.iniciado_em || null,
+        contingencia,
+        justificativa,
+      );
+      setAviso({
+        tipo: res.ok ? 'ok' : 'erro',
+        texto: res.mensagem,
+      });
+    } catch (err) {
+      setAviso({
+        tipo: 'erro',
+        texto: err instanceof Error ? err.message : 'Erro ao consolidar fechamento da banca.',
       });
     } finally {
       setSalvandoFicha(false);
@@ -870,7 +1072,18 @@ export function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-6">
+      <main className="mx-auto max-w-7xl px-6 py-6 space-y-5">
+        {/* Banner Global de Alerta de Banca Ao Vivo em Execução */}
+        <BannerBancaAoVivo
+          sessoesAtivas={sessoesAtivas}
+          grupoAtualId={grupoAtual?.id || ''}
+          onEntrarNaBanca={(id) => {
+            setGrupoSelecionadoId(id);
+            setAgenteAtivo('avaliador-bancas-tcc');
+            setAbaAtiva('ficha');
+          }}
+        />
+
         {aviso && (
           <div
             className={`mb-5 flex items-center justify-between rounded-xl border px-4 py-3 text-sm shadow-xs ${
@@ -2336,8 +2549,14 @@ export function App() {
                 {/* PAINEL DE CONSOLIDAÇÃO DA BANCA (2 PROFESSORES SIMULTÂNEOS - FIRESTORE) */}
                 <PainelBancaConsolidada
                   banca={bancaConsolidada}
+                  sessaoAoVivo={sessaoAoVivo}
                   grupoAtual={grupoAtual}
                   professorLogadoUid={usuarioAuth?.uid}
+                  isProfessorTitular={isProfessorTitular}
+                  onIniciarBanca={handleIniciarBanca}
+                  onEncerrarMinhaAvaliacao={handleEncerrarMinhaAvaliacao}
+                  onEncerrarEConsolidarBanca={handleEncerrarEConsolidarBanca}
+                  salvando={salvandoFicha}
                 />
 
                 {/* Cabeçalho Visual Idêntico à Ficha SENAI */}

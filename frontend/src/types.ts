@@ -309,7 +309,40 @@ export interface AvaliacaoProfessorIndividual {
   p3_grupo_base: number;
   nota_final_grupo: number;
   parecer_tecnico: string;
+  concluido?: boolean;
   atualizado_em: string;
+}
+
+export type StatusSessaoBanca = 'aguardando_inicio' | 'em_andamento' | 'concluida';
+
+export interface SessaoBancaAoVivo {
+  grupo_id: string;
+  turma: string;
+  projeto: string;
+  status: StatusSessaoBanca;
+  titular_uid: string;
+  titular_nome: string;
+  titular_email?: string;
+  iniciado_em: string | null;
+  encerrado_em: string | null;
+  duracao_segundos: number;
+  duracao_formatada: string;
+  avaliadores_presentes: string[];
+  avaliacoes_concluidas: string[];
+  contingencia_um_avaliador?: boolean;
+  justificativa_contingencia?: string;
+  media_final_consolidada?: number;
+  status_liberacao_final?: ResultadoFinalTipo;
+  atualizado_em: string;
+}
+
+export interface DraftAvaliacaoLocal {
+  grupo_id: string;
+  professor_uid: string;
+  rubricas: RubricaItemAvaliacao[];
+  integrantes_notas: NotaIndividualIntegrante[];
+  parecer_tecnico: string;
+  salvo_em: string;
 }
 
 export interface BancaConsolidada {
