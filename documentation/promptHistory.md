@@ -302,3 +302,19 @@ o botão para resetar / excluir banca não apareceu para mim. acho que nosso rep
 
 ### Entrevista de Alinhamento (`/grill-me`) — Sessão 13
 - Objetivo: Permitir sobreposição manual (override) da decisão da banca no status final da liberação da nota (Aprovado / Nota Retida / Nova Apresentação), tanto no nível coletivo do grupo quanto no nível individual de cada aluno, mantendo a expansão das justificativas/motivos e salvando a escolha manual soberana do professor no Firebase e na Ficha MSEP.
+- Implementações Realizadas:
+  1. `frontend/src/types.ts`: Adicionado campo opcional `status_liberacao_manual?: ResultadoFinalTipo | null` em `AvaliacaoProfessorIndividual`, `DraftAvaliacaoLocal` e `BancaConsolidada`.
+  2. `frontend/src/services/bancaMultiAvaliador.ts`: Atualizada a função `calcularMediaBanca` para propagar e honrar a escolha manual `status_liberacao_manual` nos resultados individuais dos integrantes e no status final da banca consolidada.
+  3. `frontend/src/App.tsx`:
+     - Implementado estado `statusManualLiberacao` inicializado pelo draft do localStorage e sincronizado com o auto-save.
+     - `calcularStatusFinalAluno`: Se houver status manual, ele sobrepõe o cálculo e aprova/retém diretamente todos os alunos.
+     - Barra de Status Integrada: Inclusão de seletor rápido com 3 botões dedicados: `[✓ Aprovado (Liberada)]`, `[⚠️ Nota Retida]` e `[❌ Nova Apresentação]`.
+     - Inclusão do botão `[Restaurar Sugestão Automática]` com ícone `RotateCcw`, que surge dinamicamente quando há alteração manual.
+     - Painel Expansível de Motivos: Detalhamento explicativo tanto para Nota Retida (pendências dos pilares 1, 2 e 3) quanto para Nova Apresentação (média < 50 pts ou pendência de entrega), com mensagem destacada de decisão soberana quando aprovado manualmente.
+  4. Backend (`backend/app/models.py` e `backend/app/main.py`):
+     - Inclusão de `status_liberacao_manual` nos schemas Pydantic e na rota `PUT /api/bancas/{grupo_id}/avaliacao`, aplicando a decisão soberana nos integrantes e no status de liberação do PDF oficial.
+  5. Deploy na VM Oracle Cloud (`https://bancas.147.15.2.73.sslip.io`):
+     - Compilação do frontend (`npm run build`) concluída em 1s.
+     - Upload via SCP dos novos bundles e arquivos backend para a VM Oracle.
+     - Reinício dos serviços `psof3-bancas.service` e Caddy Server com sucesso.
+  6. Git: Commit `070c5e3` realizado na branch principal.
