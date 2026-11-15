@@ -6,6 +6,8 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
   type User,
 } from 'firebase/auth';
 import {
@@ -33,12 +35,44 @@ export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfi
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Provedor Google configurado para prompt de seleção de conta
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+});
+
+/**
+ * Realiza autenticação via Popup com conta Google.
+ */
+export async function loginComGoogle(): Promise<User> {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    if (error.code === 'auth/popup-closed-by-user') {
+      throw new Error('A janela de autenticação do Google foi fechada antes de concluir o login.');
+    }
+    if (error.code === 'auth/popup-blocked') {
+      throw new Error('O navegador bloqueou a abertura do popup do Google. Permita popups para este site.');
+    }
+    if (error.code === 'auth/unauthorized-domain') {
+      throw new Error(
+        'Este domínio ainda não foi autorizado no Firebase Console. Adicione este host em Authentication > Settings > Authorized domains.',
+      );
+    }
+    throw new Error(error.message || 'Erro ao realizar login com o Google.');
+  }
+}
+
 export {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   updateProfile,
+  signInWithPopup,
+  GoogleAuthProvider,
   doc,
   getDoc,
   setDoc,

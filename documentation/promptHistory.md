@@ -138,3 +138,23 @@ as arguições podem ficar onde estão, mas quero perguntas mais simples e diret
      - **Backend FastAPI:** Serviço gerenciado por systemd (`psof3-bancas.service`) na porta `8001`, com reinício automático e isolamento em virtualenv.
      - **Frontend SPA:** Compilado via Vite e servido estaticamente pelo Caddy com fallback de rotas SPA.
      - **Testes:** 4/4 testes unitários e de integração aprovados com pytest; build do frontend 100% livre de warnings impeditivos.
+
+---
+
+## Sessão 07 — 15/11/2026 (09:22)
+
+### Prompt 7 (15/11/2026 - 09:22)
+```text
+/agente-orquestrador /grill-me /goal permiti no firebase o login com conta google e email. crie a interface para cadastro e login permitindo conta google
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 07
+1. **Fluxo de Autenticação com o Google:**
+   - Adotado **Popup Moderno (`signInWithPopup`)** com `GoogleAuthProvider`, garantindo que a aplicação não recarregue e não perca o estado da tela ao vivo da banca.
+2. **Escopo de Contas Permitidas:**
+   - Aberto para qualquer conta Google (contas institucionais `@docente.senai.br` / `@sp.senai.br` ou contas Gmail pessoais), facilitando o acesso em qualquer computador ou dispositivo.
+3. **Identidade Visual e Experiência do Usuário (UI/UX):**
+   - Inclusão do botão proeminente *"Continuar com Google"* estilizado com o logo oficial multicolorido do Google.
+   - Divisor elegante *"ou continue com e-mail e senha"*, permitindo tanto login quanto cadastro tradicional com validação clara de erros.
+   - Exibição da foto de perfil da conta Google (`photoURL`) no cabeçalho institucional ao lado do nome do docente e badge ativo, com fallback automático para avatar SENAI caso não haja foto.
+   - Orientações e tratamento para o domínio autorizado no Firebase Authentication (`147.15.2.73.sslip.io` e `localhost`).

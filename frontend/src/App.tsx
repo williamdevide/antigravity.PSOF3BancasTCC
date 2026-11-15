@@ -821,9 +821,21 @@ export function App() {
               <span>Sobre</span>
             </button>
 
-            {/* Identificação do Professor Avaliador (Firebase Auth) */}
+            {/* Identificação do Professor Avaliador (Firebase Auth com Google e E-mail) */}
             {usuarioAuth ? (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-950/60 px-3 py-1.5 text-xs">
+              <div className="flex items-center gap-2.5 rounded-lg border border-emerald-500/40 bg-emerald-950/60 px-3 py-1.5 text-xs">
+                {usuarioAuth.photoURL ? (
+                  <img
+                    src={usuarioAuth.photoURL}
+                    alt={usuarioAuth.displayName || 'Foto de Perfil do Avaliador'}
+                    className="h-8 w-8 rounded-full object-cover ring-2 ring-emerald-400 shrink-0"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-800 text-xs font-bold text-emerald-200 ring-2 ring-emerald-500/50 shrink-0">
+                    {(usuarioAuth.displayName || usuarioAuth.email || 'A')[0].toUpperCase()}
+                  </div>
+                )}
                 <div className="flex flex-col text-left">
                   <div className="flex items-center gap-1.5 font-bold text-emerald-300">
                     <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
