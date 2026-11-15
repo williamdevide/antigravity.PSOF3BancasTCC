@@ -141,16 +141,8 @@ def recalcular_totais_avaliacao(avaliacao: AvaliacaoGrupoModel) -> AvaliacaoGrup
             insuf_aluno.append(item_str)
             if item_str not in todos_insuf_grupo:
                 todos_insuf_grupo.append(item_str)
-        if ind.nivel_4_1 == "Insuficiente":
-            item_str = f"4.1 Relatórios de Sprint — {ind.nome} ({ind.nota_4_1_sprints:.1f}/8.0)"
-            insuf_aluno.append(item_str)
-            if item_str not in todos_insuf_grupo:
-                todos_insuf_grupo.append(item_str)
-        if ind.nivel_4_2 == "Insuficiente":
-            item_str = f"4.2 Participação em Aula — {ind.nome} ({ind.nota_4_2_participacao:.1f}/7.0)"
-            insuf_aluno.append(item_str)
-            if item_str not in todos_insuf_grupo:
-                todos_insuf_grupo.append(item_str)
+        # Regra SENAI: Notas insuficientes no Pilar 4 (4.1 Sprints e 4.2 Aulas) NÃO retêm a nota.
+        # Apenas pilares 1, 2 e 3 retêm a liberação caso fiquem insuficientes.
 
         ind.itens_insuficientes = insuf_aluno
         ind.possui_item_insuficiente = len(insuf_aluno) > 0

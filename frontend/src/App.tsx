@@ -7,6 +7,8 @@ import {
   BookOpen,
   Calendar,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ClipboardCheck,
   Clock,
   CloudUpload,
@@ -55,6 +57,7 @@ import {
   escutarTodasSessoesAtivas,
   encerrarMinhaAvaliacao,
   encerrarEConsolidarBanca,
+  resetarBancaGrupo,
   salvarAnaliseAutomaticaFirestore,
   salvarDraftLocalStorage,
   carregarDraftLocalStorage,
@@ -169,6 +172,7 @@ export function App() {
   const [exportandoPdf, setExportandoPdf] = useState<boolean>(false);
   const [exportandoDossie, setExportandoDossie] = useState<boolean>(false);
   const [exportandoXlsx, setExportandoXlsx] = useState<boolean>(false);
+  const [detalhesStatusAberto, setDetalhesStatusAberto] = useState<boolean>(false);
 
   const [regrasOficiais, setRegrasOficiais] = useState<RegrasOficiaisResponse | null>(null);
   const [env, setEnv] = useState<ConfigEnv>(CONFIG_INICIAL);
@@ -271,13 +275,9 @@ export function App() {
 
   const grupoAtual = bancas.find((b) => b.id === grupoSelecionadoId) || bancas[0] || null;
 
-  // Determinar se o usuário logado é o Professor Titular / Presidente da Banca
-  const isProfessorTitular = Boolean(
-    usuarioAuth &&
-      ((usuarioAuth.email && usuarioAuth.email.toLowerCase().includes('william.komel')) ||
-        (usuarioAuth.displayName && usuarioAuth.displayName.toLowerCase().includes('william')) ||
-        (env.avaliador_padrao && usuarioAuth.displayName && env.avaliador_padrao.includes(usuarioAuth.displayName))),
-  );
+  // Determinar se o usuário logado possui privilégios de Professor Titular / Presidente da Banca
+  // Como o sistema é exclusivo dos docentes avaliadores, qualquer professor autenticado tem poderes de gestão da banca
+  const isProfessorTitular = Boolean(usuarioAuth);
 
   // Escutar todas as sessões de bancas ao vivo (para o Banner Ao Vivo no topo de todas as telas)
   useEffect(() => {
@@ -390,8 +390,7 @@ export function App() {
     const nf = Number((p1TotalEdit + p2TotalEdit + p3 + p4).toFixed(2));
     const insufInd = [...itensInsuficientesColetivos];
     if (ind.nivel_3_1 === 'Insuficiente') insufInd.push('3.1');
-    if (ind.nivel_4_1 === 'Insuficiente') insufInd.push('4.1');
-    if (ind.nivel_4_2 === 'Insuficiente') insufInd.push('4.2');
+    // Regra SENAI: Notas insuficientes no Pilar 4 (4.1 e 4.2) NÃO retêm a nota.
 
     let resultado: ResultadoFinalTipo;
     if (nf < 50.0) {
@@ -733,6 +732,41 @@ export function App() {
     }
   };
 
+  const handleResetarBanca = async () => {
+    if (!grupoAtual) return;
+    if (!usuarioAuth) {
+      setAuthModalAberto(true);
+      return;
+    }
+    setSalvandoFicha(true);
+    setAviso(null);
+    try {
+      const res = await resetarBancaGrupo(grupoAtual, usuarioAuth);
+      if (res.ok) {
+        setBancaConsolidada(null);
+        setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
+        setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
+        setParecerEdit('');
+        setAviso({
+          tipo: 'ok',
+          texto: res.mensagem,
+        });
+      } else {
+        setAviso({
+          tipo: 'erro',
+          texto: res.mensagem,
+        });
+      }
+    } catch (err) {
+      setAviso({
+        tipo: 'erro',
+        texto: err instanceof Error ? err.message : 'Falha ao resetar a banca.',
+      });
+    } finally {
+      setSalvandoFicha(false);
+    }
+  };
+
   const handleExportarFichaPdf = async (grupoId: string) => {
     setExportandoPdf(true);
     setAviso(null);
@@ -871,6 +905,41 @@ export function App() {
       </span>
     );
   };
+
+  // Cálculo da média do grupo e status da nota consolidada
+  const mediaGrupoEdit = Number(
+    (
+      integrantesEdit.reduce((acc, ind) => acc + calcularStatusFinalAluno(ind).nf, 0) /
+      Math.max(1, integrantesEdit.length)
+    ).toFixed(2),
+  );
+
+  const todasPendenciasRetencao: string[] = [];
+  itensInsuficientesColetivos.forEach((cod) => {
+    const rub = rubricasEdit.find((r) => r.codigo === cod);
+    todasPendenciasRetencao.push(
+      rub
+        ? `${rub.codigo} ${rub.titulo} (${rub.nota.toFixed(1)}/${rub.peso_max.toFixed(1)})`
+        : `Item ${cod}`,
+    );
+  });
+
+  integrantesEdit.forEach((ind) => {
+    if (ind.nivel_3_1 === 'Insuficiente') {
+      todasPendenciasRetencao.push(
+        `3.1 Arguição Técnica — ${ind.nome} (${(Number(ind.nota_3_1_arguicao) || 0).toFixed(1)}/6.0)`,
+      );
+    }
+  });
+
+  let statusGrupoTipo: 'liberada' | 'retida' | 'nova_apresentacao' = 'liberada';
+  if (mediaGrupoEdit < 50.0 || (grupoAtual && !grupoAtual.entregue_na_pasta)) {
+    statusGrupoTipo = 'nova_apresentacao';
+  } else if (todasPendenciasRetencao.length > 0) {
+    statusGrupoTipo = 'retida';
+  } else {
+    statusGrupoTipo = 'liberada';
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -2543,6 +2612,16 @@ export function App() {
                       <FileText className="h-4 w-4 text-indigo-600" />
                       Baixar Dossiê (.PDF / .MD)
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleResetarBanca()}
+                      disabled={salvandoFicha}
+                      className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-700 shadow-2xs transition hover:bg-red-100 hover:border-red-400 disabled:opacity-50 cursor-pointer"
+                      title="Excluir as avaliações dos professores, zerar médias e reiniciar a banca deste grupo"
+                    >
+                      <RotateCcw className="h-4 w-4 text-red-600" />
+                      Resetar / Excluir Banca
+                    </button>
                   </div>
                 </div>
 
@@ -2556,6 +2635,7 @@ export function App() {
                   onIniciarBanca={handleIniciarBanca}
                   onEncerrarMinhaAvaliacao={handleEncerrarMinhaAvaliacao}
                   onEncerrarEConsolidarBanca={handleEncerrarEConsolidarBanca}
+                  onResetarBanca={handleResetarBanca}
                   salvando={salvandoFicha}
                 />
 
@@ -3176,6 +3256,114 @@ export function App() {
                           placeholder="Digite aqui as considerações finais e o parecer consolidado da banca avaliadora para impressão na Ficha MSEP..."
                           className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-3 text-xs leading-relaxed text-slate-800 placeholder:text-slate-400 focus:border-red-500 focus:outline-none"
                         />
+
+                        {/* ========================================================================= */}
+                        {/* BARRA DE STATUS INTEGRADA (LIBERADA / RETIDA / NOVA APRESENTAÇÃO + ALUNOS) */}
+                        {/* ========================================================================= */}
+                        <div className="mt-3.5 rounded-xl border border-slate-200 bg-linear-to-r from-slate-50 to-white p-3.5 shadow-2xs">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            {/* Botão de Status Geral da Nota */}
+                            <div className="flex flex-wrap items-center gap-2.5">
+                              <button
+                                type="button"
+                                onClick={() => setDetalhesStatusAberto((prev) => !prev)}
+                                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black uppercase tracking-wider shadow-sm transition hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${
+                                  statusGrupoTipo === 'liberada'
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'
+                                    : statusGrupoTipo === 'retida'
+                                    ? 'bg-amber-500 text-slate-950 hover:bg-amber-600 shadow-amber-500/20'
+                                    : 'bg-red-600 text-white hover:bg-red-700 shadow-red-600/20'
+                                }`}
+                                title="Clique para detalhar os critérios e pendências de liberação da nota"
+                              >
+                                {statusGrupoTipo === 'liberada' && <CheckCircle2 className="h-4 w-4 shrink-0" />}
+                                {statusGrupoTipo === 'retida' && <AlertTriangle className="h-4 w-4 shrink-0" />}
+                                {statusGrupoTipo === 'nova_apresentacao' && <XCircle className="h-4 w-4 shrink-0" />}
+                                <span>
+                                  {statusGrupoTipo === 'liberada'
+                                    ? '✅ NOTA LIBERADA'
+                                    : statusGrupoTipo === 'retida'
+                                    ? '⚠️ NOTA RETIDA'
+                                    : '❌ NECESSÁRIO NOVA APRESENTAÇÃO'}
+                                </span>
+                                {todasPendenciasRetencao.length > 0 ? (
+                                  detalhesStatusAberto ? (
+                                    <ChevronUp className="h-3.5 w-3.5 opacity-80" />
+                                  ) : (
+                                    <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                                  )
+                                ) : null}
+                              </button>
+
+                              {/* Na frente: Status individual de cada aluno (Aprovado ou Retido) */}
+                              <div className="flex flex-wrap items-center gap-1.5 pl-1">
+                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-0.5">
+                                  Alunos:
+                                </span>
+                                {integrantesEdit.map((ind) => {
+                                  const calc = calcularStatusFinalAluno(ind);
+                                  const isAprovado = calc.resultado === 'Aprovado';
+                                  const isRetido = calc.resultado === 'Nota Retida (Pendências)';
+
+                                  return (
+                                    <div
+                                      key={ind.nome}
+                                      className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold shadow-2xs transition ${
+                                        isAprovado
+                                          ? 'border-emerald-300 bg-emerald-50 text-emerald-950'
+                                          : isRetido
+                                          ? 'border-amber-300 bg-amber-50 text-amber-950'
+                                          : 'border-red-300 bg-red-50 text-red-950'
+                                      }`}
+                                    >
+                                      <span className="font-bold text-slate-900">{ind.nome}:</span>
+                                      <span
+                                        className={`rounded px-1.5 py-0.5 text-[10px] font-black uppercase ${
+                                          isAprovado
+                                            ? 'bg-emerald-600 text-white'
+                                            : isRetido
+                                            ? 'bg-amber-500 text-slate-950'
+                                            : 'bg-red-600 text-white'
+                                        }`}
+                                      >
+                                        {isAprovado ? 'Aprovado' : isRetido ? 'Retido' : 'Nova Apresentação'}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Resumo Rápido da Média */}
+                            <div className="text-right">
+                              <span className="text-[10px] font-bold uppercase text-slate-400">Média Geral</span>
+                              <p className="text-xs font-black text-slate-800">{mediaGrupoEdit.toFixed(2)} pts</p>
+                            </div>
+                          </div>
+
+                          {/* Painel Expansível de Detalhes das Pendências que Retêm a Nota */}
+                          {detalhesStatusAberto && todasPendenciasRetencao.length > 0 && (
+                            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50/95 p-3 text-xs text-amber-950">
+                              <div className="flex items-center gap-2 font-bold text-amber-900">
+                                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                                <span>Pendências Bloqueantes de Liberação da Nota (Pilares 1, 2 e 3):</span>
+                              </div>
+                              <p className="mt-1 text-[11px] text-amber-800 leading-relaxed">
+                                O grupo atingiu nota &ge; 50,0 pts, mas possui itens com classificação <strong>Insuficiente</strong>. A nota final permanece retida até a regularização das pendências:
+                              </p>
+                              <ul className="mt-2 space-y-1 text-[11px] text-amber-900 list-disc list-inside">
+                                {todasPendenciasRetencao.map((pend, pIdx) => (
+                                  <li key={pIdx} className="font-medium">
+                                    {pend}
+                                  </li>
+                                ))}
+                              </ul>
+                              <p className="mt-2 text-[10px] italic text-amber-800 border-t border-amber-200/80 pt-1.5">
+                                ℹ️ <strong>Diretriz SENAI:</strong> Notas com nível Insuficiente no <strong>Pilar 4 (4.1 Sprints e 4.2 Participação)</strong> entram no cálculo da média, mas <strong>NÃO</strong> causam a retenção da nota.
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

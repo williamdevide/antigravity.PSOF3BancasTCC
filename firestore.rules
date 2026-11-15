@@ -1,0 +1,133 @@
+rules_version = '2';
+
+// ===============================================================
+// Modelo de Dados Presumido (Assumed Data Model)
+// ===============================================================
+//
+// 1. Coleção: psof3_sessoes_banca/{grupoId}
+//    Documento representativo da sessão ao vivo da banca examinadora de cada grupo de TCC.
+//    Campos principais:
+//      - grupo_id: string (ID único do grupo / slug)
+//      - turma: string (ex: 'I2DEV-A' ou 'I2DEV-B')
+//      - projeto: string (Nome do projeto do TCC)
+//      - status: string ('aguardando_inicio' | 'pendente' | 'em_andamento' | 'concluida')
+//      - titular_uid: string (UID do professor responsável pela presidência da banca)
+//      - titular_nome: string (Nome de exibição do professor titular)
+//      - titular_email: string (E-mail institucional/Google do titular)
+//      - iniciado_em: string (ISO 8601 do início da contagem do cronômetro) ou null
+//      - encerrado_em: string (ISO 8601 do término oficial) ou null
+//      - duracao_segundos: number (tempo total acumulado em segundos)
+//      - duracao_formatada: string (tempo formatado mm:ss)
+//      - avaliadores_presentes: list de strings (nomes/UIDs dos avaliadores na sala)
+//      - avaliacoes_concluidas: list de strings (UIDs dos professores que finalizaram)
+//      - contingencia_um_avaliador: bool (opcional, ativação de contingência)
+//      - justificativa_contingencia: string (opcional)
+//      - media_final_consolidada: number (opcional, média final calculada)
+//      - banca_consolidada: map (opcional, espelho dos cálculos e notas consolidadas)
+//      - atualizado_em: string (ISO 8601 do timestamp da última atualização)
+//
+// 2. Coleção: psof3_avaliacoes_professores/{docId}
+//    ID do documento: {grupoId}_{professorUid}
+//    Avaliação individual emitida por cada professor (Titular ou Convidado) para a banca.
+//    Campos principais:
+//      - grupo_id: string
+//      - turma: string
+//      - projeto: string
+//      - professor_uid: string (UID do autor da avaliação)
+//      - professor_nome: string
+//      - professor_email: string
+//      - p1_doc_nota: number (0 a 30)
+//      - p2_sis_nota: number (0 a 40)
+//      - p3_apr_nota: number (0 a 15)
+//      - p4_eng_nota: number (0 a 15)
+//      - nota_final: number (0 a 100)
+//      - rubricas: map (pontuação detalhada dos itens MSEP)
+//      - integrantes_notas: list (notas individuais de cada aluno)
+//      - parecer_tecnico: string (considerações do professor)
+//      - status_liberacao: string ('liberada' | 'retida')
+//      - concluido: bool (true quando o professor encerra sua avaliação)
+//      - atualizado_em: string (ISO 8601)
+//
+// 3. Coleção: psof3_analises_automaticas/{grupoId}
+//    Auditoria prévia determinística calculada pelo backend e espelhada no Firestore.
+//    Campos: grupo_id, turma, projeto, tema, p1_total, p2_total, p3_grupo_base,
+//            rubricas, integrantes_notas, parecer_tecnico, atualizado_em, etc.
+//
+// 4. Coleção: psof3_avaliacoes_tcc/{docId}
+//    Registros consolidados gerados pelo backend/serviço FastAPI para relatórios e backup.
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Funções Auxiliares Globais (Security Helpers)
+    // ===============================================================
+
+    // Verifica se a requisição possui usuário autenticado via Firebase Auth
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    // ===============================================================
+    // 1. Coleção: psof3_sessoes_banca (Sessões e Cronômetro Ao Vivo)
+    // ===============================================================
+    // Leitura: Pública e aberta a todos os usuários (painéis de sala, telões e cronômetro).
+    // Criação/Atualização: Restrita a docentes autenticados, validando transição de status.
+    // Exclusão: Permitida a docentes autenticados para viabilizar reset e limpeza da banca.
+    match /psof3_sessoes_banca/{grupoId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated()
+                            && request.resource.data.status in ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida'];
+      allow delete: if isAuthenticated();
+    }
+
+    // ===============================================================
+    // 2. Coleção: psof3_avaliacoes_professores (Notas Individuais dos Docentes)
+    // ===============================================================
+    // Leitura: Permitida a qualquer usuário autenticado (professores da banca consultam médias).
+    // Criação/Atualização: Usuários autenticados informando os IDs de referência.
+    // Exclusão: Permitida a qualquer professor autenticado (essencial para que o Titular
+    //           da banca possa resetar e limpar todas as avaliações do grupo).
+    match /psof3_avaliacoes_professores/{docId} {
+      allow read: if isAuthenticated();
+
+      allow create, update: if isAuthenticated()
+                            && request.resource.data.grupo_id is string
+                            && request.resource.data.professor_uid is string;
+
+      allow delete: if isAuthenticated();
+    }
+
+    // ===============================================================
+    // 3. Coleção: psof3_analises_automaticas (Auditoria Automática do Backend)
+    // ===============================================================
+    // Leitura: Pública e aberta para consulta das análises prévias do TCC.
+    // Escrita/Exclusão: Usuários autenticados (sincronização e reset).
+    match /psof3_analises_automaticas/{grupoId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // ===============================================================
+    // 4. Coleção: psof3_avaliacoes_tcc (Histórico e Registros Gerais)
+    // ===============================================================
+    // Leitura: Aberta para consulta pública ou relatórios.
+    // Escrita/Exclusão: Restrita a usuários autenticados.
+    match /psof3_avaliacoes_tcc/{docId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // ===============================================================
+    // Bloqueio Padrão (Default Deny)
+    // ===============================================================
+    // Qualquer coleção ou documento não explicitamente mapeado acima é estritamente bloqueado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import type { BancaConsolidada, AvaliacaoGrupo, SessaoBancaAoVivo } from '../types';
-import { Users, CheckCircle2, Clock, FileText, Play, Check, Lock, AlertTriangle } from 'lucide-react';
+import {
+  Users,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Play,
+  Check,
+  Lock,
+  AlertTriangle,
+  RotateCcw,
+  Trash2,
+} from 'lucide-react';
 import { CronometroBanca } from './CronometroBanca';
 
 interface PainelBancaConsolidadaProps {
@@ -12,6 +23,7 @@ interface PainelBancaConsolidadaProps {
   onIniciarBanca: () => Promise<void>;
   onEncerrarMinhaAvaliacao: () => Promise<void>;
   onEncerrarEConsolidarBanca: (contingencia?: boolean, justificativa?: string) => Promise<void>;
+  onResetarBanca?: () => Promise<void>;
   salvando: boolean;
 }
 
@@ -24,10 +36,12 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
   onIniciarBanca,
   onEncerrarMinhaAvaliacao,
   onEncerrarEConsolidarBanca,
+  onResetarBanca,
   salvando,
 }) => {
   const [modalContingenciaAberto, setModalContingenciaAberto] = useState(false);
   const [justificativaContingencia, setJustificativaContingencia] = useState('');
+  const [modalResetAberto, setModalResetAberto] = useState(false);
 
   const statusSessao = sessaoAoVivo?.status || 'aguardando_inicio';
   const avaliadoresList = banca ? Object.values(banca.avaliacoes_individuais) : [];
@@ -155,8 +169,71 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
               <span>Ata Oficial Consolidada & Encerrada</span>
             </div>
           )}
+
+          {/* 4. BOTÃO RESETAR / EXCLUIR AVALIAÇÕES & BANCA (SEMPRE ACESSÍVEL) */}
+          {onResetarBanca && (
+            <button
+              type="button"
+              onClick={() => setModalResetAberto(true)}
+              disabled={salvando}
+              className="flex items-center gap-1.5 rounded-xl border border-red-300 bg-red-50/90 px-3.5 py-2 text-xs font-bold text-red-700 shadow-2xs transition hover:bg-red-100 hover:border-red-400 hover:text-red-800 disabled:opacity-50 cursor-pointer"
+              title="Excluir as avaliações individuais dos professores, zerar notas e reiniciar a banca deste grupo"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-red-600" />
+              Resetar / Excluir Banca
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Modal de Confirmação de Reset / Exclusão da Banca */}
+      {modalResetAberto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-red-500/40 bg-slate-900 p-5 text-white shadow-2xl">
+            <div className="flex items-center gap-2.5 text-red-400 font-bold text-sm">
+              <AlertTriangle className="h-5 w-5 text-red-500 shrink-0" />
+              <span>Excluir Avaliações e Resetar Banca?</span>
+            </div>
+            <p className="mt-3 text-xs text-slate-300 leading-relaxed">
+              Você está prestes a excluir as avaliações lançadas para o grupo{' '}
+              <strong className="text-white underline">{grupoAtual.projeto}</strong> ({grupoAtual.turma}).
+            </p>
+            <div className="mt-3 rounded-lg border border-red-900/60 bg-red-950/40 p-3 text-[11px] text-red-200">
+              <p className="font-bold text-red-300 mb-1">O que será resetado:</p>
+              <ul className="space-y-1 list-disc list-inside">
+                <li>As avaliações individuais de ambos os professores serão apagadas do Firebase.</li>
+                <li>A média final consolidada e os pareceres escritos serão excluídos.</li>
+                <li>O cronômetro voltará para 00:00 e o status da banca para "Aguardando Início".</li>
+                <li>As rubricas na interface serão restauradas para a auditoria automática padrão.</li>
+              </ul>
+            </div>
+            <div className="mt-5 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setModalResetAberto(false)}
+                disabled={salvando}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setModalResetAberto(false);
+                  if (onResetarBanca) {
+                    await onResetarBanca();
+                  }
+                }}
+                disabled={salvando}
+                className="flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-1.5 text-xs font-bold text-white shadow-md hover:bg-red-700 transition disabled:opacity-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Confirmar Exclusão e Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Contingência */}
       {modalContingenciaAberto && (
@@ -348,6 +425,82 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
               </p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* STATUS CONSOLIDADO DA LIBERAÇÃO DA NOTA DA BANCA + ALUNOS NA FRENTE      */}
+      {/* ========================================================================= */}
+      {banca && (
+        <div className="rounded-xl border border-slate-200 bg-linear-to-r from-slate-50 to-white p-3.5 shadow-2xs">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div
+                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider shadow-sm ${
+                  banca.status_liberacao_final === 'Aprovado'
+                    ? 'bg-emerald-600 text-white'
+                    : banca.status_liberacao_final === 'Nota Retida (Pendências)'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'bg-red-600 text-white'
+                }`}
+              >
+                {banca.status_liberacao_final === 'Aprovado' ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                )}
+                <span>
+                  {banca.status_liberacao_final === 'Aprovado'
+                    ? '✅ NOTA LIBERADA'
+                    : banca.status_liberacao_final === 'Nota Retida (Pendências)'
+                    ? '⚠️ NOTA RETIDA'
+                    : '❌ NECESSÁRIO NOVA APRESENTAÇÃO'}
+                </span>
+              </div>
+
+              {/* Na frente: Status individual de cada aluno */}
+              <div className="flex flex-wrap items-center gap-1.5 pl-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-0.5">
+                  Alunos:
+                </span>
+                {banca.integrantes_medias.map((ind) => {
+                  const isAprovado = ind.resultado === 'Aprovado';
+                  const isRetido = ind.resultado === 'Nota Retida (Pendências)';
+
+                  return (
+                    <div
+                      key={ind.nome}
+                      className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold shadow-2xs ${
+                        isAprovado
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-950'
+                          : isRetido
+                          ? 'border-amber-300 bg-amber-50 text-amber-950'
+                          : 'border-red-300 bg-red-50 text-red-950'
+                      }`}
+                    >
+                      <span className="font-bold text-slate-900">{ind.nome}:</span>
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-black uppercase ${
+                          isAprovado
+                            ? 'bg-emerald-600 text-white'
+                            : isRetido
+                            ? 'bg-amber-500 text-slate-950'
+                            : 'bg-red-600 text-white'
+                        }`}
+                      >
+                        {isAprovado ? 'Aprovado' : isRetido ? 'Retido' : 'Nova Apresentação'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="text-right">
+              <span className="text-[10px] font-bold uppercase text-slate-400">Média Oficial da Banca</span>
+              <p className="text-xs font-black text-slate-800">{banca.media_final.toFixed(2)} pts</p>
+            </div>
+          </div>
         </div>
       )}
     </div>

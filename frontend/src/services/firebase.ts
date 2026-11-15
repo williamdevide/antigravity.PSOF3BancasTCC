@@ -19,6 +19,7 @@ import {
   query,
   onSnapshot,
   getDocs,
+  deleteDoc,
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -80,5 +81,6 @@ export {
   query,
   onSnapshot,
   getDocs,
+  deleteDoc,
 };
 export type { User };

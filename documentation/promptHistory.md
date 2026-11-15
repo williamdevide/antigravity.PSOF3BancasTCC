@@ -186,3 +186,82 @@ as arguições podem ficar onde estão, mas quero perguntas mais simples e diret
    - As notas pré-calculadas e auditoria automática do backend são sincronizadas e armazenadas no Firestore antes da votação para auditoria histórica.
 7. **Documento Final Consolidado da Sessão:**
    - Salvo em `psof3_sessoes_banca/{grupo_id}` contendo as notas do Titular, notas do Avaliador 2, média simples oficial calculada, pareceres consolidados e duração total da banca.
+
+---
+
+## Sessão 09 — 15/11/2026 (09:50)
+
+### Prompt 9 (15/11/2026 - 09:50)
+```text
+/agente-orquestrador /grill-me /goal ao tentar iniciar uma banca apareceu: Erro ao iniciar sessão da banca: Missing or insufficient permissions.
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 09
+- Causa Raiz Identificada: Regras de segurança padrão do Cloud Firestore (`firestore.rules`) bloqueando operações de escrita nas coleções `psof3_sessoes_banca`, `psof3_avaliacoes_professores` e `psof3_analises_automaticas`.
+- Resolução Determinística: Elaboração e refinamento do arquivo oficial de regras de segurança `firestore.rules` pelo subagente especialista `firestore-rules-author`. As regras cobrem as 4 coleções do ecossistema (`psof3_sessoes_banca`, `psof3_avaliacoes_professores`, `psof3_analises_automaticas` e `psof3_avaliacoes_tcc`):
+  1. `psof3_sessoes_banca`: Leitura pública para cronômetro e alerta ao vivo; escrita restrita a docentes autenticados validando status nos estados permitidos (`'aguardando_inicio'`, `'pendente'`, `'em_andamento'`, `'concluida'`).
+  2. `psof3_avaliacoes_professores`: Leitura e escrita restritas a usuários autenticados (professores da banca), com remoção apenas pelo autor.
+  3. `psof3_analises_automaticas`: Leitura aberta (`allow read: if true`) para consulta prévia antes do login; escrita por usuários autenticados.
+  4. `psof3_avaliacoes_tcc`: Leitura aberta (`allow read: if true`) e escrita autenticada.
+  5. Default Deny na raiz e configuração `firebase.json` adicionada para deploy CLI.
+   6. Refinamento das mensagens de exceção em `frontend/src/services/bancaMultiAvaliador.ts` com a função `formatarErroFirestore` em todas as rotinas assíncronas (`salvarAvaliacaoNoFirestore`, `salvarAnaliseAutomaticaFirestore`, `iniciarSessaoBanca`, `encerrarMinhaAvaliacao`, `encerrarEConsolidarBanca`).
+   7. Validação de integridade: compilação estrita TypeScript/Vite (`npm --prefix frontend run build`) sem erros e suíte de testes de regressão backend (`pytest backend/tests/test_backend.py`) aprovada com 4/4 testes com sucesso.
+
+---
+
+## Sessão 10 — 15/11/2026 (10:42)
+
+### Prompt 10 (15/11/2026 - 10:42)
+```text
+/agente-orquestrador /grill-me /goal agora só falta um recurso  em que possamos excluir as avaliações realizadas e a consolidação
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 10
+- Objetivo: Implementação de recurso de exclusão e reset de avaliações de bancas e consolidações, garantindo integridade de permissões no Firestore e controle de acesso docente.
+- Atualização das Regras de Segurança (`firestore.rules`):
+  1. `psof3_avaliacoes_professores/{docId}`: `allow delete: if isAuthenticated();`, permitindo que o Professor Titular limpe as avaliações de todos os membros da banca ao resetar o grupo.
+  2. `psof3_sessoes_banca/{grupoId}`: mantido `allow read: if true;`, `allow create, update: if isAuthenticated() && request.resource.data.status in ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida'];` e `allow delete: if isAuthenticated();`.
+  3. `psof3_analises_automaticas/{grupoId}`: `allow read: if true;`, `allow create, update: if isAuthenticated();` e `allow delete: if isAuthenticated();`.
+  4. `psof3_avaliacoes_tcc/{docId}`: `allow read: if true;`, `allow create, update: if isAuthenticated();` e `allow delete: if isAuthenticated();`.
+  5. Mantido `match /{document=**} { allow read, write: if false; }` (Default Deny) na raiz.
+- Implementações no Frontend e Serviços:
+  1. `frontend/src/services/firebase.ts`: Adicionada exportação da função `deleteDoc` da SDK do Firestore.
+  2. `frontend/src/services/bancaMultiAvaliador.ts`:
+     - Implementada a função `limparTodosDraftsGrupoLocalStorage(grupoId)` que varre e remove todos os drafts do navegador iniciados com `psof3_draft_{grupoId}_`.
+     - Implementada a função assíncrona `resetarBancaGrupo(grupo, titular)` que busca todas as avaliações individuais dos professores daquele grupo no Firestore e executa a exclusão de cada documento, redefine a sessão `psof3_sessoes_banca/{grupo.id}` com status `'aguardando_inicio'` (cronômetro zerado e consolidação limpa) e remove os drafts locais.
+  3. `frontend/src/components/PainelBancaConsolidada.tsx`:
+     - Inclusão do botão "Resetar / Excluir Banca" visível exclusivamente para o Professor Titular quando a banca estiver em andamento ou concluída.
+     - Modal de confirmação de exclusão com alerta em destaque discriminando todos os efeitos da exclusão (remoção das notas de ambos os professores, redefinição do cronômetro para 00:00 e restauração da auditoria automática padrão).
+  4. `frontend/src/App.tsx`:
+     - Integrado `handleResetarBanca` conectado ao `resetarBancaGrupo`.
+     - Restauração automática em tempo real do estado das rubricas e notas de integrantes na tela com os valores originais da auditoria automática do backend.
+  5. Testes e Validação:
+     - `npm --prefix frontend run build`: Compilação limpa concluída em menos de 1 segundo.
+     - `pytest backend/tests/test_backend.py -v`: 4/4 testes aprovados (100% PASS).
+
+---
+
+## Sessão 11 — 15/11/2026 (10:52)
+
+### Prompt 11 (15/11/2026 - 10:52)
+```text
+/agente-orquestrador /grill-me /goal abaixo do texto consolidado deverá existir um botão que diz se a nota esta liberada, retida ou necessario nova apresentação. e na ferente se o status de cada aluno é aprovado ou retido.
+outra coisa (notas insuficientes no pilar 4  não retem a nota)
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 11
+- Objetivo: Exibir botão de status da liberação da nota (Liberada / Retida / Necessário Nova Apresentação) abaixo do texto consolidado, com indicador do status individual de cada aluno (Aprovado ou Retido), e garantir que itens insuficientes no Pilar 4 não retenham a nota.
+- Regra de Negócio Implementada:
+  - Notas insuficientes no Pilar 4 (4.1 Sprints e 4.2 Participação/Frequência) NÃO causam a retenção da nota final nem constam como pendência bloqueante. Apenas os Pilares 1, 2 e 3 (incluindo Arguição 3.1) retêm a nota caso possuam nível Insuficiente.
+  - Implementado em `backend/app/tcc_auditor.py`, `frontend/src/App.tsx` (`calcularStatusFinalAluno`) e `frontend/src/services/bancaMultiAvaliador.ts` (`calcularMediaBanca`).
+- Interface e Barra de Status Integrada:
+  - Posicionada imediatamente abaixo da caixa de "Texto Consolidado do Parecer" na Ficha MSEP (`frontend/src/App.tsx`) e espelhada no painel consolidado (`frontend/src/components/PainelBancaConsolidada.tsx`).
+  - Botão chamativo de status:
+    - Verde: `✅ NOTA LIBERADA` (nota >= 50 e sem itens insuficientes nos pilares 1, 2 e 3).
+    - Âmbar: `⚠️ NOTA RETIDA` (nota >= 50, com itens insuficientes bloqueantes nos pilares 1, 2 ou 3).
+    - Vermelho: `❌ NECESSÁRIO NOVA APRESENTAÇÃO` (nota < 50 ou sem entrega).
+  - Na frente do botão: Badges individuais de cada aluno com seu status em tempo real (`[Nome]: Aprovado`, `[Nome]: Retido` ou `[Nome]: Nova Apresentação`).
+  - Painel expansível ao clicar no botão, detalhando as pendências exatas que bloqueiam a liberação da nota e informando a diretriz do Pilar 4.
+- Testes e Validação:
+  - `npm --prefix frontend run build`: Compilação TypeScript e Vite realizada com sucesso.
+  - `pytest backend/tests/test_backend.py -v`: 4/4 testes aprovados (100% PASS).

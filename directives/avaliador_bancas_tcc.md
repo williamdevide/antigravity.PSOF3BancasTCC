@@ -109,3 +109,20 @@ Automatizar a auditoria técnica, documental e estrutural dos Trabalhos de Concl
    - **Infraestrutura:** VM Oracle Ubuntu x86_64 (`147.15.2.73`) com servidor Caddy (Auto-HTTPS Let's Encrypt e compressão Gzip).
    - **Backend:** FastAPI gerenciado por serviço systemd (`psof3-bancas.service`) escutando em `127.0.0.1:8001`.
    - **Frontend:** SPA React + Vite com Tailwind CSS servida estaticamente em `/var/www/projects/bancas/frontend/dist`.
+
+---
+
+## 6. Ciclo de Vida da Banca ao Vivo e Trava de Segurança
+
+1. **Persistência da Análise Prévia Automática:**
+   - Cada entrega de TCC tem sua análise automática gravada em `psof3_analises_automaticas/{grupo_id}` no Firestore antes da votação.
+2. **Abertura da Sessão & Cronômetro Sincronizado:**
+   - Apenas o **Professor Titular / Presidente da Banca** pode iniciar a banca oficial, registrando `iniciado_em` em `psof3_sessoes_banca/{grupo_id}`.
+   - Ambas as máquinas exibem o mesmo cronômetro progressivo MM:SS em tempo real com faixas de cores do roteiro SENAI (25-30 min).
+3. **Banner de Alerta Global:**
+   - Todos os professores logados em qualquer aba recebem notificação visual de banca em execução com botão de 1 clique para entrar na sala.
+4. **Auto-save no localStorage e Encerramento Individual:**
+   - Cada edição é salva instantaneamente no `localStorage` sob `psof3_draft_{grupo_id}_{uid}`.
+   - O professor clica em *"Encerrar Minha Avaliação"* para persistir no Firestore e marcar `concluido: true`.
+5. **Trava de Consolidação:**
+   - O Professor Titular só é liberado para consolidar a média final e fechar a ata após o segundo professor ter concluído suas notas (com contingência justificada caso o 2º avaliador esteja ausente).

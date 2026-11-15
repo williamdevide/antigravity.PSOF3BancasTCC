@@ -5,6 +5,8 @@ import {
   collection,
   query,
   onSnapshot,
+  getDocs,
+  deleteDoc,
 } from './firebase';
 import type {
   AvaliacaoGrupo,
@@ -29,6 +31,17 @@ function calcularNivel(nota: number, max: number): NivelMSEP {
   if (pct >= 90) return 'Avançado';
   if (pct >= 50) return 'Pleno';
   return 'Insuficiente';
+}
+
+function formatarErroFirestore(err: unknown, acao: string): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (
+    msg.toLowerCase().includes('permission-denied') ||
+    msg.toLowerCase().includes('missing or insufficient permissions')
+  ) {
+    return `Permissão insuficiente no Firestore para ${acao}. Acesse o Firebase Console (Firestore Database > aba Regras) e publique o arquivo firestore.rules do projeto.`;
+  }
+  return `Erro ao ${acao}: ${msg}`;
 }
 
 export function calcularMediaBanca(
@@ -135,7 +148,8 @@ export function calcularMediaBanca(
 
     const insuf: string[] = [];
     rubricasMedias.forEach((r) => {
-      if (r.codigo !== '3.1' && r.nivel === 'Insuficiente') {
+      // Regra SENAI: Notas insuficientes no Pilar 4 NÃO retêm nota
+      if (r.pilar !== 4 && r.codigo !== '3.1' && r.nivel === 'Insuficiente') {
         insuf.push(`${r.titulo} (${r.nota.toFixed(1)}/${r.peso_max.toFixed(1)})`);
       }
     });
@@ -207,8 +221,7 @@ export async function salvarAvaliacaoNoFirestore(
     await setDoc(docRef, avaliacao, { merge: true });
     return { ok: true, mensagem: `Avaliação do Prof. ${avaliacao.professor_nome} salva no Firebase!` };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, mensagem: `Erro ao salvar no Firestore: ${msg}` };
+    return { ok: false, mensagem: formatarErroFirestore(err, 'salvar avaliação individual no Firestore') };
   }
 }
 
@@ -271,8 +284,7 @@ export async function salvarAnaliseAutomaticaFirestore(
     await setDoc(docRef, dados, { merge: true });
     return { ok: true, mensagem: `Análise automática do grupo ${grupo.projeto} salva no Firebase!` };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, mensagem: `Falha ao salvar análise automática no Firestore: ${msg}` };
+    return { ok: false, mensagem: formatarErroFirestore(err, 'salvar análise automática no Firestore') };
   }
 }
 
@@ -304,8 +316,7 @@ export async function iniciarSessaoBanca(
     await setDoc(docRef, sessao, { merge: true });
     return { ok: true, mensagem: `Banca de ${grupo.projeto} iniciada pelo Prof. Titular! Cronômetro ativo.` };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, mensagem: `Erro ao iniciar sessão da banca: ${msg}` };
+    return { ok: false, mensagem: formatarErroFirestore(err, 'iniciar sessão da banca') };
   }
 }
 
@@ -406,8 +417,7 @@ export async function encerrarMinhaAvaliacao(
       mensagem: `Avaliação do Prof. ${avaliacao.professor_nome} encerrada com sucesso!`,
     };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, mensagem: `Erro ao encerrar avaliação: ${msg}` };
+    return { ok: false, mensagem: formatarErroFirestore(err, 'encerrar avaliação individual') };
   }
 }
 
@@ -456,8 +466,7 @@ export async function encerrarEConsolidarBanca(
       mensagem: `Banca encerrada com sucesso pelo Prof. Titular! Duração total: ${duracaoFormatada}. Média oficial consolidada.`,
     };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, mensagem: `Erro ao consolidar fechamento da banca: ${msg}` };
+    return { ok: false, mensagem: formatarErroFirestore(err, 'fechar e consolidar a banca') };
   }
 }
 
@@ -494,5 +503,76 @@ export function limparDraftLocalStorage(grupoId: string, professorUid: string): 
     localStorage.removeItem(chave);
   } catch {
     // Ignorar
+  }
+}
+
+export function limparTodosDraftsGrupoLocalStorage(grupoId: string): void {
+  try {
+    const chavesParaRemover: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const chave = localStorage.key(i);
+      if (chave && chave.startsWith(`psof3_draft_${grupoId}_`)) {
+        chavesParaRemover.push(chave);
+      }
+    }
+    chavesParaRemover.forEach((chave) => localStorage.removeItem(chave));
+  } catch {
+    // Ignorar falhas de acesso ao localStorage
+  }
+}
+
+/**
+ * O Professor Titular reseta e exclui a banca e as avaliações de um grupo específico:
+ * 1. Remove do Firestore todas as avaliações individuais dos professores daquele grupo (psof3_avaliacoes_professores)
+ * 2. Redefine o status da sessão (psof3_sessoes_banca) para 'aguardando_inicio', zerando cronômetro e consolidação
+ * 3. Limpa rascunhos de localStorage do grupo
+ */
+export async function resetarBancaGrupo(
+  grupo: AvaliacaoGrupo,
+  titular: User,
+): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    // 1. Buscar e deletar as avaliações dos professores desse grupo no Firestore
+    const colAvRef = collection(db, COLECAO_AVALIACOES_PROFESSORES);
+    const snap = await getDocs(colAvRef);
+    const promessasDelecao: Promise<void>[] = [];
+
+    snap.docs.forEach((d) => {
+      const data = d.data() as Partial<AvaliacaoProfessorIndividual>;
+      if (data.grupo_id === grupo.id) {
+        promessasDelecao.push(deleteDoc(doc(db, COLECAO_AVALIACOES_PROFESSORES, d.id)));
+      }
+    });
+    await Promise.all(promessasDelecao);
+
+    // 2. Redefinir a sessão da banca para aguardando_inicio com cronômetro zerado e sem merge
+    const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupo.id);
+    const sessaoResetada: SessaoBancaAoVivo = {
+      grupo_id: grupo.id,
+      turma: grupo.turma,
+      projeto: grupo.projeto,
+      status: 'aguardando_inicio',
+      titular_uid: titular.uid,
+      titular_nome: titular.displayName || titular.email?.split('@')[0] || 'Prof. Titular',
+      titular_email: titular.email || '',
+      iniciado_em: null,
+      encerrado_em: null,
+      duracao_segundos: 0,
+      duracao_formatada: '00:00',
+      avaliadores_presentes: [titular.displayName || titular.email || 'Titular'],
+      avaliacoes_concluidas: [],
+      atualizado_em: new Date().toISOString(),
+    };
+    await setDoc(docSessaoRef, sessaoResetada, { merge: false });
+
+    // 3. Limpar drafts locais no localStorage do navegador para este grupo
+    limparTodosDraftsGrupoLocalStorage(grupo.id);
+
+    return {
+      ok: true,
+      mensagem: `Banca de ${grupo.projeto} resetada com sucesso! As avaliações e consolidação foram excluídas.`,
+    };
+  } catch (err: unknown) {
+    return { ok: false, mensagem: formatarErroFirestore(err, 'resetar e excluir avaliações da banca') };
   }
 }
