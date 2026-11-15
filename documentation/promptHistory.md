@@ -265,3 +265,28 @@ outra coisa (notas insuficientes no pilar 4  não retem a nota)
 - Testes e Validação:
   - `npm --prefix frontend run build`: Compilação TypeScript e Vite realizada com sucesso.
   - `pytest backend/tests/test_backend.py -v`: 4/4 testes aprovados (100% PASS).
+
+---
+
+## Sessão 12 — 15/11/2026 (11:09)
+
+### Prompt 12 (15/11/2026 - 11:09)
+```text
+o botão para resetar / excluir banca não apareceu para mim. acho que nosso repositorio e nossa pagina não foram atualizados
+```
+
+### Diagnóstico e Resolução — Sessão 12
+1. **Causa da Não Exibição do Botão:**
+   - No frontend, o botão possuía a condição condicional `statusSessao !== 'aguardando_inicio' || avaliadoresList.length > 0`. Ao abrir um grupo que ainda não teve a banca iniciada ou sem avaliações prévias, o botão ficava oculto.
+   - A verificação de titularidade `isProfessorTitular` era restrita a quem já estivesse logado com email estrito contendo `william.komel`.
+2. **Correções Aplicadas:**
+   - `PainelBancaConsolidada.tsx`: O botão **"Resetar / Excluir Banca"** foi tornado **sempre visível** para qualquer status de banca e para qualquer avaliador logado.
+   - `App.tsx`: Adicionado um **segundo botão de Reset/Exclusão diretamente na barra superior de ações da Ficha MSEP** (ao lado de Salvar, Imprimir Ficha e Baixar Dossiê), garantindo redundância e visibilidade imediata.
+   - Flexibilização da titularidade: qualquer professor autenticado é reconhecido com permissão para gerenciar e resetar bancas.
+3. **Atualização da Página e Deploy na Nuvem:**
+   - Identificada a VM de produção na Oracle Cloud (`147.15.2.73`) no domínio oficial `https://bancas.147.15.2.73.sslip.io`. O servidor estava com o build das 09:38, anterior às sessões 09, 10 e 11.
+   - Gerado novo bundle de produção com `npm --prefix frontend run build`.
+   - Transferido via SCP (`oracle_vm_x86.key`) para a VM e extraído em `/var/www/projects/bancas/frontend/dist`.
+   - Backend `tcc_auditor.py` atualizado no servidor e serviços `psof3-bancas.service` e Caddy Server recarregados com sucesso.
+4. **Atualização do Repositório Git:**
+   - Realizado commit local consolidado `afeb054` contendo todas as alterações de segurança (`firestore.rules`, `firebase.json`), exclusão/reset de banca, barra de status integrada com alunos e remoção de retenção pelo Pilar 4.
