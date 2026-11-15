@@ -310,6 +310,7 @@ export interface AvaliacaoProfessorIndividual {
   nota_final_grupo: number;
   parecer_tecnico: string;
   concluido?: boolean;
+  status_liberacao_manual?: ResultadoFinalTipo | null;
   atualizado_em: string;
 }
 
@@ -342,6 +343,7 @@ export interface DraftAvaliacaoLocal {
   rubricas: RubricaItemAvaliacao[];
   integrantes_notas: NotaIndividualIntegrante[];
   parecer_tecnico: string;
+  status_liberacao_manual?: ResultadoFinalTipo | null;
   salvo_em: string;
 }
 
@@ -359,4 +361,5 @@ export interface BancaConsolidada {
   integrantes_medias: NotaIndividualIntegrante[];
   pareceres_professores: { professor_nome: string; parecer: string; atualizado_em: string }[];
   status_liberacao_final: ResultadoFinalTipo;
+  status_liberacao_manual?: ResultadoFinalTipo | null;
 }

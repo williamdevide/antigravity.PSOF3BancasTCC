@@ -90,6 +90,18 @@ export function calcularMediaBanca(
           av.integrantes_notas.length
         : 0;
 
+    const statusLiberacaoCalculado: ResultadoFinalTipo =
+      av.nota_final_grupo >= 50
+        ? av.integrantes_notas.some((i) => i.possui_item_insuficiente)
+          ? 'Nota Retida (Pendências)'
+          : 'Aprovado'
+        : 'Nova Chance (Data Futura)';
+
+    const statusEfetivo = av.status_liberacao_manual || statusLiberacaoCalculado;
+    const integrantesComStatusEfetivo = av.status_liberacao_manual
+      ? av.integrantes_notas.map((i) => ({ ...i, resultado: av.status_liberacao_manual as ResultadoFinalTipo }))
+      : av.integrantes_notas;
+
     return {
       grupo_id: grupoBase.id,
       status_banca: 'aguardando_segundo_avaliador',
@@ -101,14 +113,10 @@ export function calcularMediaBanca(
       media_p4: Number(mediaP4.toFixed(2)),
       media_final: av.nota_final_grupo,
       rubricas_medias: av.rubricas,
-      integrantes_medias: av.integrantes_notas,
+      integrantes_medias: integrantesComStatusEfetivo,
       pareceres_professores: pareceres,
-      status_liberacao_final:
-        av.nota_final_grupo >= 50
-          ? av.integrantes_notas.some((i) => i.possui_item_insuficiente)
-            ? 'Nota Retida (Pendências)'
-            : 'Aprovado'
-          : 'Nova Chance (Data Futura)',
+      status_liberacao_final: statusEfetivo,
+      status_liberacao_manual: av.status_liberacao_manual || null,
     };
   }
 
@@ -192,6 +200,15 @@ export function calcularMediaBanca(
     statusFinal = 'Nova Chance (Data Futura)';
   }
 
+  const statusManualConsolidado = av1.status_liberacao_manual || av2.status_liberacao_manual || null;
+  if (statusManualConsolidado) {
+    statusFinal = statusManualConsolidado;
+  }
+
+  const integrantesFinais = statusManualConsolidado
+    ? integrantesMedias.map((i) => ({ ...i, resultado: statusManualConsolidado }))
+    : integrantesMedias;
+
   return {
     grupo_id: grupoBase.id,
     status_banca: 'banca_concluida',
@@ -203,9 +220,10 @@ export function calcularMediaBanca(
     media_p4: Number(mediaP4.toFixed(2)),
     media_final: mediaFinal,
     rubricas_medias: rubricasMedias,
-    integrantes_medias: integrantesMedias,
+    integrantes_medias: integrantesFinais,
     pareceres_professores: pareceres,
     status_liberacao_final: statusFinal,
+    status_liberacao_manual: statusManualConsolidado,
   };
 }
 

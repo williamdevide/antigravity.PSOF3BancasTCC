@@ -6,6 +6,7 @@ import type {
   ExecucaoHistorico,
   NotaIndividualIntegrante,
   RegrasOficiaisResponse,
+  ResultadoFinalTipo,
   RubricaItemAvaliacao,
 } from '../types';
 
@@ -66,6 +67,7 @@ export const api = {
       parecer_tecnico: string;
       pontos_fortes?: string[];
       pontos_atencao?: string[];
+      status_liberacao_manual?: ResultadoFinalTipo | null;
       sincronizar_firebase?: boolean;
     },
   ) =>

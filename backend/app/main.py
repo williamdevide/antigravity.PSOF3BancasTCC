@@ -352,6 +352,12 @@ def salvar_avaliacao_grupo(grupo_id: str, payload: SalvarAvaliacaoRequest) -> Av
     alvo.atualizado_em = datetime.now().isoformat(timespec="seconds")
     recalcular_totais_avaliacao(alvo)
 
+    if payload.status_liberacao_manual:
+        alvo.status_liberacao_manual = payload.status_liberacao_manual
+        alvo.status_liberacao_nota = payload.status_liberacao_manual
+        for ind in alvo.integrantes_notas:
+            ind.resultado = payload.status_liberacao_manual
+
     if payload.sincronizar_firebase:
         sincronizar_avaliacao_firestore(alvo)
 

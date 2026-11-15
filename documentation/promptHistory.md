@@ -290,3 +290,15 @@ o botão para resetar / excluir banca não apareceu para mim. acho que nosso rep
    - Backend `tcc_auditor.py` atualizado no servidor e serviços `psof3-bancas.service` e Caddy Server recarregados com sucesso.
 4. **Atualização do Repositório Git:**
    - Realizado commit local consolidado `afeb054` contendo todas as alterações de segurança (`firestore.rules`, `firebase.json`), exclusão/reset de banca, barra de status integrada com alunos e remoção de retenção pelo Pilar 4.
+
+---
+
+## Sessão 13 — 15/11/2026 (11:24)
+
+### Prompt 13 (15/11/2026 - 11:24)
+```text
+/agente-orquestrador /grill-me /goal importante, apesar da sugestão no final do trabalho ser nota retida e quando clicar no botão expandir o motivo (o mesmo vale para reapresentação), quero poder alterar diretamente para aprovado se assim julgar melhor
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 13
+- Objetivo: Permitir sobreposição manual (override) da decisão da banca no status final da liberação da nota (Aprovado / Nota Retida / Nova Apresentação), tanto no nível coletivo do grupo quanto no nível individual de cada aluno, mantendo a expansão das justificativas/motivos e salvando a escolha manual soberana do professor no Firebase e na Ficha MSEP.

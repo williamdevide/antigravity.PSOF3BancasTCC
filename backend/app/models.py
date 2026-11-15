@@ -248,6 +248,7 @@ class AvaliacaoGrupoModel(BaseModel):
     possui_item_insuficiente_grupo: bool = False
     itens_insuficientes_grupo: list[str] = Field(default_factory=list)
     status_liberacao_nota: str = "Aguardando Entrega"
+    status_liberacao_manual: str | None = None
 
     parecer_tecnico: str = ""
     parecer_estruturado: list[BlocoParecerTecnico] = Field(default_factory=list)
@@ -304,6 +305,7 @@ class SalvarAvaliacaoRequest(BaseModel):
     parecer_tecnico: str
     pontos_fortes: list[str] | None = None
     pontos_atencao: list[str] | None = None
+    status_liberacao_manual: str | None = None
     sincronizar_firebase: bool = True
 
 

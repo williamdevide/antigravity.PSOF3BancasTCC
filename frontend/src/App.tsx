@@ -173,6 +173,7 @@ export function App() {
   const [exportandoDossie, setExportandoDossie] = useState<boolean>(false);
   const [exportandoXlsx, setExportandoXlsx] = useState<boolean>(false);
   const [detalhesStatusAberto, setDetalhesStatusAberto] = useState<boolean>(false);
+  const [statusManualLiberacao, setStatusManualLiberacao] = useState<ResultadoFinalTipo | null>(null);
 
   const [regrasOficiais, setRegrasOficiais] = useState<RegrasOficiaisResponse | null>(null);
   const [env, setEnv] = useState<ConfigEnv>(CONFIG_INICIAL);
@@ -314,21 +315,24 @@ export function App() {
         setRubricasEdit(draft.rubricas);
         setIntegrantesEdit(draft.integrantes_notas);
         setParecerEdit(draft.parecer_tecnico);
+        setStatusManualLiberacao(draft.status_liberacao_manual || null);
       } else {
         setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
         setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
         setParecerEdit('');
+        setStatusManualLiberacao(null);
       }
       setAvaliadorEdit(usuarioAuth.displayName || grupoAtual.avaliador || env.avaliador_padrao);
     } else if (grupoAtual) {
       setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
       setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
       setParecerEdit('');
+      setStatusManualLiberacao(null);
       setAvaliadorEdit(grupoAtual.avaliador || env.avaliador_padrao);
     }
   }, [grupoAtual?.id, usuarioAuth?.uid]);
 
-  // Auto-save local em tempo real no localStorage para cada alteração das notas/parecer
+  // Auto-save local em tempo real no localStorage para cada alteração das notas/parecer/status manual
   useEffect(() => {
     if (grupoAtual && usuarioAuth && rubricasEdit.length > 0) {
       salvarDraftLocalStorage({
@@ -337,10 +341,11 @@ export function App() {
         rubricas: rubricasEdit,
         integrantes_notas: integrantesEdit,
         parecer_tecnico: parecerEdit,
+        status_liberacao_manual: statusManualLiberacao,
         salvo_em: new Date().toISOString(),
       });
     }
-  }, [grupoAtual?.id, usuarioAuth?.uid, rubricasEdit, integrantesEdit, parecerEdit]);
+  }, [grupoAtual?.id, usuarioAuth?.uid, rubricasEdit, integrantesEdit, parecerEdit, statusManualLiberacao]);
 
   // Escutar avaliações dos 2 professores no Firestore em tempo real
   useEffect(() => {
@@ -393,7 +398,9 @@ export function App() {
     // Regra SENAI: Notas insuficientes no Pilar 4 (4.1 e 4.2) NÃO retêm a nota.
 
     let resultado: ResultadoFinalTipo;
-    if (nf < 50.0) {
+    if (statusManualLiberacao) {
+      resultado = statusManualLiberacao;
+    } else if (nf < 50.0) {
       resultado = 'Nova Chance (Data Futura)';
     } else if (insufInd.length > 0) {
       resultado = 'Nota Retida (Pendências)';
@@ -573,6 +580,7 @@ export function App() {
         p3_grupo_base: p3BaseEdit,
         nota_final_grupo: mediaFinalGrupoCalculada,
         parecer_tecnico: parecerEdit,
+        status_liberacao_manual: statusManualLiberacao,
         atualizado_em: new Date().toISOString(),
       };
 
@@ -584,6 +592,7 @@ export function App() {
         rubricas: rubricasEdit,
         integrantes_notas: recalculados,
         parecer_tecnico: parecerEdit,
+        status_liberacao_manual: statusManualLiberacao,
         sincronizar_firebase: true,
       });
 
@@ -672,6 +681,7 @@ export function App() {
         p3_grupo_base: p3BaseEdit,
         nota_final_grupo: mediaFinalGrupoCalculada,
         parecer_tecnico: parecerEdit,
+        status_liberacao_manual: statusManualLiberacao,
         concluido: true,
         atualizado_em: new Date().toISOString(),
       };
@@ -684,6 +694,7 @@ export function App() {
         rubricas: rubricasEdit,
         integrantes_notas: recalculados,
         parecer_tecnico: parecerEdit,
+        status_liberacao_manual: statusManualLiberacao,
         sincronizar_firebase: true,
       });
 
@@ -744,6 +755,7 @@ export function App() {
       const res = await resetarBancaGrupo(grupoAtual, usuarioAuth);
       if (res.ok) {
         setBancaConsolidada(null);
+        setStatusManualLiberacao(null);
         setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
         setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
         setParecerEdit('');
@@ -932,14 +944,29 @@ export function App() {
     }
   });
 
-  let statusGrupoTipo: 'liberada' | 'retida' | 'nova_apresentacao' = 'liberada';
+  let statusSugeridoCalculado: 'liberada' | 'retida' | 'nova_apresentacao' = 'liberada';
   if (mediaGrupoEdit < 50.0 || (grupoAtual && !grupoAtual.entregue_na_pasta)) {
-    statusGrupoTipo = 'nova_apresentacao';
+    statusSugeridoCalculado = 'nova_apresentacao';
   } else if (todasPendenciasRetencao.length > 0) {
-    statusGrupoTipo = 'retida';
+    statusSugeridoCalculado = 'retida';
   } else {
-    statusGrupoTipo = 'liberada';
+    statusSugeridoCalculado = 'liberada';
   }
+
+  // Se o professor selecionou uma opção manual soberana, ela sobrepõe a sugestão automática
+  let statusGrupoTipo: 'liberada' | 'retida' | 'nova_apresentacao' = statusSugeridoCalculado;
+  if (statusManualLiberacao === 'Aprovado') {
+    statusGrupoTipo = 'liberada';
+  } else if (statusManualLiberacao === 'Nota Retida (Pendências)') {
+    statusGrupoTipo = 'retida';
+  } else if (statusManualLiberacao === 'Nova Chance (Data Futura)') {
+    statusGrupoTipo = 'nova_apresentacao';
+  }
+
+  const motivoReapresentacao =
+    grupoAtual && !grupoAtual.entregue_na_pasta
+      ? 'Grupo sem entrega dos arquivos obrigatórios na pasta da turma.'
+      : `Média final calculada em ${mediaGrupoEdit.toFixed(2)} pts, inferior ao mínimo regulamentar de 50,0 pts exigido para aprovação direta.`;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -3274,7 +3301,7 @@ export function App() {
                                     ? 'bg-amber-500 text-slate-950 hover:bg-amber-600 shadow-amber-500/20'
                                     : 'bg-red-600 text-white hover:bg-red-700 shadow-red-600/20'
                                 }`}
-                                title="Clique para detalhar os critérios e pendências de liberação da nota"
+                                title="Clique para expandir e ver os motivos ou pendências do resultado"
                               >
                                 {statusGrupoTipo === 'liberada' && <CheckCircle2 className="h-4 w-4 shrink-0" />}
                                 {statusGrupoTipo === 'retida' && <AlertTriangle className="h-4 w-4 shrink-0" />}
@@ -3286,13 +3313,16 @@ export function App() {
                                     ? '⚠️ NOTA RETIDA'
                                     : '❌ NECESSÁRIO NOVA APRESENTAÇÃO'}
                                 </span>
-                                {todasPendenciasRetencao.length > 0 ? (
-                                  detalhesStatusAberto ? (
-                                    <ChevronUp className="h-3.5 w-3.5 opacity-80" />
-                                  ) : (
-                                    <ChevronDown className="h-3.5 w-3.5 opacity-80" />
-                                  )
-                                ) : null}
+                                {statusManualLiberacao && (
+                                  <span className="rounded bg-black/20 px-1.5 py-0.5 text-[9px] font-bold text-white tracking-normal">
+                                    Manual
+                                  </span>
+                                )}
+                                {detalhesStatusAberto ? (
+                                  <ChevronUp className="h-3.5 w-3.5 opacity-80" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+                                )}
                               </button>
 
                               {/* Na frente: Status individual de cada aluno (Aprovado ou Retido) */}
@@ -3341,26 +3371,131 @@ export function App() {
                             </div>
                           </div>
 
-                          {/* Painel Expansível de Detalhes das Pendências que Retêm a Nota */}
-                          {detalhesStatusAberto && todasPendenciasRetencao.length > 0 && (
-                            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50/95 p-3 text-xs text-amber-950">
-                              <div className="flex items-center gap-2 font-bold text-amber-900">
-                                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-                                <span>Pendências Bloqueantes de Liberação da Nota (Pilares 1, 2 e 3):</span>
+                          {/* Seletor Rápido de Decisão Soberana da Banca (Alterar Diretamente para Aprovado / Retido / Nova Apresentação) */}
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/80 pt-2.5 text-xs">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                                Decisão da Banca (Alterar Diretamente):
+                              </span>
+                              <div className="inline-flex rounded-lg border border-slate-300 bg-white p-0.5 shadow-2xs">
+                                <button
+                                  type="button"
+                                  onClick={() => setStatusManualLiberacao('Aprovado')}
+                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                                    statusGrupoTipo === 'liberada' && statusManualLiberacao === 'Aprovado'
+                                      ? 'bg-emerald-600 text-white shadow-xs'
+                                      : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-900'
+                                  }`}
+                                  title="Aprovar diretamente todos os integrantes e liberar a nota, sobrepondo qualquer trava de retenção ou reapresentação"
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                  Aprovado (Liberada)
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setStatusManualLiberacao('Nota Retida (Pendências)')}
+                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                                    statusGrupoTipo === 'retida' && statusManualLiberacao === 'Nota Retida (Pendências)'
+                                      ? 'bg-amber-500 text-slate-950 shadow-xs'
+                                      : 'text-slate-700 hover:bg-amber-50 hover:text-amber-900'
+                                  }`}
+                                  title="Reter a nota do grupo até que sejam entregues pendências indicadas pela banca"
+                                >
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                  Nota Retida
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setStatusManualLiberacao('Nova Chance (Data Futura)')}
+                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                                    statusGrupoTipo === 'nova_apresentacao' && statusManualLiberacao === 'Nova Chance (Data Futura)'
+                                      ? 'bg-red-600 text-white shadow-xs'
+                                      : 'text-slate-700 hover:bg-red-50 hover:text-red-900'
+                                  }`}
+                                  title="Indicar necessidade de reapresentação do TCC em data futura"
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                  Nova Apresentação
+                                </button>
                               </div>
-                              <p className="mt-1 text-[11px] text-amber-800 leading-relaxed">
-                                O grupo atingiu nota &ge; 50,0 pts, mas possui itens com classificação <strong>Insuficiente</strong>. A nota final permanece retida até a regularização das pendências:
-                              </p>
-                              <ul className="mt-2 space-y-1 text-[11px] text-amber-900 list-disc list-inside">
-                                {todasPendenciasRetencao.map((pend, pIdx) => (
-                                  <li key={pIdx} className="font-medium">
-                                    {pend}
-                                  </li>
-                                ))}
-                              </ul>
-                              <p className="mt-2 text-[10px] italic text-amber-800 border-t border-amber-200/80 pt-1.5">
-                                ℹ️ <strong>Diretriz SENAI:</strong> Notas com nível Insuficiente no <strong>Pilar 4 (4.1 Sprints e 4.2 Participação)</strong> entram no cálculo da média, mas <strong>NÃO</strong> causam a retenção da nota.
-                              </p>
+                            </div>
+
+                            {/* Botão para Restaurar a Sugestão Automática Calculada */}
+                            {statusManualLiberacao && (
+                              <button
+                                type="button"
+                                onClick={() => setStatusManualLiberacao(null)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer"
+                                title="Reverter a escolha manual e restaurar o status calculado automaticamente pelo sistema"
+                              >
+                                <RotateCcw className="h-3 w-3 text-indigo-600" />
+                                Restaurar Sugestão Automática ({statusSugeridoCalculado === 'liberada' ? 'Liberada' : statusSugeridoCalculado === 'retida' ? 'Retida' : 'Nova Apresentação'})
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Painel Expansível de Detalhes e Justificativas */}
+                          {detalhesStatusAberto && (
+                            <div className="mt-3 rounded-lg border border-slate-300 bg-white p-3.5 text-xs text-slate-800 shadow-inner">
+                              {/* Alerta de Decisão Manual Ativa */}
+                              {statusManualLiberacao && (
+                                <div className="mb-2.5 flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 p-2 text-xs font-semibold text-indigo-900">
+                                  <Info className="h-4 w-4 shrink-0 text-indigo-600" />
+                                  <span>
+                                    <strong>Decisão Soberana da Banca:</strong> O status foi alterado manualmente pelo professor para{' '}
+                                    <span className="underline font-bold uppercase">{statusManualLiberacao}</span>, sobrepondo a sugestão inicial do sistema ({statusSugeridoCalculado}).
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Motivo de Nota Retida */}
+                              {statusSugeridoCalculado === 'retida' && todasPendenciasRetencao.length > 0 && (
+                                <div className="rounded-lg border border-amber-300 bg-amber-50/90 p-3 text-amber-950">
+                                  <div className="flex items-center gap-2 font-bold text-amber-900">
+                                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                                    <span>Motivo da Sugestão de Retenção — Pendências nos Pilares 1, 2 ou 3:</span>
+                                  </div>
+                                  <p className="mt-1 text-[11px] text-amber-800 leading-relaxed">
+                                    O grupo atingiu nota &ge; 50,0 pts, porém possui itens com classificação <strong>Insuficiente</strong> que motivaram a sugestão de retenção:
+                                  </p>
+                                  <ul className="mt-2 space-y-1 text-[11px] text-amber-900 list-disc list-inside">
+                                    {todasPendenciasRetencao.map((pend, pIdx) => (
+                                      <li key={pIdx} className="font-medium">
+                                        {pend}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  <p className="mt-2 text-[10px] italic text-amber-800 border-t border-amber-200/80 pt-1.5">
+                                    ℹ️ <strong>Diretriz SENAI:</strong> Notas no <strong>Pilar 4 (Sprints e Frequência)</strong> compõem a média, mas <strong>NÃO</strong> causam a retenção da nota.
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Motivo de Nova Apresentação (Reapresentação) */}
+                              {statusSugeridoCalculado === 'nova_apresentacao' && (
+                                <div className="rounded-lg border border-red-300 bg-red-50/90 p-3 text-red-950">
+                                  <div className="flex items-center gap-2 font-bold text-red-900">
+                                    <XCircle className="h-4 w-4 shrink-0 text-red-600" />
+                                    <span>Motivo da Sugestão de Reapresentação (Data Futura):</span>
+                                  </div>
+                                  <p className="mt-1 text-[11px] text-red-800 leading-relaxed">
+                                    {motivoReapresentacao}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Caso a sugestão tenha sido originalmente Liberada */}
+                              {statusSugeridoCalculado === 'liberada' && (
+                                <div className="rounded-lg border border-emerald-300 bg-emerald-50/90 p-3 text-emerald-950">
+                                  <div className="flex items-center gap-2 font-bold text-emerald-900">
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                                    <span>Sugestão Automática de Aprovação Plena:</span>
+                                  </div>
+                                  <p className="mt-1 text-[11px] text-emerald-800 leading-relaxed">
+                                    O grupo atingiu média de {mediaGrupoEdit.toFixed(2)} pts (&ge; 50,0 pts) e não possui nenhum item classificado como Insuficiente nos Pilares 1, 2 e 3.
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
