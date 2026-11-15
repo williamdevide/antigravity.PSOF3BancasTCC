@@ -1,0 +1,133 @@
+import type {
+  AgentStatus,
+  AgentSummary,
+  AvaliacaoGrupo,
+  ConfigEnv,
+  ExecucaoHistorico,
+  NotaIndividualIntegrante,
+  RegrasOficiaisResponse,
+  RubricaItemAvaliacao,
+} from '../types';
+
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? 'http://127.0.0.1:8000' : window.location.origin);
+
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const resp = await fetch(`${API_BASE}${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (!resp.ok) {
+    const erro = await resp.json().catch(() => ({ detail: resp.statusText }));
+    throw new Error(erro.detail || 'Erro na requisição à API');
+  }
+  return resp.json() as Promise<T>;
+}
+
+export const api = {
+  getAgents: () => request<{ agentes: AgentSummary[] }>('/api/agents'),
+
+  getRegras: () => request<RegrasOficiaisResponse>('/api/regras'),
+
+  getRegraPdfUrl: (nomeArquivo: string) =>
+    `${API_BASE}/api/regras/pdf/${encodeURIComponent(nomeArquivo)}`,
+
+  getBancas: (turma?: string) =>
+    request<{
+      total: number;
+      entregues: number;
+      pendentes: number;
+      auditados: number;
+      sincronizados_firebase: number;
+      bancas: AvaliacaoGrupo[];
+    }>(`/api/bancas${turma && turma !== 'Todas' ? `?turma=${encodeURIComponent(turma)}` : ''}`),
+
+  getBancaDetalhe: (grupoId: string) =>
+    request<AvaliacaoGrupo>(`/api/bancas/${encodeURIComponent(grupoId)}`),
+
+  auditarBancas: (payload: {
+    grupo_ids?: string[] | null;
+    turma?: string | null;
+    forcar_reauditoria?: boolean;
+    sincronizar_firebase?: boolean;
+  }) =>
+    request<{ mensagem: string; execucao_id: string }>('/api/bancas/auditar', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  salvarAvaliacao: (
+    grupoId: string,
+    payload: {
+      avaliador?: string;
+      rubricas: RubricaItemAvaliacao[];
+      integrantes_notas: NotaIndividualIntegrante[];
+      parecer_tecnico: string;
+      pontos_fortes?: string[];
+      pontos_atencao?: string[];
+      sincronizar_firebase?: boolean;
+    },
+  ) =>
+    request<AvaliacaoGrupo>(`/api/bancas/${encodeURIComponent(grupoId)}/avaliacao`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  sincronizarGrupoFirebase: (grupoId: string) =>
+    request<{ ok: boolean; mensagem: string; firebase_sync_em: string | null }>(
+      `/api/bancas/${encodeURIComponent(grupoId)}/firebase-sync`,
+      { method: 'POST' },
+    ),
+
+  sincronizarTodosFirebase: () =>
+    request<{ ok: boolean; sincronizados: number; erros: string[]; mensagem: string }>(
+      '/api/firebase/sync-all',
+      { method: 'POST' },
+    ),
+
+  exportarFichaPdf: (grupoId: string) =>
+    request<{ arquivo: string; caminho: string; url_download: string; mensagem: string }>(
+      `/api/bancas/${encodeURIComponent(grupoId)}/exportar/ficha-pdf`,
+      { method: 'POST' },
+    ),
+
+  exportarDossie: (grupoId: string) =>
+    request<{
+      arquivo_pdf: string;
+      arquivo_md: string;
+      url_pdf: string;
+      url_md: string;
+      mensagem: string;
+    }>(`/api/bancas/${encodeURIComponent(grupoId)}/exportar/dossie`, {
+      method: 'POST',
+    }),
+
+  exportarConsolidadoXlsx: (turma?: string) =>
+    request<{ arquivo: string; caminho: string; url_download: string; mensagem: string }>(
+      `/api/exportar/consolidado-xlsx${
+        turma && turma !== 'Todas' ? `?turma=${encodeURIComponent(turma)}` : ''
+      }`,
+      { method: 'POST' },
+    ),
+
+  getConfig: () => request<ConfigEnv>('/api/config'),
+
+  saveConfig: (cfg: ConfigEnv) =>
+    request<ConfigEnv>('/api/config', {
+      method: 'PUT',
+      body: JSON.stringify(cfg),
+    }),
+
+  getStatus: () => request<AgentStatus>('/api/agent/status'),
+
+  getHistory: () => request<{ historico: ExecucaoHistorico[] }>('/api/history'),
+
+  openFolder: (qual: 'relatorios' | 'tcc' = 'relatorios') =>
+    request<{ pasta: string; mensagem: string }>(`/api/reports/open-folder?qual=${qual}`, {
+      method: 'POST',
+    }),
+
+  getDownloadUrl: (filename: string) =>
+    `${API_BASE}/api/reports/download/${encodeURIComponent(filename)}`,
+};

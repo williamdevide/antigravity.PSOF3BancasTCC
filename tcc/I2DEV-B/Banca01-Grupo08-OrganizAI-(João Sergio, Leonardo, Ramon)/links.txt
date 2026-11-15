@@ -1,0 +1,2 @@
+GitHub: https://github.com/leuz3ra/organizai.git
+Deploy: organizai-theta.vercel.app

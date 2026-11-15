@@ -1,0 +1,3045 @@
+{
+  "I2DEV-B_Grupo08": {
+    "id": "I2DEV-B_Grupo08",
+    "ordem_apresentacao": 1,
+    "turma": "I2DEV-B",
+    "dia_semana": "Segunda-feira",
+    "sala": "Metrologia",
+    "data_banca": "16/11/2026",
+    "data_banca_iso": "2026-11-16",
+    "horario": "Primeiro Horário",
+    "grupo": "Grupo 08",
+    "grupo_num": 8,
+    "projeto": "OrganizAI",
+    "tema": "Consumo Impulsivo e Endividamento: o Desafio do Controle Financeiro na Era Digital",
+    "integrantes": [
+      "Leonardo",
+      "João Sergio",
+      "Ramon"
+    ],
+    "entregue_na_pasta": true,
+    "nome_pasta_entregue": "Banca01-Grupo08-OrganizAI-(João Sergio, Leonardo, Ramon)",
+    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca01-Grupo08-OrganizAI-(João Sergio, Leonardo, Ramon)",
+    "status_avaliacao": "auditado_ia",
+    "auditado_em": "2026-11-14T23:03:38",
+    "atualizado_em": "2026-11-14T23:03:38",
+    "avaliador": "Prof. William Devidé Komel",
+    "sincronizado_firebase": true,
+    "firebase_sync_em": "2026-11-14T23:03:38",
+    "arquivos_entregues": [
+      {
+        "tipo": "TCC_PDF",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-TCC-OrganizAi-Joao-Leonardo-Ramon.pdf",
+        "tamanho_bytes": 785050,
+        "padrao_esperado": "CTDS-2026-02-TCC-OrganizAI-Leonardo-Joao-Ramon.pdf",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "TCC_DOCX",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-TCC-OrganizAi-Joao-Leonardo-Ramon.docx",
+        "tamanho_bytes": 4324824,
+        "padrao_esperado": "CTDS-2026-02-TCC-OrganizAI-Leonardo-Joao-Ramon.docx",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "SISTEMA_ZIP",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon.zip",
+        "tamanho_bytes": 8051933,
+        "padrao_esperado": "CTDS-2026-02-Sistema-OrganizAI-Leonardo-Joao-Ramon.zip",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "BD_SQL",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql",
+        "tamanho_bytes": 6239,
+        "padrao_esperado": "CTDS-2026-02-BD-OrganizAI-Leonardo-Joao-Ramon.sql",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "SLIDES_PDF",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Apresentação-OrganizAi-Joao-Leonardo-Ramon.pdf",
+        "tamanho_bytes": 1903211,
+        "padrao_esperado": "CTDS-2026-02-Apresentação-OrganizAI-Leonardo-Joao-Ramon.pdf",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "SLIDES_PPTX",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Apresentação-OrganizAi-Joao-Leonardo-Ramon.pptx",
+        "tamanho_bytes": 1715445,
+        "padrao_esperado": "CTDS-2026-02-Apresentação-OrganizAI-Leonardo-Joao-Ramon.pptx",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "LINKS_TXT",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "links.txt",
+        "tamanho_bytes": 84,
+        "padrao_esperado": "links.txt",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      }
+    ],
+    "conformidade_nomenclatura_pct": 100.0,
+    "auditoria_tecnica": {
+      "monografia_paginas_estimadas": 36,
+      "monografia_palavras": 4996,
+      "monografia_caracteres": 40679,
+      "secoes_abnt_detectadas": {
+        "Capa & Folha de Rosto": true,
+        "Resumo & Abstract": true,
+        "Sumário": true,
+        "Introdução & Justificativa": false,
+        "Fundamentação Teórica": false,
+        "Metodologia": false,
+        "Requisitos (RF / RNF)": true,
+        "Modelagem de BD (MER/DER & Dicionário)": true,
+        "Prototipação & Wireframes (Figma)": true,
+        "Arquitetura & Stack": true,
+        "Plano de Negócios & Viabilidade": true,
+        "Rotinas e Relatório de Testes": true,
+        "Backlog & Cronograma Ágil": false,
+        "Conclusão & Referências ABNT": true
+      },
+      "rfs_detectados_qtd": 8,
+      "rnfs_detectados_qtd": 8,
+      "possui_mer_der": true,
+      "possui_dicionario_dados": true,
+      "possui_link_figma": true,
+      "links_figma_encontrados": [
+        "https://www.figma.com/design/9nG9RIvSCoxmJzuEURWjRr/OrganizA%C3%AD?node-"
+      ],
+      "possui_plano_negocios": true,
+      "possui_casos_teste": true,
+      "possui_backlog_cronograma": false,
+      "resumo_monografia": "O presente projeto visa ao desenvolvimento do OrganizAí, um aplicativo móvel destinado à organização financeira pessoal e à prevenção do endividamento. A plataforma foi planejada para reunir, em um único ambiente, recursos que auxiliem o usuário a visualizar sua situação financeira, registrar rendas, organizar pagamentos,",
+      "sql_arquivo": "CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql",
+      "sql_linhas": 159,
+      "sql_tabelas": [
+        "profiles",
+        "metas",
+        "metas_pagamentos"
+      ],
+      "sql_tabelas_qtd": 3,
+      "sql_inserts_por_tabela": {
+        "profiles": 0,
+        "metas": 0,
+        "metas_pagamentos": 0
+      },
+      "sql_total_registros_inseridos": 0,
+      "sql_atende_min_20_por_tabela": false,
+      "sql_tabelas_abaixo_20": [
+        "profiles (0 reg)",
+        "metas (0 reg)",
+        "metas_pagamentos (0 reg)"
+      ],
+      "sql_possui_pk": true,
+      "sql_possui_fk": true,
+      "sql_possui_indices": true,
+      "sql_possui_rls": true,
+      "sql_possui_triggers_functions": true,
+      "sql_diagnostico": "Atenção (Rubrica 2.3): O script possui 3 tabela(s) DDL (profiles, metas, metas_pagamentos), mas nenhuma possui registros populados via INSERT INTO no arquivo .sql.",
+      "zip_arquivo": "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon.zip",
+      "zip_total_arquivos": 136,
+      "zip_extensoes": {
+        ".png": 34,
+        ".ts": 31,
+        ".scss": 14,
+        ".html": 13,
+        ".json": 10,
+        ".xml": 10,
+        "sem_ext": 6,
+        ".gradle": 6,
+        ".java": 3,
+        ".properties": 2
+      },
+      "zip_stack_detectada": [
+        "Angular / Ionic",
+        "PostgreSQL / SQL",
+        "Supabase",
+        "TypeScript"
+      ],
+      "zip_possui_readme": false,
+      "zip_readme_tamanho": 0,
+      "zip_possui_package_json": true,
+      "zip_dependencias": [
+        "@angular/animations",
+        "@angular/common",
+        "@angular/compiler",
+        "@angular/core",
+        "@angular/forms",
+        "@angular/platform-browser",
+        "@angular/platform-browser-dynamic",
+        "@angular/router",
+        "@capacitor/android",
+        "@capacitor/app",
+        "@capacitor/core",
+        "@capacitor/haptics",
+        "@capacitor/keyboard",
+        "@capacitor/status-bar",
+        "@ionic/angular",
+        "@supabase/supabase-js",
+        "ionicons",
+        "rxjs",
+        "tslib",
+        "zone.js",
+        "@angular-devkit/build-angular",
+        "@angular-eslint/builder",
+        "@angular-eslint/eslint-plugin",
+        "@angular-eslint/eslint-plugin-template",
+        "@angular-eslint/schematics",
+        "@angular-eslint/template-parser",
+        "@angular/cli",
+        "@angular/compiler-cli",
+        "@angular/language-service",
+        "@capacitor/cli",
+        "@ionic/angular-toolkit",
+        "@types/jasmine",
+        "@typescript-eslint/eslint-plugin",
+        "@typescript-eslint/parser",
+        "eslint",
+        "eslint-plugin-import",
+        "eslint-plugin-jsdoc",
+        "eslint-plugin-prefer-arrow",
+        "jasmine-core",
+        "jasmine-spec-reporter",
+        "karma",
+        "karma-chrome-launcher",
+        "karma-coverage",
+        "karma-jasmine",
+        "karma-jasmine-html-reporter",
+        "typescript"
+      ],
+      "zip_arquivos_backend": [
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/guards/auth.guard.ts",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/services/metas.service.ts",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/services/supabase.service.ts",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/services/user-storage.service.ts"
+      ],
+      "zip_arquivos_frontend": [
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/app.component.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/app.component.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/dashboard/dashboard.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/dashboard/dashboard.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/assinaturas/assinaturas.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/assinaturas/assinaturas.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/boletos/boletos.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/boletos/boletos.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/cadastro/cadastro.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/cadastro/cadastro.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/contas-fixas/contas-fixas.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/contas-fixas/contas-fixas.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/dicas/dicas.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/dicas/dicas.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/login/login.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/login/login.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/metas/metas.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/metas/metas.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/pagamentos/pagamentos.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/pagamentos/pagamentos.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/redefinir-senha/redefinir-senha.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/redefinir-senha/redefinir-senha.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/visao-geral/visao-geral.page.html",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/visao-geral/visao-geral.page.scss",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/global.scss"
+      ],
+      "zip_arquivos_teste": [
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/app.component.spec.ts",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/dashboard/dashboard.page.spec.ts",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/cadastro/cadastro.page.spec.ts",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/src/app/pages/login/login.page.spec.ts",
+        "CTDS-2026-02-Sistema-OrganizAi-Joao-Leonardo-Ramon/organizai-main/tsconfig.spec.json"
+      ],
+      "zip_alertas_seguranca": [],
+      "slides_arquivo": "CTDS-2026-02-Apresentação-OrganizAi-Joao-Leonardo-Ramon.pptx",
+      "slides_qtd": 9,
+      "slides_etapas_roteiro": {
+        "1. Capa & Identificação (1 min)": true,
+        "2. Contexto & Dor (1.5 min)": true,
+        "3. Solução & Proposta (1.5 min)": true,
+        "4. Arquitetura, Stack & BD (1.5 min)": true,
+        "5. Plano de Negócio (2.5 min)": true,
+        "6. Demonstração / Protótipo (5-8 min)": true,
+        "7. Conclusão & Encerramento (1 min)": true
+      },
+      "slides_titulos": [
+        "Slide 01: OrganizAí",
+        "Slide 02: dores",
+        "Slide 03: visão geral",
+        "Slide 04: arquitetura do sistema",
+        "Slide 05: Usuários",
+        "Slide 06: plano de negócio",
+        "Slide 07: demonstração",
+        "Slide 08: encerramento",
+        "Slide 09: obrigado!"
+      ],
+      "github_url": "https://github.com/leuz3ra/organizai.git",
+      "github_online_ok": true,
+      "github_status_http": 200,
+      "github_commits_total": 11,
+      "github_commits_por_autor": {
+        "pqnalua": 3,
+        "miguelrcamargo": 3,
+        "svilemor": 2,
+        "MeloozXz": 2,
+        "leuz3ra": 1
+      },
+      "github_ultimo_commit_data": "2026-10-26T20:14:57Z",
+      "github_readme_online": false,
+      "github_linguagens": [
+        "TypeScript",
+        "SCSS",
+        "HTML",
+        "PLpgSQL",
+        "Java",
+        "JavaScript"
+      ],
+      "github_diagnostico": "Repositório 'leuz3ra/organizai' ativo (HTTP 200). 11 commit(s) inspecionado(s) (pqnalua: 3, miguelrcamargo: 3, svilemor: 2, MeloozXz: 2, leuz3ra: 1). README online: Não.",
+      "deploy_url": "https://organizai-theta.vercel.app",
+      "deploy_online_ok": true,
+      "deploy_status_http": 200,
+      "deploy_tempo_ms": 222,
+      "deploy_titulo_pagina": "OrganizAí - Gestão Financeira Inteligente",
+      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 222 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'.",
+      "deploy_provedor": "Vercel Cloud",
+      "deploy_rodando_inteiramente_nuvem": false,
+      "banco_provedor_nuvem": "Supabase (PostgreSQL Cloud)",
+      "banco_url_detectada": "https://dkftcjsofgpllrmswpmw.supabase.co",
+      "banco_exclusivo_nuvem": false,
+      "usa_localstorage_indevido": true,
+      "arquivos_localstorage_detectados": [
+        "app/dashboard/dashboard.page.ts",
+        "pages/assinaturas/assinaturas.page.ts",
+        "pages/boletos/boletos.page.ts",
+        "pages/contas-fixas/contas-fixas.page.ts",
+        "pages/dicas/dicas.page.ts",
+        "pages/pagamentos/pagamentos.page.ts",
+        "pages/visao-geral/visao-geral.page.ts",
+        "app/services/user-storage.service.ts"
+      ],
+      "chaves_localstorage_negocio": [
+        "renda_mensal",
+        "boletos",
+        "contas_fixas",
+        "assinaturas",
+        "dicas_salvas",
+        "organizai_${key}"
+      ],
+      "chaves_localstorage_permitidas_ui": [
+        "temaEscuro",
+        "ocultarValores",
+        "organizai_cotacoes_cache",
+        "organizai_cotacoes_ts"
+      ],
+      "usa_arquivos_json_locais_no_servidor": false,
+      "arquivos_json_locais_detectados": [],
+      "tabelas_auditoria_online": [
+        {
+          "tabela": "profiles",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (HTTP 200 • 0 reg)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: app/services/supabase.service.ts | Consumo (SELECT): pages/cadastro/cadastro.page.ts, app/services/supabase.service.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "metas",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (HTTP 200 • 0 reg)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: app/services/metas.service.ts | Consumo (SELECT): app/services/metas.service.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "metas_pagamentos",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (HTTP 200 • 0 reg)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: app/services/metas.service.ts | Consumo (SELECT): app/services/metas.service.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "renda_mensal (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (app/dashboard/dashboard.page.ts, pages/assinaturas/assinaturas.page.ts)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "boletos (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (app/dashboard/dashboard.page.ts, pages/assinaturas/assinaturas.page.ts)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "contas_fixas (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (app/dashboard/dashboard.page.ts, pages/assinaturas/assinaturas.page.ts)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "assinaturas (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (app/dashboard/dashboard.page.ts, pages/assinaturas/assinaturas.page.ts)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "dicas_salvas (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (app/dashboard/dashboard.page.ts, pages/assinaturas/assinaturas.page.ts)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "organizai_${key} (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (app/dashboard/dashboard.page.ts, pages/assinaturas/assinaturas.page.ts)",
+          "conforme_ciclo_completo": false
+        }
+      ],
+      "tabelas_sql_presentes_online_qtd": 3,
+      "tabelas_sql_gravadas_pelo_codigo_qtd": 3,
+      "tabelas_sql_consumidas_pelo_codigo_qtd": 3,
+      "tabelas_ciclo_completo_qtd": 3,
+      "entidades_tema_sem_tabela_banco": [
+        "renda_mensal",
+        "boletos",
+        "contas_fixas",
+        "assinaturas",
+        "dicas_salvas",
+        "organizai_${key}"
+      ],
+      "inviabiliza_finalizacao_persistencia": true,
+      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts]. Auditoria das 3 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 3/3 existem online, 3/3 possuem gravação (INSERT/UPDATE) no código e 3/3 são consumidas via leitura (SELECT) pelo programa (3/3 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}]. (Item 2.4 Deploy e BD online ativo: Conforme)."
+    },
+    "rubricas": [
+      {
+        "codigo": "1.1",
+        "pilar": 1,
+        "titulo": "1.1 Monografia ABNT",
+        "peso_max": 8.0,
+        "nivel": "Pleno",
+        "nota": 6.29,
+        "nota_sugerida_ia": 6.29,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Monografia com 4996 palavras (~36 págs) e 10/14 elementos obrigatórios ABNT identificados.",
+        "evidencias": [
+          "4996 palavras (~36 páginas)",
+          "10/14 seções estruturais ABNT identificadas",
+          "Conformidade de nomenclatura digital: 100.0%"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.2",
+        "pilar": 1,
+        "titulo": "1.2 Requisitos RF/RNF",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.85,
+        "nota_sugerida_ia": 2.85,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Mapeamento de Requisitos Funcionais (8) e Não Funcionais (8) na documentação.",
+        "evidencias": [
+          "RFs codificados detectados: 8",
+          "RNFs codificados detectados: 8"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.3",
+        "pilar": 1,
+        "titulo": "1.3 Modelagem de BD",
+        "peso_max": 3.0,
+        "nivel": "Pleno",
+        "nota": 2.65,
+        "nota_sugerida_ia": 2.65,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Documentação contempla modelagem relacional alinhada a 3 tabelas no script SQL.",
+        "evidencias": [
+          "MER/DER na monografia: Sim",
+          "Dicionário de Dados: Sim",
+          "Tabelas físicas no .sql: 3"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.4",
+        "pilar": 1,
+        "titulo": "1.4 Protótipo & Figma",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.95,
+        "nota_sugerida_ia": 2.95,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Protótipo e fluxos de telas documentados na monografia.",
+        "evidencias": [
+          "Menção a Protótipo/Figma/Telas: Sim",
+          "Links diretos Figma: 1"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.5",
+        "pilar": 1,
+        "titulo": "1.5 Arquitetura & Stack",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.9,
+        "nota_sugerida_ia": 2.9,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Arquitetura e justificativa técnica da stack (Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript).",
+        "evidencias": [
+          "Stack detectada no código: Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript",
+          "Capítulo de Arquitetura no TCC: Sim"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.6",
+        "pilar": 1,
+        "titulo": "1.6 Plano de Negócio",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.85,
+        "nota_sugerida_ia": 2.85,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Plano de negócio, público-alvo, precificação e sustentabilidade presentes no documento.",
+        "evidencias": [
+          "Viabilidade/Precificação/Sustentabilidade no TCC: Sim"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.7",
+        "pilar": 1,
+        "titulo": "1.7 Testes & Relatório",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 3.0,
+        "nota_sugerida_ia": 3.0,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Documentação de testes presente (5 scripts de teste automatizado no ZIP).",
+        "evidencias": [
+          "Seção de Testes na monografia: Sim",
+          "Arquivos de teste no repositório (.zip): 5"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.8",
+        "pilar": 1,
+        "titulo": "1.8 Backlog & Cronograma",
+        "peso_max": 4.0,
+        "nivel": "Pleno",
+        "nota": 2.0,
+        "nota_sugerida_ia": 2.0,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Planejamento ágil, backlog de produto e cronograma documentados.",
+        "evidencias": [
+          "Backlog/Cronograma identificado no TCC: Não"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.1",
+        "pilar": 2,
+        "titulo": "2.1 Backend (APIs)",
+        "peso_max": 10.0,
+        "nivel": "Pleno",
+        "nota": 8.4,
+        "nota_sugerida_ia": 8.4,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Camada de serviços, autenticação, regras de negócio e persistência estruturada (4 arquivos principais).",
+        "evidencias": [
+          "Módulos de Backend/Serviços/Integrações no ZIP: 4",
+          "Alertas de segurança: 0"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.2",
+        "pilar": 2,
+        "titulo": "2.2 Frontend (UI/UX)",
+        "peso_max": 10.0,
+        "nivel": "Avançado",
+        "nota": 9.5,
+        "nota_sugerida_ia": 9.5,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Interface estruturada com 25 arquivos de visualização/componentes responsivos.",
+        "evidencias": [
+          "Componentes/Telas Frontend no ZIP: 25",
+          "Tecnologias UI: Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.3",
+        "pilar": 2,
+        "titulo": "2.3 Banco de Dados Físico",
+        "peso_max": 10.0,
+        "nivel": "Insuficiente",
+        "nota": 2.0,
+        "nota_sugerida_ia": 2.0,
+        "nivel_sugerido_ia": "Insuficiente",
+        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (renda_mensal, boletos, contas_fixas, assinaturas), abatendo a nota da rubrica 2.3.",
+        "evidencias": [
+          "Estrutura DDL (.sql) vs DER: 3 tabelas (PK: Sim, FK: Sim)",
+          "Tabelas gravadas (INSERT/UPDATE) pelo código: 3/3",
+          "Tabelas consumidas (SELECT) pelo código: 3/3",
+          "Registros no script .sql: 0 registros (Todas as tabelas com registros: NÃO - 3 sem registro)",
+          "Chaves localStorage permitidas (UI/Sessão): temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts",
+          "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.4",
+        "pilar": 2,
+        "titulo": "2.4 Deploy Online",
+        "peso_max": 5.0,
+        "nivel": "Avançado",
+        "nota": 4.8,
+        "nota_sugerida_ia": 4.8,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 222 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'. Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "evidencias": [
+          "Deploy do Sistema: Vercel Cloud (https://organizai-theta.vercel.app) — HTTP 200 (222 ms)",
+          "Banco de Dados Online Ativo: Supabase (PostgreSQL Cloud) (https://dkftcjsofgpllrmswpmw.supabase.co)",
+          "Tabelas presentes no BD Online: 3/3",
+          "Sistema apontando para o BD Online: SIM (Integrado)"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.5",
+        "pilar": 2,
+        "titulo": "2.5 GitHub & README",
+        "peso_max": 5.0,
+        "nivel": "Pleno",
+        "nota": 3.5,
+        "nota_sugerida_ia": 3.5,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Repositório 'leuz3ra/organizai' ativo (HTTP 200). 11 commit(s) inspecionado(s) (pqnalua: 3, miguelrcamargo: 3, svilemor: 2, MeloozXz: 2, leuz3ra: 1). README online: Não.",
+        "evidencias": [
+          "URL GitHub em links.txt: https://github.com/leuz3ra/organizai.git",
+          "README.md no projeto: Não (0 bytes)",
+          "Commits inspecionados na API: 11"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.1",
+        "pilar": 3,
+        "titulo": "3.1 Arguição do Código",
+        "peso_max": 6.0,
+        "nivel": "Pendente",
+        "nota": 0.0,
+        "nota_sugerida_ia": 0.0,
+        "nivel_sugerido_ia": "Pendente",
+        "justificativa_ia": "Item presencial obrigatório (6,0 pts): Inicia VAZIO (Pendente). Selecione o nível (Insuficiente, Pleno ou Avançado) para cada integrante durante a sabatina técnica.",
+        "evidencias": [
+          "PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie o domínio tecnológico individual de cada aluno na tabela abaixo."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.2",
+        "pilar": 3,
+        "titulo": "3.2 Pitch do Grupo",
+        "peso_max": 5.0,
+        "nivel": "Pendente",
+        "nota": 0.0,
+        "nota_sugerida_ia": 0.0,
+        "nivel_sugerido_ia": "Pendente",
+        "justificativa_ia": "Item presencial obrigatório (5,0 pts): Inicia VAZIO (Pendente). Preencha durante/após a apresentação ao vivo da equipe.",
+        "evidencias": [
+          "PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie coesão da equipe, síntese, postura e tempo de apresentação (15-20 min)."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.3",
+        "pilar": 3,
+        "titulo": "3.3 Material de Slides",
+        "peso_max": 4.0,
+        "nivel": "Avançado",
+        "nota": 3.85,
+        "nota_sugerida_ia": 3.85,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Apresentação com 9 slides cobrindo 7/7 tópicos exigidos no Roteiro de Banca.",
+        "evidencias": [
+          "Total de slides na apresentação: 9",
+          "Etapas do roteiro oficial cobertas: 7/7"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "4.1",
+        "pilar": 4,
+        "titulo": "4.1 Relatórios de Sprint",
+        "peso_max": 8.0,
+        "nivel": "Pleno",
+        "nota": 4.8,
+        "nota_sugerida_ia": 4.8,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Pontuação carregada automaticamente do relatório oficial da turma (Média do grupo: 4.80/8,00 pts).",
+        "evidencias": [
+          "Média do grupo extraída do PDF oficial de entregas semanais: 4.80 / 8,00 pts",
+          "Nota individual exata aplicada a cada aluno na Tabela de Consolidação Final."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "4.2",
+        "pilar": 4,
+        "titulo": "4.2 Participação em Aula",
+        "peso_max": 7.0,
+        "nivel": "Pleno",
+        "nota": 6.13,
+        "nota_sugerida_ia": 6.13,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Pontuação carregada automaticamente do relatório oficial de presença/participação da turma (Média do grupo: 6.13/7,00 pts).",
+        "evidencias": [
+          "Média do grupo extraída do PDF oficial de participação em aula: 6.13 / 7,00 pts",
+          "Nota individual exata aplicada a cada aluno na Tabela de Consolidação Final."
+        ],
+        "editado_manualmente": false
+      }
+    ],
+    "integrantes_notas": [
+      {
+        "nome": "Leonardo",
+        "nome_completo_planilha": "LEONARDO MACHADO",
+        "matricula": "25129531",
+        "github_autor": "pqnalua",
+        "commits_qtd": 3,
+        "relatorios_entregues": 8,
+        "total_relatorios": 10,
+        "aulas_participadas": 15,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 6.4,
+        "nota_4_1_sugerida": 6.4,
+        "nivel_4_1": "Pleno",
+        "nivel_4_1_sugerido": "Pleno",
+        "nota_4_2_participacao": 6.6,
+        "nota_4_2_sugerida": 6.6,
+        "nivel_4_2": "Avançado",
+        "nivel_4_2_sugerido": "Avançado",
+        "p1_nota": 25.49,
+        "p2_nota": 28.2,
+        "p3_nota": 3.85,
+        "p4_nota": 13.0,
+        "nota_final": 70.54,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (2.0/10.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      },
+      {
+        "nome": "João Sergio",
+        "nome_completo_planilha": "JOÃO SÉRGIO XAVIER DE AGUIAR",
+        "matricula": "25130171",
+        "github_autor": "miguelrcamargo",
+        "commits_qtd": 3,
+        "relatorios_entregues": 2,
+        "total_relatorios": 10,
+        "aulas_participadas": 13,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 1.6,
+        "nota_4_1_sugerida": 1.6,
+        "nivel_4_1": "Insuficiente",
+        "nivel_4_1_sugerido": "Insuficiente",
+        "nota_4_2_participacao": 5.7,
+        "nota_4_2_sugerida": 5.7,
+        "nivel_4_2": "Pleno",
+        "nivel_4_2_sugerido": "Pleno",
+        "p1_nota": 25.49,
+        "p2_nota": 28.2,
+        "p3_nota": 3.85,
+        "p4_nota": 7.3,
+        "nota_final": 64.84,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "4.1 Relatórios de Sprint — João Sergio (1.6/8.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      },
+      {
+        "nome": "Ramon",
+        "nome_completo_planilha": "RAMÓN GABRIEL DE SOUZA SANTOS",
+        "matricula": "25129553",
+        "github_autor": "svilemor",
+        "commits_qtd": 2,
+        "relatorios_entregues": 8,
+        "total_relatorios": 10,
+        "aulas_participadas": 14,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 6.4,
+        "nota_4_1_sugerida": 6.4,
+        "nivel_4_1": "Pleno",
+        "nivel_4_1_sugerido": "Pleno",
+        "nota_4_2_participacao": 6.1,
+        "nota_4_2_sugerida": 6.1,
+        "nivel_4_2": "Pleno",
+        "nivel_4_2_sugerido": "Pleno",
+        "p1_nota": 25.49,
+        "p2_nota": 28.2,
+        "p3_nota": 3.85,
+        "p4_nota": 12.5,
+        "nota_final": 70.04,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (2.0/10.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      }
+    ],
+    "perguntas_arguicao": [
+      {
+        "integrante_sugerido": "Leonardo",
+        "categoria": "Arquitetura & Comunicação Cliente-Servidor",
+        "arquivo_referencia": "Stack: Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript",
+        "trecho_codigo": "Tecnologias adotadas: Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript\nProvedor de Deploy: Vercel Cloud (https://organizai-theta.vercel.app)\nProvedor de Dados: Supabase (PostgreSQL Cloud)",
+        "pergunta": "Por que a equipe escolheu a stack (Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript) e como a interface (Frontend) se comunica com o banco/serviço (Supabase (PostgreSQL Cloud)) para enviar e buscar dados?",
+        "resposta_esperada": "Explicar a separação entre tela e servidor/dados, o uso de requisições HTTP (GET/POST) com JSON e por que essa stack foi a mais adequada para o projeto."
+      },
+      {
+        "integrante_sugerido": "João Sergio",
+        "categoria": "Persistência em Nuvem vs LocalStorage & Banco de Dados",
+        "arquivo_referencia": "Supabase (PostgreSQL Cloud) • CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql",
+        "trecho_codigo": "Banco em Nuvem: Supabase (PostgreSQL Cloud) (https://dkftcjsofgpllrmswpmw.supabase.co)\nTabelas presentes online: 3/3\nChaves UI permitidas: temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts",
+        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (Supabase (PostgreSQL Cloud))?",
+        "resposta_esperada": "Explicar que o localStorage serve apenas para preferências locais simples do navegador (como tema claro/escuro), enquanto os dados de negócio devem ser persistidos centralizadamente no banco online para estarem seguros e disponíveis para todos os usuários."
+      },
+      {
+        "integrante_sugerido": "Ramon",
+        "categoria": "Segurança, Autenticação & Controle de Acesso",
+        "arquivo_referencia": "Segurança em Supabase (PostgreSQL Cloud)",
+        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Presente\nProvedor de Autenticação / Dados: Supabase (PostgreSQL Cloud)",
+        "pergunta": "Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?",
+        "resposta_esperada": "Explicar o fluxo de login com senha/token de sessão e as regras de segurança/permissão que amarram os registros ao ID do usuário autenticado."
+      },
+      {
+        "integrante_sugerido": "Toda a Equipe",
+        "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
+        "arquivo_referencia": "Vercel Cloud (https://organizai-theta.vercel.app)",
+        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://organizai-theta.vercel.app)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (222 ms)",
+        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Vercel Cloud)?",
+        "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
+      }
+    ],
+    "p1_total": 25.49,
+    "p2_total": 28.2,
+    "p3_grupo_base": 3.85,
+    "media_nota_final_grupo": 68.47,
+    "possui_item_insuficiente_grupo": true,
+    "itens_insuficientes_grupo": [
+      "2.3 Banco de Dados Físico (2.0/10.0)",
+      "4.1 Relatórios de Sprint — João Sergio (1.6/8.0)"
+    ],
+    "status_liberacao_nota": "Nota Retida (Pendências)",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (OrganizAI — I2DEV-B / Grupo 08):\n1. DOCUMENTAÇÃO (Pilar 1 = 25.49/30,00 pts): Monografia com 4996 palavras (~36 págs.), 8 RFs e 8 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.20/40,00 pts): Stack [Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript] publicada em Vercel Cloud (https://organizai-theta.vercel.app) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts]. Auditoria das 3 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 3/3 existem online, 3/3 possuem gravação (INSERT/UPDATE) no código e 3/3 são consumidas via leitura (SELECT) pelo programa (3/3 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}]. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_estruturado": [
+      {
+        "categoria": "Entregáveis & Nomenclatura",
+        "titulo": "1. Pacote Digital e Padronização (CTDS-2026-02)",
+        "status": "conforme",
+        "resumo": "7/7 entregáveis • 100.0% conforme",
+        "itens": [
+          "Arquivos obrigatórios localizados na pasta do grupo: 7 de 7.",
+          "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 100.0%.",
+          "Todos os 7 arquivos seguem rigorosamente a nomenclatura oficial exigida pelo SENAI."
+        ]
+      },
+      {
+        "categoria": "Pilar 1 (30,0 pts)",
+        "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
+        "status": "conforme",
+        "resumo": "Nota Pilar 1: 25.49 / 30,00 pts • 4996 palavras (~36 págs.)",
+        "itens": [
+          "Extensão textual: 4996 palavras (~36 páginas estimadas) cobrindo 10/14 seções ABNT.",
+          "Engenharia de Requisitos: 8 Requisitos Funcionais (RF) e 8 Requisitos Não Funcionais (RNF) mapeados.",
+          "Modelagem de Dados e Prototipação: MER/DER=Sim, Dicionário de Dados=Sim, Protótipo/Figma=Sim.",
+          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Não."
+        ]
+      },
+      {
+        "categoria": "Itens 2.3 e 2.4 (Crítico)",
+        "titulo": "3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy",
+        "status": "critico",
+        "resumo": "Online: 3/3 • Grava: 3/3 • Consome (SELECT): 3/3",
+        "itens": [
+          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://organizai-theta.vercel.app) — Status HTTP 200 (222 ms).",
+          "Publicação do Banco de Dados (Item 2.3): Supabase (PostgreSQL Cloud) (https://dkftcjsofgpllrmswpmw.supabase.co).",
+          "Script SQL Entregue ('CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql'): 3 tabelas DDL (profiles, metas, metas_pagamentos) e 0 registros INSERT INTO.",
+          "Rastreabilidade das Tabelas do .sql no Banco Online (Supabase (PostgreSQL Cloud)): 3/3 existem online • 3/3 possuem gravação (INSERT/UPDATE) • 3/3 são consumidas via leitura (SELECT) • 3/3 com ciclo completo.",
+          "✅ Persistência Local Permitida (UI / Sessão / Preferências — Não Penaliza): [temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts].",
+          "❌ PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (profiles, metas, metas_pagamentos) possuem 3/3 ciclos completos no banco online, entidades centrais do tema [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}).",
+          "❌ Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql' contém 3 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
+        ]
+      },
+      {
+        "categoria": "Pilar 2 (40,0 pts)",
+        "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
+        "status": "conforme",
+        "resumo": "Nota Pilar 2: 28.20 / 40,00 pts • Stack: Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript",
+        "itens": [
+          "Stack Tecnológica Detectada no Pacote ZIP (136 arquivos úteis): Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript.",
+          "Estrutura de Código: 25 arquivos de interface (Frontend) e 4 arquivos de serviços/regras/integração (Backend).",
+          "✅ GitHub Ativo: Repositório 'leuz3ra/organizai' ativo (HTTP 200). 11 commit(s) inspecionado(s) (pqnalua: 3, miguelrcamargo: 3, svilemor: 2, MeloozXz: 2, leuz3ra: 1). README online: Não."
+        ]
+      },
+      {
+        "categoria": "Pilar 4 (15,0 pts)",
+        "titulo": "5. Histórico Oficial de Sprints (8,0 pts) e Participação em Aula (7,0 pts)",
+        "status": "alerta",
+        "resumo": "Extraído automaticamente dos PDFs oficiais de entregas e participação da turma",
+        "itens": [
+          "LEONARDO MACHADO (Matrícula: 25129531): Relatórios Semanais (4.1) = 8/10 (6.40/8,00 pts — Pleno) | Participação em Aula (4.2) = 15/16 (6.60/7,00 pts — Avançado) | Total Pilar 4 = 13.00/15,00 pts (✅ Regular).",
+          "JOÃO SÉRGIO XAVIER DE AGUIAR (Matrícula: 25130171): Relatórios Semanais (4.1) = 2/10 (1.60/8,00 pts — Insuficiente) | Participação em Aula (4.2) = 13/16 (5.70/7,00 pts — Pleno) | Total Pilar 4 = 7.30/15,00 pts (⚠️ Insuficiente em entregas/presença).",
+          "RAMÓN GABRIEL DE SOUZA SANTOS (Matrícula: 25129553): Relatórios Semanais (4.1) = 8/10 (6.40/8,00 pts — Pleno) | Participação em Aula (4.2) = 14/16 (6.10/7,00 pts — Pleno) | Total Pilar 4 = 12.50/15,00 pts (✅ Regular)."
+        ]
+      },
+      {
+        "categoria": "Regras Finais MSEP",
+        "titulo": "6. Situação de Aprovação e Liberação da Nota Final",
+        "status": "critico",
+        "resumo": "Nota Retida (Pendências)",
+        "itens": [
+          "Status Geral do Grupo: Nota Retida (Pendências).",
+          "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 68.47 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)",
+          "   • Pendência bloqueante: 4.1 Relatórios de Sprint — João Sergio (1.6/8.0)"
+        ]
+      }
+    ],
+    "pontos_fortes": [
+      "Padronização de nomenclatura digital (CTDS-2026-02-...) 100% em conformidade com o edital.",
+      "Monografia densa e bem desenvolvida (4996 palavras, ~36 páginas, 8 RFs e 8 RNFs).",
+      "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 222 ms).",
+      "Repositório GitHub público e ativo (11 commits analisados via API)."
+    ],
+    "pontos_atencao": [
+      "PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (profiles, metas, metas_pagamentos) possuem 3/3 ciclos completos no banco online, entidades centrais do tema [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}).",
+      "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql' contém 3 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela).",
+      "Integrante João Sergio possui nível Insuficiente no item 4.1 Relatórios de Sprint (2/10 relatórios = 1.60/8,00 pts)."
+    ],
+    "usou_llm_gemini": false
+  },
+  "I2DEV-B_Grupo03": {
+    "id": "I2DEV-B_Grupo03",
+    "ordem_apresentacao": 2,
+    "turma": "I2DEV-B",
+    "dia_semana": "Segunda-feira",
+    "sala": "Metrologia",
+    "data_banca": "16/11/2026",
+    "data_banca_iso": "2026-11-16",
+    "horario": "Segundo Horário",
+    "grupo": "Grupo 03",
+    "grupo_num": 3,
+    "projeto": "Guardião Animal",
+    "tema": "Plataforma para Centralização e Gestão de Denúncias e Doações para Causas Animais",
+    "integrantes": [
+      "Arthur",
+      "Davi K",
+      "Vinicius"
+    ],
+    "entregue_na_pasta": true,
+    "nome_pasta_entregue": "Banca02-Grupo03-Guardião Animal-(Arthur, Davi K, Vinicius)",
+    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca02-Grupo03-Guardião Animal-(Arthur, Davi K, Vinicius)",
+    "status_avaliacao": "auditado_ia",
+    "auditado_em": "2026-11-14T23:03:51",
+    "atualizado_em": "2026-11-14T23:03:51",
+    "avaliador": "Prof. William Devidé Komel",
+    "sincronizado_firebase": true,
+    "firebase_sync_em": "2026-11-14T23:03:51",
+    "arquivos_entregues": [
+      {
+        "tipo": "TCC_PDF",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf",
+        "tamanho_bytes": 1563832,
+        "padrao_esperado": "CTDS-2026-02-TCC-GuardiãoAnimal-Arthur-Davi-Vinicius.pdf",
+        "nomenclatura_conforme": false,
+        "alertas_nomenclatura": [
+          "Extensão duplicada no nome do arquivo ('CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf')."
+        ]
+      },
+      {
+        "tipo": "TCC_DOCX",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.docx",
+        "tamanho_bytes": 10429447,
+        "padrao_esperado": "CTDS-2026-02-TCC-GuardiãoAnimal-Arthur-Davi-Vinicius.docx",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "SISTEMA_ZIP",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Sistema-GuardiaoAnimal-DaviK-Vinicius-Arthur.zip",
+        "tamanho_bytes": 787153,
+        "padrao_esperado": "CTDS-2026-02-Sistema-GuardiãoAnimal-Arthur-Davi-Vinicius.zip",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "BD_SQL",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql",
+        "tamanho_bytes": 13527,
+        "padrao_esperado": "CTDS-2026-02-BD-GuardiãoAnimal-Arthur-Davi-Vinicius.sql",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "SLIDES_PDF",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Apresentação-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf",
+        "tamanho_bytes": 523744,
+        "padrao_esperado": "CTDS-2026-02-Apresentação-GuardiãoAnimal-Arthur-Davi-Vinicius.pdf",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "SLIDES_PPTX",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Apresentação-GuardiaoAnimal-DaviK-Vinicius-Arthur.pptx",
+        "tamanho_bytes": 2294471,
+        "padrao_esperado": "CTDS-2026-02-Apresentação-GuardiãoAnimal-Arthur-Davi-Vinicius.pptx",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "LINKS_TXT",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "links.txt",
+        "tamanho_bytes": 105,
+        "padrao_esperado": "links.txt",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      }
+    ],
+    "conformidade_nomenclatura_pct": 95.0,
+    "auditoria_tecnica": {
+      "monografia_paginas_estimadas": 63,
+      "monografia_palavras": 11166,
+      "monografia_caracteres": 85649,
+      "secoes_abnt_detectadas": {
+        "Capa & Folha de Rosto": true,
+        "Resumo & Abstract": true,
+        "Sumário": true,
+        "Introdução & Justificativa": false,
+        "Fundamentação Teórica": false,
+        "Metodologia": true,
+        "Requisitos (RF / RNF)": true,
+        "Modelagem de BD (MER/DER & Dicionário)": true,
+        "Prototipação & Wireframes (Figma)": true,
+        "Arquitetura & Stack": true,
+        "Plano de Negócios & Viabilidade": true,
+        "Rotinas e Relatório de Testes": true,
+        "Backlog & Cronograma Ágil": true,
+        "Conclusão & Referências ABNT": true
+      },
+      "rfs_detectados_qtd": 22,
+      "rnfs_detectados_qtd": 15,
+      "possui_mer_der": true,
+      "possui_dicionario_dados": true,
+      "possui_link_figma": true,
+      "links_figma_encontrados": [
+        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET--Community-?",
+        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET-Community-?"
+      ],
+      "possui_plano_negocios": true,
+      "possui_casos_teste": true,
+      "possui_backlog_cronograma": true,
+      "resumo_monografia": "O  presente  trabalho  apresenta  o  desenvolvimento  do  Guardião  Animal,  uma plataforma web demonstrativa voltada à organização de denúncias de maus-tratos e ao apoio a iniciativas de proteção animal. A proposta responde à dificuldade de centralizar solicitações encaminhadas por redes sociais e aplicativos de mensagens,",
+      "sql_arquivo": "CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql",
+      "sql_linhas": 292,
+      "sql_tabelas": [
+        "denuncias",
+        "ongs",
+        "animais",
+        "solicitacoes_adocao",
+        "doacoes",
+        "apadrinhamentos",
+        "contatos",
+        "noticias",
+        "administradores",
+        "admin_solicitacoes",
+        "ong_denuncia_atendimentos",
+        "auditoria"
+      ],
+      "sql_tabelas_qtd": 12,
+      "sql_inserts_por_tabela": {
+        "denuncias": 0,
+        "ongs": 0,
+        "animais": 0,
+        "solicitacoes_adocao": 0,
+        "doacoes": 0,
+        "apadrinhamentos": 0,
+        "contatos": 0,
+        "noticias": 0,
+        "administradores": 0,
+        "admin_solicitacoes": 0,
+        "ong_denuncia_atendimentos": 0,
+        "auditoria": 0
+      },
+      "sql_total_registros_inseridos": 0,
+      "sql_atende_min_20_por_tabela": false,
+      "sql_tabelas_abaixo_20": [
+        "denuncias (0 reg)",
+        "ongs (0 reg)",
+        "animais (0 reg)",
+        "solicitacoes_adocao (0 reg)",
+        "doacoes (0 reg)",
+        "apadrinhamentos (0 reg)",
+        "contatos (0 reg)",
+        "noticias (0 reg)",
+        "administradores (0 reg)",
+        "admin_solicitacoes (0 reg)",
+        "ong_denuncia_atendimentos (0 reg)",
+        "auditoria (0 reg)"
+      ],
+      "sql_possui_pk": true,
+      "sql_possui_fk": true,
+      "sql_possui_indices": true,
+      "sql_possui_rls": true,
+      "sql_possui_triggers_functions": false,
+      "sql_diagnostico": "Atenção (Rubrica 2.3): O script possui 12 tabela(s) DDL (denuncias, ongs, animais, solicitacoes_adocao, doacoes, apadrinhamentos), mas nenhuma possui registros populados via INSERT INTO no arquivo .sql.",
+      "zip_arquivo": "CTDS-2026-02-Sistema-GuardiaoAnimal-DaviK-Vinicius-Arthur.zip",
+      "zip_total_arquivos": 63,
+      "zip_extensoes": {
+        ".php": 37,
+        ".png": 7,
+        "sem_ext": 6,
+        ".js": 6,
+        ".css": 3,
+        ".json": 2,
+        ".ini": 1,
+        ".txt": 1
+      },
+      "zip_stack_detectada": [
+        "PHP"
+      ],
+      "zip_possui_readme": false,
+      "zip_readme_tamanho": 0,
+      "zip_possui_package_json": false,
+      "zip_dependencias": [],
+      "zip_arquivos_backend": [
+        "admin/cadastro.php",
+        "admin/index.php",
+        "admin/integracoes.php",
+        "admin/login.php",
+        "admin/logout.php",
+        "adocao.php",
+        "animal.php",
+        "apadrinhar.php",
+        "api/admin_counts.php",
+        "api/map_data.php",
+        "api/ong_feed.php",
+        "config/auto_principal.php",
+        "config/gemini.php",
+        "config/install_guard.php",
+        "config/supabase.php",
+        "contato.php",
+        "denuncia.php",
+        "doacao.php",
+        "entrar.php",
+        "includes/bootstrap.php",
+        "includes/data.php",
+        "includes/denuncia_sync.php",
+        "includes/footer.php",
+        "includes/header.php",
+        "includes/ourinhos.php"
+      ],
+      "zip_arquivos_frontend": [
+        "assets/css/admin-dashboard-v28.css",
+        "assets/css/ong-dashboard-v30.css",
+        "assets/css/style.css"
+      ],
+      "zip_arquivos_teste": [],
+      "zip_alertas_seguranca": [],
+      "slides_arquivo": "CTDS-2026-02-Apresentação-GuardiaoAnimal-DaviK-Vinicius-Arthur.pptx",
+      "slides_qtd": 14,
+      "slides_etapas_roteiro": {
+        "1. Capa & Identificação (1 min)": true,
+        "2. Contexto & Dor (1.5 min)": false,
+        "3. Solução & Proposta (1.5 min)": false,
+        "4. Arquitetura, Stack & BD (1.5 min)": false,
+        "5. Plano de Negócio (2.5 min)": false,
+        "6. Demonstração / Protótipo (5-8 min)": false,
+        "7. Conclusão & Encerramento (1 min)": false
+      },
+      "slides_titulos": [],
+      "github_url": "https://github.com/dkalmeidatheking/guardiaoanimaltcc.git",
+      "github_online_ok": true,
+      "github_status_http": 200,
+      "github_commits_total": 1,
+      "github_commits_por_autor": {
+        "dkalmeidatheking": 1
+      },
+      "github_ultimo_commit_data": "2026-11-13T17:38:51Z",
+      "github_readme_online": false,
+      "github_linguagens": [
+        "PHP",
+        "CSS",
+        "JavaScript"
+      ],
+      "github_diagnostico": "Repositório 'dkalmeidatheking/guardiaoanimaltcc' ativo (HTTP 200). 1 commit(s) inspecionado(s) (dkalmeidatheking: 1). README online: Não.",
+      "deploy_url": "https://guardiaoanimal.fwh.is/",
+      "deploy_online_ok": true,
+      "deploy_status_http": 200,
+      "deploy_tempo_ms": 626,
+      "deploy_titulo_pagina": "",
+      "deploy_diagnostico": "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 626 ms).",
+      "deploy_provedor": "InfinityFree / fwh.is Cloud (PHP)",
+      "deploy_rodando_inteiramente_nuvem": false,
+      "banco_provedor_nuvem": "Supabase (PostgreSQL Cloud)",
+      "banco_url_detectada": "https://znuwnuktnqogevwisqbj.supabase.co",
+      "banco_exclusivo_nuvem": false,
+      "usa_localstorage_indevido": true,
+      "arquivos_localstorage_detectados": [],
+      "chaves_localstorage_negocio": [],
+      "chaves_localstorage_permitidas_ui": [],
+      "usa_arquivos_json_locais_no_servidor": true,
+      "arquivos_json_locais_detectados": [
+        "includes/bootstrap.php (lê/grava em storage/*.json local)"
+      ],
+      "tabelas_auditoria_online": [
+        {
+          "tabela": "denuncias",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: includes/denuncia_sync.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "ongs",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "animais",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (HTTP 200 • 0 reg)",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "solicitacoes_adocao",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no Supabase Online (HTTP 404 PGRST205 — Tabela não criada no banco!)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: config/supabase.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "doacoes",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: doacao.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "apadrinhamentos",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: apadrinhar.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "contatos",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: contato.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "noticias",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (HTTP 200 • 0 reg)",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "administradores",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "admin_solicitacoes",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "ong_denuncia_atendimentos",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "auditoria",
+          "presente_no_sql": true,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
+          "conforme_ciclo_completo": false
+        }
+      ],
+      "tabelas_sql_presentes_online_qtd": 11,
+      "tabelas_sql_gravadas_pelo_codigo_qtd": 5,
+      "tabelas_sql_consumidas_pelo_codigo_qtd": 0,
+      "tabelas_ciclo_completo_qtd": 0,
+      "entidades_tema_sem_tabela_banco": [],
+      "inviabiliza_finalizacao_persistencia": true,
+      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Auditoria das 12 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 11/12 existem online, 5/12 possuem gravação (INSERT/UPDATE) no código e 0/12 são consumidas via leitura (SELECT) pelo programa (0/12 com ciclo completo). Penalidade aplicada em 2.3: O sistema lê/grava entidades do tema em arquivos JSON locais (includes/bootstrap.php (lê/grava em storage/*.json local)) em vez de usar o banco. (Item 2.4 Deploy e BD online ativo: Conforme)."
+    },
+    "rubricas": [
+      {
+        "codigo": "1.1",
+        "pilar": 1,
+        "titulo": "1.1 Monografia ABNT",
+        "peso_max": 8.0,
+        "nivel": "Pleno",
+        "nota": 6.82,
+        "nota_sugerida_ia": 6.82,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Monografia com 11166 palavras (~63 págs) e 12/14 elementos obrigatórios ABNT identificados.",
+        "evidencias": [
+          "11166 palavras (~63 páginas)",
+          "12/14 seções estruturais ABNT identificadas",
+          "Conformidade de nomenclatura digital: 95.0%"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.2",
+        "pilar": 1,
+        "titulo": "1.2 Requisitos RF/RNF",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 3.0,
+        "nota_sugerida_ia": 3.0,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Mapeamento de Requisitos Funcionais (22) e Não Funcionais (15) na documentação.",
+        "evidencias": [
+          "RFs codificados detectados: 22",
+          "RNFs codificados detectados: 15"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.3",
+        "pilar": 1,
+        "titulo": "1.3 Modelagem de BD",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.9,
+        "nota_sugerida_ia": 2.9,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Documentação contempla modelagem relacional alinhada a 12 tabelas no script SQL.",
+        "evidencias": [
+          "MER/DER na monografia: Sim",
+          "Dicionário de Dados: Sim",
+          "Tabelas físicas no .sql: 12"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.4",
+        "pilar": 1,
+        "titulo": "1.4 Protótipo & Figma",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.95,
+        "nota_sugerida_ia": 2.95,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Protótipo e fluxos de telas documentados na monografia.",
+        "evidencias": [
+          "Menção a Protótipo/Figma/Telas: Sim",
+          "Links diretos Figma: 2"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.5",
+        "pilar": 1,
+        "titulo": "1.5 Arquitetura & Stack",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.9,
+        "nota_sugerida_ia": 2.9,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Arquitetura e justificativa técnica da stack (PHP).",
+        "evidencias": [
+          "Stack detectada no código: PHP",
+          "Capítulo de Arquitetura no TCC: Sim"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.6",
+        "pilar": 1,
+        "titulo": "1.6 Plano de Negócio",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.85,
+        "nota_sugerida_ia": 2.85,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Plano de negócio, público-alvo, precificação e sustentabilidade presentes no documento.",
+        "evidencias": [
+          "Viabilidade/Precificação/Sustentabilidade no TCC: Sim"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.7",
+        "pilar": 1,
+        "titulo": "1.7 Testes & Relatório",
+        "peso_max": 3.0,
+        "nivel": "Pleno",
+        "nota": 2.55,
+        "nota_sugerida_ia": 2.55,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Documentação de testes presente (0 scripts de teste automatizado no ZIP).",
+        "evidencias": [
+          "Seção de Testes na monografia: Sim",
+          "Arquivos de teste no repositório (.zip): 0"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.8",
+        "pilar": 1,
+        "titulo": "1.8 Backlog & Cronograma",
+        "peso_max": 4.0,
+        "nivel": "Avançado",
+        "nota": 3.75,
+        "nota_sugerida_ia": 3.75,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Planejamento ágil, backlog de produto e cronograma documentados.",
+        "evidencias": [
+          "Backlog/Cronograma identificado no TCC: Sim"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.1",
+        "pilar": 2,
+        "titulo": "2.1 Backend (APIs)",
+        "peso_max": 10.0,
+        "nivel": "Avançado",
+        "nota": 9.4,
+        "nota_sugerida_ia": 9.4,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Camada de serviços, autenticação, regras de negócio e persistência estruturada (25 arquivos principais).",
+        "evidencias": [
+          "Módulos de Backend/Serviços/Integrações no ZIP: 25",
+          "Alertas de segurança: 0"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.2",
+        "pilar": 2,
+        "titulo": "2.2 Frontend (UI/UX)",
+        "peso_max": 10.0,
+        "nivel": "Pleno",
+        "nota": 8.5,
+        "nota_sugerida_ia": 8.5,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Interface estruturada com 3 arquivos de visualização/componentes responsivos.",
+        "evidencias": [
+          "Componentes/Telas Frontend no ZIP: 3",
+          "Tecnologias UI: PHP"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.3",
+        "pilar": 2,
+        "titulo": "2.3 Banco de Dados Físico",
+        "peso_max": 10.0,
+        "nivel": "Insuficiente",
+        "nota": 2.0,
+        "nota_sugerida_ia": 2.0,
+        "nivel_sugerido_ia": "Insuficiente",
+        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (JSON local no servidor), abatendo a nota da rubrica 2.3.",
+        "evidencias": [
+          "Estrutura DDL (.sql) vs DER: 12 tabelas (PK: Sim, FK: Sim)",
+          "Tabelas gravadas (INSERT/UPDATE) pelo código: 5/12",
+          "Tabelas consumidas (SELECT) pelo código: 0/12",
+          "Registros no script .sql: 0 registros (Todas as tabelas com registros: NÃO - 12 sem registro)",
+          "Chaves localStorage permitidas (UI/Sessão): Nenhuma",
+          "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.4",
+        "pilar": 2,
+        "titulo": "2.4 Deploy Online",
+        "peso_max": 5.0,
+        "nivel": "Avançado",
+        "nota": 4.8,
+        "nota_sugerida_ia": 4.8,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 626 ms). Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "evidencias": [
+          "Deploy do Sistema: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) — HTTP 200 (626 ms)",
+          "Banco de Dados Online Ativo: Supabase (PostgreSQL Cloud) (https://znuwnuktnqogevwisqbj.supabase.co)",
+          "Tabelas presentes no BD Online: 11/12",
+          "Sistema apontando para o BD Online: SIM (Integrado)"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.5",
+        "pilar": 2,
+        "titulo": "2.5 GitHub & README",
+        "peso_max": 5.0,
+        "nivel": "Pleno",
+        "nota": 3.5,
+        "nota_sugerida_ia": 3.5,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Repositório 'dkalmeidatheking/guardiaoanimaltcc' ativo (HTTP 200). 1 commit(s) inspecionado(s) (dkalmeidatheking: 1). README online: Não.",
+        "evidencias": [
+          "URL GitHub em links.txt: https://github.com/dkalmeidatheking/guardiaoanimaltcc.git",
+          "README.md no projeto: Não (0 bytes)",
+          "Commits inspecionados na API: 1"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.1",
+        "pilar": 3,
+        "titulo": "3.1 Arguição do Código",
+        "peso_max": 6.0,
+        "nivel": "Pendente",
+        "nota": 0.0,
+        "nota_sugerida_ia": 0.0,
+        "nivel_sugerido_ia": "Pendente",
+        "justificativa_ia": "Item presencial obrigatório (6,0 pts): Inicia VAZIO (Pendente). Selecione o nível (Insuficiente, Pleno ou Avançado) para cada integrante durante a sabatina técnica.",
+        "evidencias": [
+          "PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie o domínio tecnológico individual de cada aluno na tabela abaixo."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.2",
+        "pilar": 3,
+        "titulo": "3.2 Pitch do Grupo",
+        "peso_max": 5.0,
+        "nivel": "Pendente",
+        "nota": 0.0,
+        "nota_sugerida_ia": 0.0,
+        "nivel_sugerido_ia": "Pendente",
+        "justificativa_ia": "Item presencial obrigatório (5,0 pts): Inicia VAZIO (Pendente). Preencha durante/após a apresentação ao vivo da equipe.",
+        "evidencias": [
+          "PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie coesão da equipe, síntese, postura e tempo de apresentação (15-20 min)."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.3",
+        "pilar": 3,
+        "titulo": "3.3 Material de Slides",
+        "peso_max": 4.0,
+        "nivel": "Pleno",
+        "nota": 3.2,
+        "nota_sugerida_ia": 3.2,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Apresentação com 14 slides cobrindo 1/7 tópicos exigidos no Roteiro de Banca.",
+        "evidencias": [
+          "Total de slides na apresentação: 14",
+          "Etapas do roteiro oficial cobertas: 1/7"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "4.1",
+        "pilar": 4,
+        "titulo": "4.1 Relatórios de Sprint",
+        "peso_max": 8.0,
+        "nivel": "Pleno",
+        "nota": 6.4,
+        "nota_sugerida_ia": 6.4,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Pontuação carregada automaticamente do relatório oficial da turma (Média do grupo: 6.40/8,00 pts).",
+        "evidencias": [
+          "Média do grupo extraída do PDF oficial de entregas semanais: 6.40 / 8,00 pts",
+          "Nota individual exata aplicada a cada aluno na Tabela de Consolidação Final."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "4.2",
+        "pilar": 4,
+        "titulo": "4.2 Participação em Aula",
+        "peso_max": 7.0,
+        "nivel": "Pleno",
+        "nota": 5.97,
+        "nota_sugerida_ia": 5.97,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Pontuação carregada automaticamente do relatório oficial de presença/participação da turma (Média do grupo: 5.97/7,00 pts).",
+        "evidencias": [
+          "Média do grupo extraída do PDF oficial de participação em aula: 5.97 / 7,00 pts",
+          "Nota individual exata aplicada a cada aluno na Tabela de Consolidação Final."
+        ],
+        "editado_manualmente": false
+      }
+    ],
+    "integrantes_notas": [
+      {
+        "nome": "Arthur",
+        "nome_completo_planilha": "ARTHUR DA SILVA MORAIS",
+        "matricula": "25129571",
+        "github_autor": "dkalmeidatheking",
+        "commits_qtd": 1,
+        "relatorios_entregues": 5,
+        "total_relatorios": 10,
+        "aulas_participadas": 13,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 4.0,
+        "nota_4_1_sugerida": 4.0,
+        "nivel_4_1": "Pleno",
+        "nivel_4_1_sugerido": "Pleno",
+        "nota_4_2_participacao": 5.7,
+        "nota_4_2_sugerida": 5.7,
+        "nivel_4_2": "Pleno",
+        "nivel_4_2_sugerido": "Pleno",
+        "p1_nota": 27.72,
+        "p2_nota": 28.2,
+        "p3_nota": 3.2,
+        "p4_nota": 9.7,
+        "nota_final": 68.82,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (2.0/10.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      },
+      {
+        "nome": "Davi K",
+        "nome_completo_planilha": "DAVI KILIAM DE ALMEIDA",
+        "matricula": "25129515",
+        "github_autor": "",
+        "commits_qtd": 0,
+        "relatorios_entregues": 9,
+        "total_relatorios": 10,
+        "aulas_participadas": 14,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 7.2,
+        "nota_4_1_sugerida": 7.2,
+        "nivel_4_1": "Avançado",
+        "nivel_4_1_sugerido": "Avançado",
+        "nota_4_2_participacao": 6.1,
+        "nota_4_2_sugerida": 6.1,
+        "nivel_4_2": "Pleno",
+        "nivel_4_2_sugerido": "Pleno",
+        "p1_nota": 27.72,
+        "p2_nota": 28.2,
+        "p3_nota": 3.2,
+        "p4_nota": 13.3,
+        "nota_final": 72.42,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (2.0/10.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      },
+      {
+        "nome": "Vinicius",
+        "nome_completo_planilha": "VINICIUS LOURENÇO DA SILVA",
+        "matricula": "25129561",
+        "github_autor": "",
+        "commits_qtd": 0,
+        "relatorios_entregues": 10,
+        "total_relatorios": 10,
+        "aulas_participadas": 14,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 8.0,
+        "nota_4_1_sugerida": 8.0,
+        "nivel_4_1": "Avançado",
+        "nivel_4_1_sugerido": "Avançado",
+        "nota_4_2_participacao": 6.1,
+        "nota_4_2_sugerida": 6.1,
+        "nivel_4_2": "Pleno",
+        "nivel_4_2_sugerido": "Pleno",
+        "p1_nota": 27.72,
+        "p2_nota": 28.2,
+        "p3_nota": 3.2,
+        "p4_nota": 14.1,
+        "nota_final": 73.22,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (2.0/10.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      }
+    ],
+    "perguntas_arguicao": [
+      {
+        "integrante_sugerido": "Arthur",
+        "categoria": "Arquitetura & Comunicação Cliente-Servidor",
+        "arquivo_referencia": "Stack: PHP",
+        "trecho_codigo": "Tecnologias adotadas: PHP\nProvedor de Deploy: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)\nProvedor de Dados: Supabase (PostgreSQL Cloud)",
+        "pergunta": "Por que a equipe escolheu a stack (PHP) e como a interface (Frontend) se comunica com o banco/serviço (Supabase (PostgreSQL Cloud)) para enviar e buscar dados?",
+        "resposta_esperada": "Explicar a separação entre tela e servidor/dados, o uso de requisições HTTP (GET/POST) com JSON e por que essa stack foi a mais adequada para o projeto."
+      },
+      {
+        "integrante_sugerido": "Davi K",
+        "categoria": "Persistência em Nuvem vs LocalStorage & Banco de Dados",
+        "arquivo_referencia": "Supabase (PostgreSQL Cloud) • CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql",
+        "trecho_codigo": "Banco em Nuvem: Supabase (PostgreSQL Cloud) (https://znuwnuktnqogevwisqbj.supabase.co)\nTabelas presentes online: 11/12\nChaves UI permitidas: Nenhuma",
+        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (Supabase (PostgreSQL Cloud))?",
+        "resposta_esperada": "Explicar que o localStorage serve apenas para preferências locais simples do navegador (como tema claro/escuro), enquanto os dados de negócio devem ser persistidos centralizadamente no banco online para estarem seguros e disponíveis para todos os usuários."
+      },
+      {
+        "integrante_sugerido": "Vinicius",
+        "categoria": "Segurança, Autenticação & Controle de Acesso",
+        "arquivo_referencia": "Segurança em Supabase (PostgreSQL Cloud)",
+        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Presente\nProvedor de Autenticação / Dados: Supabase (PostgreSQL Cloud)",
+        "pergunta": "Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?",
+        "resposta_esperada": "Explicar o fluxo de login com senha/token de sessão e as regras de segurança/permissão que amarram os registros ao ID do usuário autenticado."
+      },
+      {
+        "integrante_sugerido": "Toda a Equipe",
+        "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
+        "arquivo_referencia": "InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)",
+        "trecho_codigo": "Hospedagem da Aplicação: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (626 ms)",
+        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em InfinityFree / fwh.is Cloud (PHP))?",
+        "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
+      }
+    ],
+    "p1_total": 27.72,
+    "p2_total": 28.2,
+    "p3_grupo_base": 3.2,
+    "media_nota_final_grupo": 71.49,
+    "possui_item_insuficiente_grupo": true,
+    "itens_insuficientes_grupo": [
+      "2.3 Banco de Dados Físico (2.0/10.0)"
+    ],
+    "status_liberacao_nota": "Nota Retida (Pendências)",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Guardião Animal — I2DEV-B / Grupo 03):\n1. DOCUMENTAÇÃO (Pilar 1 = 27.72/30,00 pts): Monografia com 11166 palavras (~63 págs.), 22 RFs e 15 RNFs, e 95.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.20/40,00 pts): Stack [PHP] publicada em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Auditoria das 12 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 11/12 existem online, 5/12 possuem gravação (INSERT/UPDATE) no código e 0/12 são consumidas via leitura (SELECT) pelo programa (0/12 com ciclo completo). Penalidade aplicada em 2.3: O sistema lê/grava entidades do tema em arquivos JSON locais (includes/bootstrap.php (lê/grava em storage/*.json local)) em vez de usar o banco. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 14 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_estruturado": [
+      {
+        "categoria": "Entregáveis & Nomenclatura",
+        "titulo": "1. Pacote Digital e Padronização (CTDS-2026-02)",
+        "status": "alerta",
+        "resumo": "7/7 entregáveis • 95.0% conforme",
+        "itens": [
+          "Arquivos obrigatórios localizados na pasta do grupo: 7 de 7.",
+          "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 95.0%.",
+          "⚠️ Arquivo 'CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf': Extensão duplicada no nome do arquivo ('CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf')."
+        ]
+      },
+      {
+        "categoria": "Pilar 1 (30,0 pts)",
+        "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
+        "status": "conforme",
+        "resumo": "Nota Pilar 1: 27.72 / 30,00 pts • 11166 palavras (~63 págs.)",
+        "itens": [
+          "Extensão textual: 11166 palavras (~63 páginas estimadas) cobrindo 12/14 seções ABNT.",
+          "Engenharia de Requisitos: 22 Requisitos Funcionais (RF) e 15 Requisitos Não Funcionais (RNF) mapeados.",
+          "Modelagem de Dados e Prototipação: MER/DER=Sim, Dicionário de Dados=Sim, Protótipo/Figma=Sim.",
+          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Sim."
+        ]
+      },
+      {
+        "categoria": "Itens 2.3 e 2.4 (Crítico)",
+        "titulo": "3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy",
+        "status": "critico",
+        "resumo": "Online: 11/12 • Grava: 5/12 • Consome (SELECT): 0/12",
+        "itens": [
+          "Hospedagem da Aplicação (Item 2.4): InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) — Status HTTP 200 (626 ms).",
+          "Publicação do Banco de Dados (Item 2.3): Supabase (PostgreSQL Cloud) (https://znuwnuktnqogevwisqbj.supabase.co).",
+          "Script SQL Entregue ('CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql'): 12 tabelas DDL (denuncias, ongs, animais, solicitacoes_adocao, doacoes, apadrinhamentos) e 0 registros INSERT INTO.",
+          "Rastreabilidade das Tabelas do .sql no Banco Online (Supabase (PostgreSQL Cloud)): 11/12 existem online • 5/12 possuem gravação (INSERT/UPDATE) • 0/12 são consumidas via leitura (SELECT) • 0/12 com ciclo completo.",
+          "❌ TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Supabase (PostgreSQL Cloud)): A(s) tabela(s) [solicitacoes_adocao] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
+          "❌ PERSISTÊNCIA E CONSUMO EM ARQUIVOS JSON LOCAIS: O sistema realiza apenas INSERT unidirecional em 5/12 tabelas e consome via SELECT 0/12 tabelas do banco online, lendo e gravando os dados do tema em [includes/bootstrap.php (lê/grava em storage/*.json local)].",
+          "❌ Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql' contém 12 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
+        ]
+      },
+      {
+        "categoria": "Pilar 2 (40,0 pts)",
+        "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
+        "status": "conforme",
+        "resumo": "Nota Pilar 2: 28.20 / 40,00 pts • Stack: PHP",
+        "itens": [
+          "Stack Tecnológica Detectada no Pacote ZIP (63 arquivos úteis): PHP.",
+          "Estrutura de Código: 3 arquivos de interface (Frontend) e 25 arquivos de serviços/regras/integração (Backend).",
+          "✅ GitHub Ativo: Repositório 'dkalmeidatheking/guardiaoanimaltcc' ativo (HTTP 200). 1 commit(s) inspecionado(s) (dkalmeidatheking: 1). README online: Não."
+        ]
+      },
+      {
+        "categoria": "Pilar 4 (15,0 pts)",
+        "titulo": "5. Histórico Oficial de Sprints (8,0 pts) e Participação em Aula (7,0 pts)",
+        "status": "conforme",
+        "resumo": "Extraído automaticamente dos PDFs oficiais de entregas e participação da turma",
+        "itens": [
+          "ARTHUR DA SILVA MORAIS (Matrícula: 25129571): Relatórios Semanais (4.1) = 5/10 (4.00/8,00 pts — Pleno) | Participação em Aula (4.2) = 13/16 (5.70/7,00 pts — Pleno) | Total Pilar 4 = 9.70/15,00 pts (✅ Regular).",
+          "DAVI KILIAM DE ALMEIDA (Matrícula: 25129515): Relatórios Semanais (4.1) = 9/10 (7.20/8,00 pts — Avançado) | Participação em Aula (4.2) = 14/16 (6.10/7,00 pts — Pleno) | Total Pilar 4 = 13.30/15,00 pts (✅ Regular).",
+          "VINICIUS LOURENÇO DA SILVA (Matrícula: 25129561): Relatórios Semanais (4.1) = 10/10 (8.00/8,00 pts — Avançado) | Participação em Aula (4.2) = 14/16 (6.10/7,00 pts — Pleno) | Total Pilar 4 = 14.10/15,00 pts (✅ Regular)."
+        ]
+      },
+      {
+        "categoria": "Regras Finais MSEP",
+        "titulo": "6. Situação de Aprovação e Liberação da Nota Final",
+        "status": "critico",
+        "resumo": "Nota Retida (Pendências)",
+        "itens": [
+          "Status Geral do Grupo: Nota Retida (Pendências).",
+          "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 71.49 pts (>= 50,0 pts), existem 1 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)"
+        ]
+      }
+    ],
+    "pontos_fortes": [
+      "Monografia densa e bem desenvolvida (11166 palavras, ~63 páginas, 22 RFs e 15 RNFs).",
+      "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 626 ms).",
+      "Repositório GitHub público e ativo (1 commits analisados via API)."
+    ],
+    "pontos_atencao": [
+      "Arquivo 'CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf': Extensão duplicada no nome do arquivo ('CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf').",
+      "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Supabase (PostgreSQL Cloud)): A(s) tabela(s) [solicitacoes_adocao] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
+      "PERSISTÊNCIA E CONSUMO EM ARQUIVOS JSON LOCAIS: O sistema realiza apenas INSERT unidirecional em 5/12 tabelas e consome via SELECT 0/12 tabelas do banco online, lendo e gravando os dados do tema em [includes/bootstrap.php (lê/grava em storage/*.json local)].",
+      "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql' contém 12 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
+    ],
+    "usou_llm_gemini": false
+  },
+  "I2DEV-B_Grupo05": {
+    "id": "I2DEV-B_Grupo05",
+    "ordem_apresentacao": 3,
+    "turma": "I2DEV-B",
+    "dia_semana": "Segunda-feira",
+    "sala": "Metrologia",
+    "data_banca": "16/11/2026",
+    "data_banca_iso": "2026-11-16",
+    "horario": "Terceiro Horário",
+    "grupo": "Grupo 05",
+    "grupo_num": 5,
+    "projeto": "Risk Zero / CyberSecurity",
+    "tema": "Boas práticas de segurança na era da informação",
+    "integrantes": [
+      "Felipe",
+      "Nikolas",
+      "Miguel"
+    ],
+    "entregue_na_pasta": true,
+    "nome_pasta_entregue": "Banca03-Grupo05-Risk Zero-(Felipe, Miguel, Nikolas)",
+    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca03-Grupo05-Risk Zero-(Felipe, Miguel, Nikolas)",
+    "status_avaliacao": "auditado_ia",
+    "auditado_em": "2026-11-14T23:03:58",
+    "atualizado_em": "2026-11-14T23:03:58",
+    "avaliador": "Prof. William Devidé Komel",
+    "sincronizado_firebase": true,
+    "firebase_sync_em": "2026-11-14T23:03:58",
+    "arquivos_entregues": [
+      {
+        "tipo": "TCC_PDF",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf",
+        "tamanho_bytes": 1907737,
+        "padrao_esperado": "CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf",
+        "nomenclatura_conforme": false,
+        "alertas_nomenclatura": [
+          "Sufixo de cópia de download '(1)' presente no nome."
+        ]
+      },
+      {
+        "tipo": "TCC_DOCX",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx",
+        "tamanho_bytes": 6662207,
+        "padrao_esperado": "CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.docx",
+        "nomenclatura_conforme": false,
+        "alertas_nomenclatura": [
+          "Sufixo de cópia de download '(1)' presente no nome."
+        ]
+      },
+      {
+        "tipo": "SISTEMA_ZIP",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Sistema-RiskZero-Nikolas-Felipe-Miguel.zip",
+        "tamanho_bytes": 2971368,
+        "padrao_esperado": "CTDS-2026-02-Sistema-RiskZero-Felipe-Nikolas-Miguel.zip",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "BD_SQL",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql",
+        "tamanho_bytes": 41568,
+        "padrao_esperado": "CTDS-2026-02-BD-RiskZero-Felipe-Nikolas-Miguel.sql",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      },
+      {
+        "tipo": "SLIDES_PDF",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf",
+        "tamanho_bytes": 7939289,
+        "padrao_esperado": "CTDS-2026-02-Apresentação-RiskZero-Felipe-Nikolas-Miguel.pdf",
+        "nomenclatura_conforme": false,
+        "alertas_nomenclatura": [
+          "Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf').",
+          "Hífen sobrando antes da extensão ('-.')."
+        ]
+      },
+      {
+        "tipo": "SLIDES_PPTX",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx",
+        "tamanho_bytes": 6027229,
+        "padrao_esperado": "CTDS-2026-02-Apresentação-RiskZero-Felipe-Nikolas-Miguel.pptx",
+        "nomenclatura_conforme": false,
+        "alertas_nomenclatura": [
+          "Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx').",
+          "Hífen sobrando antes da extensão ('-.')."
+        ]
+      },
+      {
+        "tipo": "LINKS_TXT",
+        "obrigatorio": true,
+        "encontrado": true,
+        "nome_arquivo": "links.txt",
+        "tamanho_bytes": 51,
+        "padrao_esperado": "links.txt",
+        "nomenclatura_conforme": true,
+        "alertas_nomenclatura": []
+      }
+    ],
+    "conformidade_nomenclatura_pct": 80.0,
+    "auditoria_tecnica": {
+      "monografia_paginas_estimadas": 69,
+      "monografia_palavras": 13840,
+      "monografia_caracteres": 100629,
+      "secoes_abnt_detectadas": {
+        "Capa & Folha de Rosto": true,
+        "Resumo & Abstract": true,
+        "Sumário": true,
+        "Introdução & Justificativa": true,
+        "Fundamentação Teórica": true,
+        "Metodologia": true,
+        "Requisitos (RF / RNF)": true,
+        "Modelagem de BD (MER/DER & Dicionário)": true,
+        "Prototipação & Wireframes (Figma)": true,
+        "Arquitetura & Stack": true,
+        "Plano de Negócios & Viabilidade": true,
+        "Rotinas e Relatório de Testes": true,
+        "Backlog & Cronograma Ágil": true,
+        "Conclusão & Referências ABNT": true
+      },
+      "rfs_detectados_qtd": 25,
+      "rnfs_detectados_qtd": 15,
+      "possui_mer_der": true,
+      "possui_dicionario_dados": true,
+      "possui_link_figma": true,
+      "links_figma_encontrados": [],
+      "possui_plano_negocios": true,
+      "possui_casos_teste": true,
+      "possui_backlog_cronograma": true,
+      "resumo_monografia": "Dedico este trabalho a todas as pessoas que estiveram ao meu lado ao longo dessa caminhada, oferecendo incentivo, apoio e motivação para que pudesse Com muito carinho, dedico também aos meus amigos, que permaneceram comigo com lealdade e afeto, presentes tanto nos momentos de alegria quanto",
+      "sql_arquivo": "CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql",
+      "sql_linhas": 361,
+      "sql_tabelas": [
+        "usuarios_perfil",
+        "cofre_envelope",
+        "cofre_itens",
+        "historico_senhas",
+        "logs_auditoria",
+        "servidores_vpn",
+        "assinaturas_planos",
+        "sessoes_ativas"
+      ],
+      "sql_tabelas_qtd": 8,
+      "sql_inserts_por_tabela": {
+        "usuarios_perfil": 22,
+        "cofre_envelope": 22,
+        "cofre_itens": 22,
+        "historico_senhas": 22,
+        "logs_auditoria": 22,
+        "servidores_vpn": 22,
+        "assinaturas_planos": 22,
+        "sessoes_ativas": 22
+      },
+      "sql_total_registros_inseridos": 176,
+      "sql_atende_min_20_por_tabela": true,
+      "sql_tabelas_abaixo_20": [],
+      "sql_possui_pk": true,
+      "sql_possui_fk": true,
+      "sql_possui_indices": true,
+      "sql_possui_rls": false,
+      "sql_possui_triggers_functions": false,
+      "sql_diagnostico": "Excelente: 8 tabela(s) modeladas e 100% povoadas com registros no script .sql (Total: 176 registros válidos. A sugestão de 20 reg/tabela foi atendida ou bem exemplificada).",
+      "zip_arquivo": "CTDS-2026-02-Sistema-RiskZero-Nikolas-Felipe-Miguel.zip",
+      "zip_total_arquivos": 206,
+      "zip_extensoes": {
+        ".ts": 38,
+        ".tsx": 35,
+        ".png": 34,
+        ".css": 16,
+        ".json": 12,
+        ".xml": 11,
+        ".py": 9,
+        "sem_ext": 6,
+        ".gradle": 6,
+        ".js": 6
+      },
+      "zip_stack_detectada": [
+        "Firebase",
+        "PostgreSQL / SQL",
+        "Python",
+        "React",
+        "Tailwind CSS",
+        "Testes Automatizados",
+        "TypeScript",
+        "Vite"
+      ],
+      "zip_possui_readme": true,
+      "zip_readme_tamanho": 4625,
+      "zip_possui_package_json": true,
+      "zip_dependencias": [
+        "@capacitor-community/privacy-screen",
+        "@capacitor/app",
+        "@capacitor/clipboard",
+        "@capacitor/core",
+        "@capacitor/preferences",
+        "@fontsource/jetbrains-mono",
+        "@fontsource/manrope",
+        "@fontsource/saira-condensed",
+        "@ionic/react",
+        "@ionic/react-router",
+        "@noble/hashes",
+        "@tailwindcss/vite",
+        "@types/react-router",
+        "@types/react-router-dom",
+        "autoprefixer",
+        "clsx",
+        "firebase",
+        "framer-motion",
+        "ionicons",
+        "lucide-react",
+        "postcss",
+        "qrcode",
+        "react",
+        "react-dom",
+        "react-router",
+        "react-router-dom",
+        "tailwind-merge",
+        "tailwindcss",
+        "@capacitor/android",
+        "@capacitor/cli",
+        "@testing-library/dom",
+        "@testing-library/jest-dom",
+        "@testing-library/react",
+        "@testing-library/user-event",
+        "@types/qrcode",
+        "@types/react",
+        "@types/react-dom",
+        "@vitejs/plugin-legacy",
+        "@vitejs/plugin-react",
+        "cypress",
+        "eslint",
+        "eslint-plugin-react",
+        "eslint-plugin-react-hooks",
+        "eslint-plugin-react-refresh",
+        "firebase-tools",
+        "globals",
+        "jsdom",
+        "terser",
+        "typescript",
+        "typescript-eslint",
+        "vite",
+        "vitest"
+      ],
+      "zip_arquivos_backend": [
+        "RiskZero-main/scripts/audit_deep.py",
+        "RiskZero-main/scripts/build_full_audited_tcc.py",
+        "RiskZero-main/scripts/curate_and_clean_docx.py",
+        "RiskZero-main/scripts/docx_helper.py",
+        "RiskZero-main/scripts/inspect_docx.py",
+        "RiskZero-main/scripts/update_part1.py",
+        "RiskZero-main/scripts/update_part2.py",
+        "RiskZero-main/scripts/update_part3.py",
+        "RiskZero-main/scripts/update_part4.py",
+        "RiskZero-main/src/components/Auth/LockOverlay.tsx",
+        "RiskZero-main/src/components/Auth/TotpQrCode.tsx",
+        "RiskZero-main/src/components/Vault/AutofillSelectorModal.tsx",
+        "RiskZero-main/src/components/Vault/PasswordGenerator.tsx",
+        "RiskZero-main/src/contexts/VaultContext.tsx",
+        "RiskZero-main/src/crypto/totp.test.ts",
+        "RiskZero-main/src/crypto/totp.ts",
+        "RiskZero-main/src/crypto/webcrypto.test.ts",
+        "RiskZero-main/src/crypto/webcrypto.ts",
+        "RiskZero-main/src/pages/Auth/AuthPage.tsx",
+        "RiskZero-main/src/pages/Vault/VaultDetailPage.tsx",
+        "RiskZero-main/src/pages/Vault/VaultFormPage.tsx",
+        "RiskZero-main/src/pages/Vault/VaultListPage.tsx",
+        "RiskZero-main/src/services/autofill.test.ts",
+        "RiskZero-main/src/services/autofill.ts",
+        "RiskZero-main/src/services/biometrics.test.ts"
+      ],
+      "zip_arquivos_frontend": [
+        "RiskZero-main/extension/popup.css",
+        "RiskZero-main/extension/popup.html",
+        "RiskZero-main/index.html",
+        "RiskZero-main/src/App.test.tsx",
+        "RiskZero-main/src/App.tsx",
+        "RiskZero-main/src/components/Auth/LockOverlay.css",
+        "RiskZero-main/src/components/Auth/LockOverlay.tsx",
+        "RiskZero-main/src/components/Auth/TotpQrCode.tsx",
+        "RiskZero-main/src/components/MasterKeyModal.tsx",
+        "RiskZero-main/src/components/Security/BiometricScannerModal.css",
+        "RiskZero-main/src/components/Security/BiometricScannerModal.tsx",
+        "RiskZero-main/src/components/Security/SecurityTermsModal.tsx",
+        "RiskZero-main/src/components/Security/TermsPage.tsx",
+        "RiskZero-main/src/components/Subscription/UpgradeModal.tsx",
+        "RiskZero-main/src/components/Vault/AutofillSelectorModal.tsx",
+        "RiskZero-main/src/components/Vault/PasswordGenerator.tsx",
+        "RiskZero-main/src/components/brand/Logo.tsx",
+        "RiskZero-main/src/components/brand/Mascot.tsx",
+        "RiskZero-main/src/components/brand/OrbitRing.tsx",
+        "RiskZero-main/src/components/ui/ConfirmModal.tsx",
+        "RiskZero-main/src/components/ui/EmptyState.tsx",
+        "RiskZero-main/src/components/ui/PageHeader.tsx",
+        "RiskZero-main/src/contexts/SecurityContext.tsx",
+        "RiskZero-main/src/contexts/SubscriptionContext.tsx",
+        "RiskZero-main/src/contexts/VaultContext.tsx"
+      ],
+      "zip_arquivos_teste": [
+        "RiskZero-main/cypress/e2e/test.cy.ts",
+        "RiskZero-main/cypress/fixtures/example.json",
+        "RiskZero-main/cypress/support/commands.ts",
+        "RiskZero-main/cypress/support/e2e.ts",
+        "RiskZero-main/src/App.test.tsx",
+        "RiskZero-main/src/crypto/totp.test.ts",
+        "RiskZero-main/src/crypto/webcrypto.test.ts",
+        "RiskZero-main/src/services/autofill.test.ts",
+        "RiskZero-main/src/services/biometrics.test.ts",
+        "RiskZero-main/src/services/breach.test.ts",
+        "RiskZero-main/src/services/subscription.test.ts",
+        "RiskZero-main/src/services/vault.test.ts",
+        "RiskZero-main/src/services/vpn.test.ts"
+      ],
+      "zip_alertas_seguranca": [],
+      "slides_arquivo": "CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx",
+      "slides_qtd": 9,
+      "slides_etapas_roteiro": {
+        "1. Capa & Identificação (1 min)": true,
+        "2. Contexto & Dor (1.5 min)": true,
+        "3. Solução & Proposta (1.5 min)": true,
+        "4. Arquitetura, Stack & BD (1.5 min)": true,
+        "5. Plano de Negócio (2.5 min)": false,
+        "6. Demonstração / Protótipo (5-8 min)": true,
+        "7. Conclusão & Encerramento (1 min)": true
+      },
+      "slides_titulos": [
+        "Slide 01: RISK",
+        "Slide 02: Problemas",
+        "Slide 03: Visão Geral",
+        "Slide 04: Seg",
+        "Slide 07: Assinatura Mensal",
+        "Slide 08: Assinatura Anual",
+        "Slide 09: Muito obrigado!"
+      ],
+      "github_url": "",
+      "github_online_ok": false,
+      "github_status_http": 0,
+      "github_commits_total": 0,
+      "github_commits_por_autor": {},
+      "github_ultimo_commit_data": "",
+      "github_readme_online": false,
+      "github_linguagens": [],
+      "github_diagnostico": "Link do GitHub ausente (em branco) no arquivo links.txt!",
+      "deploy_url": "https://riskzero-vault.vercel.app/",
+      "deploy_online_ok": true,
+      "deploy_status_http": 200,
+      "deploy_tempo_ms": 184,
+      "deploy_titulo_pagina": "RiskZero - Zero Knowledge Vault & Cyber Defense",
+      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 184 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.",
+      "deploy_provedor": "Vercel Cloud",
+      "deploy_rodando_inteiramente_nuvem": false,
+      "banco_provedor_nuvem": "Google Firebase Cloud Firestore",
+      "banco_url_detectada": "securityproject-67800.firebaseapp.com",
+      "banco_exclusivo_nuvem": false,
+      "usa_localstorage_indevido": true,
+      "arquivos_localstorage_detectados": [
+        "pages/Hardening/HardeningPage.tsx",
+        "pages/LinkDetector/LinkDetectorPage.tsx",
+        "src/services/vpn.ts"
+      ],
+      "chaves_localstorage_negocio": [
+        "rz_hardening_checklist_v1",
+        "riskzero_link_detector_history_v2",
+        "seguranapp_custom_vpn_servers",
+        "riskzero_custom_vpn_servers"
+      ],
+      "chaves_localstorage_permitidas_ui": [
+        "rz_welcome_dismissed",
+        "rz_autolock_minutes",
+        "rz_clipboard_seconds",
+        "rz_privacy_screen",
+        "${BIOMETRIC_CONFIG_PREFIX}${emailKey}",
+        "${BIOMETRIC_KEY_PREFIX}${emailKey}",
+        "rz_privacy_screen_enabled",
+        "riskzero.realIpBaseline",
+        "riskzero_client_wg_pubkey",
+        "riskzero_client_private_key",
+        "riskzero_warp_active_credentials"
+      ],
+      "usa_arquivos_json_locais_no_servidor": false,
+      "arquivos_json_locais_detectados": [],
+      "tabelas_auditoria_online": [
+        {
+          "tabela": "usuarios_perfil",
+          "presente_no_sql": true,
+          "registros_no_sql": 22,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Persistido em NoSQL Firestore (securityproject-67800)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Documento Firestore 'users/{uid}' (perfil + 2FA + salt) via getDoc/setDoc em storage.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "cofre_envelope",
+          "presente_no_sql": true,
+          "registros_no_sql": 22,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Persistido em NoSQL Firestore (securityproject-67800)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Campo 'encryptedVault.encryptedDek' em 'users/{uid}' via getDoc/setDoc em storage.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "cofre_itens",
+          "presente_no_sql": true,
+          "registros_no_sql": 22,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Persistido em NoSQL Firestore (securityproject-67800)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Campo 'encryptedVault.items' em 'users/{uid}' via getDoc/setDoc em storage.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "historico_senhas",
+          "presente_no_sql": true,
+          "registros_no_sql": 22,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Persistido em NoSQL Firestore (securityproject-67800)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Campo 'encryptedVault.items[].history' em 'users/{uid}' via getDoc/setDoc em storage.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "logs_auditoria",
+          "presente_no_sql": true,
+          "registros_no_sql": 22,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não mapeada no Firestore (securityproject-67800) — Mantida apenas no localStorage",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Entidade do .sql não gravada/consumida no Firestore (usa apenas localStorage)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "servidores_vpn",
+          "presente_no_sql": true,
+          "registros_no_sql": 22,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não mapeada no Firestore (securityproject-67800) — Mantida apenas no localStorage",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Entidade do .sql não gravada/consumida no Firestore (usa apenas localStorage)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "assinaturas_planos",
+          "presente_no_sql": true,
+          "registros_no_sql": 22,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Persistido em NoSQL Firestore (securityproject-67800)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Campo 'subscription' em 'users/{uid}' via getDoc/setDoc em storage.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "sessoes_ativas",
+          "presente_no_sql": true,
+          "registros_no_sql": 22,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Persistido em NoSQL Firestore (securityproject-67800)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Firebase Auth + 'users/{uid}' (SessionService) via getDoc/setDoc em storage.ts",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "rz_hardening_checklist_v1 (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (pages/Hardening/HardeningPage.tsx, pages/LinkDetector/LinkDetectorPage.tsx)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "riskzero_link_detector_history_v2 (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (pages/Hardening/HardeningPage.tsx, pages/LinkDetector/LinkDetectorPage.tsx)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "seguranapp_custom_vpn_servers (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (pages/Hardening/HardeningPage.tsx, pages/LinkDetector/LinkDetectorPage.tsx)",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "riskzero_custom_vpn_servers (Entidade do Tema)",
+          "presente_no_sql": false,
+          "registros_no_sql": 0,
+          "presente_no_banco_online": false,
+          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (pages/Hardening/HardeningPage.tsx, pages/LinkDetector/LinkDetectorPage.tsx)",
+          "conforme_ciclo_completo": false
+        }
+      ],
+      "tabelas_sql_presentes_online_qtd": 6,
+      "tabelas_sql_gravadas_pelo_codigo_qtd": 6,
+      "tabelas_sql_consumidas_pelo_codigo_qtd": 6,
+      "tabelas_ciclo_completo_qtd": 6,
+      "entidades_tema_sem_tabela_banco": [
+        "rz_hardening_checklist_v1",
+        "riskzero_link_detector_history_v2",
+        "seguranapp_custom_vpn_servers",
+        "riskzero_custom_vpn_servers"
+      ],
+      "inviabiliza_finalizacao_persistencia": true,
+      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}]. Auditoria das 8 tabelas do .sql no banco online (Google Firebase Cloud Firestore): 6/8 existem online, 6/8 possuem gravação (INSERT/UPDATE) no código e 6/8 são consumidas via leitura (SELECT) pelo programa (6/8 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers]. (Item 2.4 Deploy e BD online ativo: Conforme)."
+    },
+    "rubricas": [
+      {
+        "codigo": "1.1",
+        "pilar": 1,
+        "titulo": "1.1 Monografia ABNT",
+        "peso_max": 8.0,
+        "nivel": "Avançado",
+        "nota": 7.68,
+        "nota_sugerida_ia": 7.68,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Monografia com 13840 palavras (~69 págs) e 14/14 elementos obrigatórios ABNT identificados.",
+        "evidencias": [
+          "13840 palavras (~69 páginas)",
+          "14/14 seções estruturais ABNT identificadas",
+          "Conformidade de nomenclatura digital: 80.0%"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.2",
+        "pilar": 1,
+        "titulo": "1.2 Requisitos RF/RNF",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 3.0,
+        "nota_sugerida_ia": 3.0,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Mapeamento de Requisitos Funcionais (25) e Não Funcionais (15) na documentação.",
+        "evidencias": [
+          "RFs codificados detectados: 25",
+          "RNFs codificados detectados: 15"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.3",
+        "pilar": 1,
+        "titulo": "1.3 Modelagem de BD",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.9,
+        "nota_sugerida_ia": 2.9,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Documentação contempla modelagem relacional alinhada a 8 tabelas no script SQL.",
+        "evidencias": [
+          "MER/DER na monografia: Sim",
+          "Dicionário de Dados: Sim",
+          "Tabelas físicas no .sql: 8"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.4",
+        "pilar": 1,
+        "titulo": "1.4 Protótipo & Figma",
+        "peso_max": 3.0,
+        "nivel": "Pleno",
+        "nota": 2.55,
+        "nota_sugerida_ia": 2.55,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Protótipo e fluxos de telas documentados na monografia.",
+        "evidencias": [
+          "Menção a Protótipo/Figma/Telas: Sim",
+          "Links diretos Figma: 0"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.5",
+        "pilar": 1,
+        "titulo": "1.5 Arquitetura & Stack",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.9,
+        "nota_sugerida_ia": 2.9,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Arquitetura e justificativa técnica da stack (Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite).",
+        "evidencias": [
+          "Stack detectada no código: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite",
+          "Capítulo de Arquitetura no TCC: Sim"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.6",
+        "pilar": 1,
+        "titulo": "1.6 Plano de Negócio",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 2.85,
+        "nota_sugerida_ia": 2.85,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Plano de negócio, público-alvo, precificação e sustentabilidade presentes no documento.",
+        "evidencias": [
+          "Viabilidade/Precificação/Sustentabilidade no TCC: Sim"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.7",
+        "pilar": 1,
+        "titulo": "1.7 Testes & Relatório",
+        "peso_max": 3.0,
+        "nivel": "Avançado",
+        "nota": 3.0,
+        "nota_sugerida_ia": 3.0,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Documentação de testes presente (13 scripts de teste automatizado no ZIP).",
+        "evidencias": [
+          "Seção de Testes na monografia: Sim",
+          "Arquivos de teste no repositório (.zip): 13"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "1.8",
+        "pilar": 1,
+        "titulo": "1.8 Backlog & Cronograma",
+        "peso_max": 4.0,
+        "nivel": "Avançado",
+        "nota": 3.75,
+        "nota_sugerida_ia": 3.75,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Planejamento ágil, backlog de produto e cronograma documentados.",
+        "evidencias": [
+          "Backlog/Cronograma identificado no TCC: Sim"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.1",
+        "pilar": 2,
+        "titulo": "2.1 Backend (APIs)",
+        "peso_max": 10.0,
+        "nivel": "Avançado",
+        "nota": 9.4,
+        "nota_sugerida_ia": 9.4,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Camada de serviços, autenticação, regras de negócio e persistência estruturada (25 arquivos principais).",
+        "evidencias": [
+          "Módulos de Backend/Serviços/Integrações no ZIP: 25",
+          "Alertas de segurança: 0"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.2",
+        "pilar": 2,
+        "titulo": "2.2 Frontend (UI/UX)",
+        "peso_max": 10.0,
+        "nivel": "Avançado",
+        "nota": 9.5,
+        "nota_sugerida_ia": 9.5,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Interface estruturada com 25 arquivos de visualização/componentes responsivos.",
+        "evidencias": [
+          "Componentes/Telas Frontend no ZIP: 25",
+          "Tecnologias UI: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.3",
+        "pilar": 2,
+        "titulo": "2.3 Banco de Dados Físico",
+        "peso_max": 10.0,
+        "nivel": "Insuficiente",
+        "nota": 3.8,
+        "nota_sugerida_ia": 3.8,
+        "nivel_sugerido_ia": "Insuficiente",
+        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers), abatendo a nota da rubrica 2.3.",
+        "evidencias": [
+          "Estrutura DDL (.sql) vs DER: 8 tabelas (PK: Sim, FK: Sim)",
+          "Tabelas gravadas (INSERT/UPDATE) pelo código: 6/8",
+          "Tabelas consumidas (SELECT) pelo código: 6/8",
+          "Registros no script .sql: 176 registros (Todas as tabelas com registros: SIM)",
+          "Chaves localStorage permitidas (UI/Sessão): rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}",
+          "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.4",
+        "pilar": 2,
+        "titulo": "2.4 Deploy Online",
+        "peso_max": 5.0,
+        "nivel": "Avançado",
+        "nota": 4.8,
+        "nota_sugerida_ia": 4.8,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 184 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "evidencias": [
+          "Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (184 ms)",
+          "Banco de Dados Online Ativo: Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com)",
+          "Tabelas presentes no BD Online: 6/8",
+          "Sistema apontando para o BD Online: SIM (Integrado)"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "2.5",
+        "pilar": 2,
+        "titulo": "2.5 GitHub & README",
+        "peso_max": 5.0,
+        "nivel": "Insuficiente",
+        "nota": 2.2,
+        "nota_sugerida_ia": 2.2,
+        "nivel_sugerido_ia": "Insuficiente",
+        "justificativa_ia": "Link do GitHub ausente (em branco) no arquivo links.txt!",
+        "evidencias": [
+          "URL GitHub em links.txt: EM BRANCO / AUSENTE",
+          "README.md no projeto: Sim (4625 bytes)",
+          "Commits inspecionados na API: 0"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.1",
+        "pilar": 3,
+        "titulo": "3.1 Arguição do Código",
+        "peso_max": 6.0,
+        "nivel": "Pendente",
+        "nota": 0.0,
+        "nota_sugerida_ia": 0.0,
+        "nivel_sugerido_ia": "Pendente",
+        "justificativa_ia": "Item presencial obrigatório (6,0 pts): Inicia VAZIO (Pendente). Selecione o nível (Insuficiente, Pleno ou Avançado) para cada integrante durante a sabatina técnica.",
+        "evidencias": [
+          "PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie o domínio tecnológico individual de cada aluno na tabela abaixo."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.2",
+        "pilar": 3,
+        "titulo": "3.2 Pitch do Grupo",
+        "peso_max": 5.0,
+        "nivel": "Pendente",
+        "nota": 0.0,
+        "nota_sugerida_ia": 0.0,
+        "nivel_sugerido_ia": "Pendente",
+        "justificativa_ia": "Item presencial obrigatório (5,0 pts): Inicia VAZIO (Pendente). Preencha durante/após a apresentação ao vivo da equipe.",
+        "evidencias": [
+          "PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie coesão da equipe, síntese, postura e tempo de apresentação (15-20 min)."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "3.3",
+        "pilar": 3,
+        "titulo": "3.3 Material de Slides",
+        "peso_max": 4.0,
+        "nivel": "Avançado",
+        "nota": 3.85,
+        "nota_sugerida_ia": 3.85,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Apresentação com 9 slides cobrindo 6/7 tópicos exigidos no Roteiro de Banca.",
+        "evidencias": [
+          "Total de slides na apresentação: 9",
+          "Etapas do roteiro oficial cobertas: 6/7"
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "4.1",
+        "pilar": 4,
+        "titulo": "4.1 Relatórios de Sprint",
+        "peso_max": 8.0,
+        "nivel": "Avançado",
+        "nota": 7.2,
+        "nota_sugerida_ia": 7.2,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Pontuação carregada automaticamente do relatório oficial da turma (Média do grupo: 7.20/8,00 pts).",
+        "evidencias": [
+          "Média do grupo extraída do PDF oficial de entregas semanais: 7.20 / 8,00 pts",
+          "Nota individual exata aplicada a cada aluno na Tabela de Consolidação Final."
+        ],
+        "editado_manualmente": false
+      },
+      {
+        "codigo": "4.2",
+        "pilar": 4,
+        "titulo": "4.2 Participação em Aula",
+        "peso_max": 7.0,
+        "nivel": "Pleno",
+        "nota": 6.27,
+        "nota_sugerida_ia": 6.27,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Pontuação carregada automaticamente do relatório oficial de presença/participação da turma (Média do grupo: 6.27/7,00 pts).",
+        "evidencias": [
+          "Média do grupo extraída do PDF oficial de participação em aula: 6.27 / 7,00 pts",
+          "Nota individual exata aplicada a cada aluno na Tabela de Consolidação Final."
+        ],
+        "editado_manualmente": false
+      }
+    ],
+    "integrantes_notas": [
+      {
+        "nome": "Felipe",
+        "nome_completo_planilha": "FELIPE ARTHUR MORINI MACHADO",
+        "matricula": "25129521",
+        "github_autor": "",
+        "commits_qtd": 0,
+        "relatorios_entregues": 10,
+        "total_relatorios": 10,
+        "aulas_participadas": 14,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 8.0,
+        "nota_4_1_sugerida": 8.0,
+        "nivel_4_1": "Avançado",
+        "nivel_4_1_sugerido": "Avançado",
+        "nota_4_2_participacao": 6.1,
+        "nota_4_2_sugerida": 6.1,
+        "nivel_4_2": "Pleno",
+        "nivel_4_2_sugerido": "Pleno",
+        "p1_nota": 28.63,
+        "p2_nota": 29.7,
+        "p3_nota": 3.85,
+        "p4_nota": 14.1,
+        "nota_final": 76.28,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (3.8/10.0)",
+          "2.5 GitHub & README (2.2/5.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      },
+      {
+        "nome": "Nikolas",
+        "nome_completo_planilha": "NIKOLAS MELO LIMA",
+        "matricula": "25129549",
+        "github_autor": "",
+        "commits_qtd": 0,
+        "relatorios_entregues": 10,
+        "total_relatorios": 10,
+        "aulas_participadas": 15,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 8.0,
+        "nota_4_1_sugerida": 8.0,
+        "nivel_4_1": "Avançado",
+        "nivel_4_1_sugerido": "Avançado",
+        "nota_4_2_participacao": 6.6,
+        "nota_4_2_sugerida": 6.6,
+        "nivel_4_2": "Avançado",
+        "nivel_4_2_sugerido": "Avançado",
+        "p1_nota": 28.63,
+        "p2_nota": 29.7,
+        "p3_nota": 3.85,
+        "p4_nota": 14.6,
+        "nota_final": 76.78,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (3.8/10.0)",
+          "2.5 GitHub & README (2.2/5.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      },
+      {
+        "nome": "Miguel",
+        "nome_completo_planilha": "MIGUEL RODRIGUES CAMARGO",
+        "matricula": "25129693",
+        "github_autor": "",
+        "commits_qtd": 0,
+        "relatorios_entregues": 7,
+        "total_relatorios": 10,
+        "aulas_participadas": 14,
+        "total_aulas_turma": 16,
+        "nota_3_1_arguicao": 0.0,
+        "nivel_3_1": "Pendente",
+        "nota_3_1_sugerida": 0.0,
+        "nivel_3_1_sugerido": "Pendente",
+        "nota_4_1_sprints": 5.6,
+        "nota_4_1_sugerida": 5.6,
+        "nivel_4_1": "Pleno",
+        "nivel_4_1_sugerido": "Pleno",
+        "nota_4_2_participacao": 6.1,
+        "nota_4_2_sugerida": 6.1,
+        "nivel_4_2": "Pleno",
+        "nivel_4_2_sugerido": "Pleno",
+        "p1_nota": 28.63,
+        "p2_nota": 29.7,
+        "p3_nota": 3.85,
+        "p4_nota": 11.7,
+        "nota_final": 73.88,
+        "possui_item_insuficiente": true,
+        "itens_insuficientes": [
+          "2.3 Banco de Dados Físico (3.8/10.0)",
+          "2.5 GitHub & README (2.2/5.0)"
+        ],
+        "resultado": "Nota Retida (Pendências)",
+        "observacoes_individuais": ""
+      }
+    ],
+    "perguntas_arguicao": [
+      {
+        "integrante_sugerido": "Felipe",
+        "categoria": "Arquitetura & Comunicação Cliente-Servidor",
+        "arquivo_referencia": "Stack: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite",
+        "trecho_codigo": "Tecnologias adotadas: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite\nProvedor de Deploy: Vercel Cloud (https://riskzero-vault.vercel.app/)\nProvedor de Dados: Google Firebase Cloud Firestore",
+        "pergunta": "Por que a equipe escolheu a stack (Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite) e como a interface (Frontend) se comunica com o banco/serviço (Google Firebase Cloud Firestore) para enviar e buscar dados?",
+        "resposta_esperada": "Explicar a separação entre tela e servidor/dados, o uso de requisições HTTP (GET/POST) com JSON e por que essa stack foi a mais adequada para o projeto."
+      },
+      {
+        "integrante_sugerido": "Nikolas",
+        "categoria": "Persistência em Nuvem vs LocalStorage & Banco de Dados",
+        "arquivo_referencia": "Google Firebase Cloud Firestore • CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql",
+        "trecho_codigo": "Banco em Nuvem: Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com)\nTabelas presentes online: 6/8\nChaves UI permitidas: rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen",
+        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (Google Firebase Cloud Firestore)?",
+        "resposta_esperada": "Explicar que o localStorage serve apenas para preferências locais simples do navegador (como tema claro/escuro), enquanto os dados de negócio devem ser persistidos centralizadamente no banco online para estarem seguros e disponíveis para todos os usuários."
+      },
+      {
+        "integrante_sugerido": "Miguel",
+        "categoria": "Segurança, Autenticação & Controle de Acesso",
+        "arquivo_referencia": "Segurança em Google Firebase Cloud Firestore",
+        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: Google Firebase Cloud Firestore",
+        "pergunta": "Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?",
+        "resposta_esperada": "Explicar o fluxo de login com senha/token de sessão e as regras de segurança/permissão que amarram os registros ao ID do usuário autenticado."
+      },
+      {
+        "integrante_sugerido": "Toda a Equipe",
+        "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
+        "arquivo_referencia": "Vercel Cloud (https://riskzero-vault.vercel.app/)",
+        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://riskzero-vault.vercel.app/)\nHospedagem do Banco: Google Firebase Cloud Firestore\nStatus HTTP: 200 (184 ms)",
+        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Vercel Cloud)?",
+        "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
+      }
+    ],
+    "p1_total": 28.63,
+    "p2_total": 29.7,
+    "p3_grupo_base": 3.85,
+    "media_nota_final_grupo": 75.65,
+    "possui_item_insuficiente_grupo": true,
+    "itens_insuficientes_grupo": [
+      "2.3 Banco de Dados Físico (3.8/10.0)",
+      "2.5 GitHub & README (2.2/5.0)"
+    ],
+    "status_liberacao_nota": "Nota Retida (Pendências)",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Risk Zero / CyberSecurity — I2DEV-B / Grupo 05):\n1. DOCUMENTAÇÃO (Pilar 1 = 28.63/30,00 pts): Monografia com 13840 palavras (~69 págs.), 25 RFs e 15 RNFs, e 80.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 29.70/40,00 pts): Stack [Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite] publicada em Vercel Cloud (https://riskzero-vault.vercel.app/) e banco vinculado a Google Firebase Cloud Firestore. PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}]. Auditoria das 8 tabelas do .sql no banco online (Google Firebase Cloud Firestore): 6/8 existem online, 6/8 possuem gravação (INSERT/UPDATE) no código e 6/8 são consumidas via leitura (SELECT) pelo programa (6/8 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers]. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_estruturado": [
+      {
+        "categoria": "Entregáveis & Nomenclatura",
+        "titulo": "1. Pacote Digital e Padronização (CTDS-2026-02)",
+        "status": "alerta",
+        "resumo": "7/7 entregáveis • 80.0% conforme",
+        "itens": [
+          "Arquivos obrigatórios localizados na pasta do grupo: 7 de 7.",
+          "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 80.0%.",
+          "⚠️ Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf': Sufixo de cópia de download '(1)' presente no nome.",
+          "⚠️ Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx': Sufixo de cópia de download '(1)' presente no nome.",
+          "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf').",
+          "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Hífen sobrando antes da extensão ('-.').",
+          "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx').",
+          "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Hífen sobrando antes da extensão ('-.')."
+        ]
+      },
+      {
+        "categoria": "Pilar 1 (30,0 pts)",
+        "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
+        "status": "conforme",
+        "resumo": "Nota Pilar 1: 28.63 / 30,00 pts • 13840 palavras (~69 págs.)",
+        "itens": [
+          "Extensão textual: 13840 palavras (~69 páginas estimadas) cobrindo 14/14 seções ABNT.",
+          "Engenharia de Requisitos: 25 Requisitos Funcionais (RF) e 15 Requisitos Não Funcionais (RNF) mapeados.",
+          "Modelagem de Dados e Prototipação: MER/DER=Sim, Dicionário de Dados=Sim, Protótipo/Figma=Sim.",
+          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Sim."
+        ]
+      },
+      {
+        "categoria": "Itens 2.3 e 2.4 (Crítico)",
+        "titulo": "3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy",
+        "status": "critico",
+        "resumo": "Online: 6/8 • Grava: 6/8 • Consome (SELECT): 6/8",
+        "itens": [
+          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (184 ms).",
+          "Publicação do Banco de Dados (Item 2.3): Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com).",
+          "Script SQL Entregue ('CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql'): 8 tabelas DDL (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas, logs_auditoria, servidores_vpn) e 176 registros INSERT INTO.",
+          "Rastreabilidade das Tabelas do .sql no Banco Online (Google Firebase Cloud Firestore): 6/8 existem online • 6/8 possuem gravação (INSERT/UPDATE) • 6/8 são consumidas via leitura (SELECT) • 6/8 com ciclo completo.",
+          "✅ Persistência Local Permitida (UI / Sessão / Preferências — Não Penaliza): [rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}, rz_privacy_screen_enabled, riskzero.realIpBaseline].",
+          "❌ TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Google Firebase Cloud Firestore): A(s) tabela(s) [logs_auditoria, servidores_vpn] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
+          "❌ PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas) possuem 6/8 ciclos completos no banco online, entidades centrais do tema [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers).",
+          "✅ Povoamento SQL Conforme: Todas as 8 tabelas possuem no mínimo 20 registros inseridos via INSERT INTO."
+        ]
+      },
+      {
+        "categoria": "Pilar 2 (40,0 pts)",
+        "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
+        "status": "critico",
+        "resumo": "Nota Pilar 2: 29.70 / 40,00 pts • Stack: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite",
+        "itens": [
+          "Stack Tecnológica Detectada no Pacote ZIP (206 arquivos úteis): Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite.",
+          "Estrutura de Código: 25 arquivos de interface (Frontend) e 25 arquivos de serviços/regras/integração (Backend).",
+          "❌ Link do repositório GitHub foi deixado EM BRANCO no arquivo links.txt (Item 2.5 classificado como Insuficiente até entrega do link)."
+        ]
+      },
+      {
+        "categoria": "Pilar 4 (15,0 pts)",
+        "titulo": "5. Histórico Oficial de Sprints (8,0 pts) e Participação em Aula (7,0 pts)",
+        "status": "conforme",
+        "resumo": "Extraído automaticamente dos PDFs oficiais de entregas e participação da turma",
+        "itens": [
+          "FELIPE ARTHUR MORINI MACHADO (Matrícula: 25129521): Relatórios Semanais (4.1) = 10/10 (8.00/8,00 pts — Avançado) | Participação em Aula (4.2) = 14/16 (6.10/7,00 pts — Pleno) | Total Pilar 4 = 14.10/15,00 pts (✅ Regular).",
+          "NIKOLAS MELO LIMA (Matrícula: 25129549): Relatórios Semanais (4.1) = 10/10 (8.00/8,00 pts — Avançado) | Participação em Aula (4.2) = 15/16 (6.60/7,00 pts — Avançado) | Total Pilar 4 = 14.60/15,00 pts (✅ Regular).",
+          "MIGUEL RODRIGUES CAMARGO (Matrícula: 25129693): Relatórios Semanais (4.1) = 7/10 (5.60/8,00 pts — Pleno) | Participação em Aula (4.2) = 14/16 (6.10/7,00 pts — Pleno) | Total Pilar 4 = 11.70/15,00 pts (✅ Regular)."
+        ]
+      },
+      {
+        "categoria": "Regras Finais MSEP",
+        "titulo": "6. Situação de Aprovação e Liberação da Nota Final",
+        "status": "critico",
+        "resumo": "Nota Retida (Pendências)",
+        "itens": [
+          "Status Geral do Grupo: Nota Retida (Pendências).",
+          "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 75.65 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (3.8/10.0)",
+          "   • Pendência bloqueante: 2.5 GitHub & README (2.2/5.0)"
+        ]
+      }
+    ],
+    "pontos_fortes": [
+      "Monografia densa e bem desenvolvida (13840 palavras, ~69 páginas, 25 RFs e 15 RNFs).",
+      "Script SQL exemplar: 8 tabelas normalizadas com 176 registros válidos (>= 20 por entidade).",
+      "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 184 ms)."
+    ],
+    "pontos_atencao": [
+      "Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf': Sufixo de cópia de download '(1)' presente no nome.",
+      "Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx': Sufixo de cópia de download '(1)' presente no nome.",
+      "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf').",
+      "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Hífen sobrando antes da extensão ('-.').",
+      "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx').",
+      "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Hífen sobrando antes da extensão ('-.').",
+      "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Google Firebase Cloud Firestore): A(s) tabela(s) [logs_auditoria, servidores_vpn] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
+      "PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas) possuem 6/8 ciclos completos no banco online, entidades centrais do tema [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers).",
+      "Link do repositório GitHub foi deixado EM BRANCO no arquivo links.txt (Item 2.5 classificado como Insuficiente até entrega do link)."
+    ],
+    "usou_llm_gemini": false
+  }
+}

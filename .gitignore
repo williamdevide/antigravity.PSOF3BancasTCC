@@ -1,0 +1,25 @@
+# Ambientes virtuais e Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.npm
+.vite/
+
+# Arquivos de Sistema & Chaves
+*.key
+*.pem
+deploy_bancas.tar.gz
+backend/data/app_window_profile/
+
+# Logs e arquivos temporários
+*.log
+.DS_Store
+Thumbs.db
