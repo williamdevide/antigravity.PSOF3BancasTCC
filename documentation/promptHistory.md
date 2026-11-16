@@ -340,5 +340,20 @@ em [Auditoria & Bancas] os cards já estão exibindo se o tcc esta Aguardando ou
    - **Bloco Nobre da Ata da Banca Realizada (logo abaixo dos 5 cards dos pilares):** Cabeçalho com data/hora efetiva de realização (início e término), tempo total de duração (ex.: `28m 15s`) e nomes dos professores avaliadores; seguido pelas caixas de texto com o parecer consolidado / considerações técnicas de cada professor.
    - Abaixo da Ata, permanecem os cards de auditoria técnica (Deploy, BD, GitHub, Anexos e Tabelas).
 
+### Implementações Realizadas:
+- `frontend/src/components/AuthModal.tsx`: Adicionada prop `obrigatorio={!usuarioAuth}`, ocultando o botão de fechar e bloqueando navegação até autenticação com Google, e-mail/senha ou atalho rápido.
+- `frontend/src/services/bancaMultiAvaliador.ts`: Implementada função `escutarTodasSessoesBanca` que provê listener reativo a todas as sessões em tempo real via Firestore.
+- `frontend/src/types.ts`: Adicionado campo `banca_consolidada?: BancaConsolidada;` à interface `SessaoBancaAoVivo`.
+- `frontend/src/App.tsx`:
+  - Integração do modal bloqueante no carregamento da aplicação (`obrigatorio={!usuarioAuth}`).
+  - Cards da coluna esquerda: detecção automática da sessão concluída (`status === 'concluida'`), exibição do badge roxo **"Apresentado"**, nota consolidada oficial `/100`, badge de status final de liberação e indicador de duração da banca.
+  - Coluna direita:
+    - 5 Cards dos Pilares (P1, P2, P3, P4 e Média Final) exibindo a nota de cada avaliador individualmente e a nota consolidada em destaque maior (`text-2xl font-extrabold`).
+    - Bloco Nobre da **Ata da Banca Realizada**: posicionado imediatamente abaixo dos 5 cards dos pilares, exibindo nomes dos avaliadores da banca examinadora, data/hora efetiva de realização (`16/11/2026 das 14:10 às 14:38`), tempo total de duração e caixas dedicadas com o parecer técnico consolidado de cada avaliador.
+- `backend/app/tcc_auditor.py`: Ajuste sintático em regex de verificação de sufixos de download para total compatibilidade com Python 3.11.
+- `backend/app/report_generator.py`: Fallback resiliente na geração de PDF para ambientes sem Playwright instalado.
+- Testes e Build: 4/4 testes pytest aprovados e build do frontend concluído com Vite em 4.24s.
+- Git: Commit `d63d046` registrado na branch principal.
+
 
 
