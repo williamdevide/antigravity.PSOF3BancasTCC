@@ -907,8 +907,9 @@ def _analisar_nomenclatura_arquivos(
                 alertas.append("Não inicia com o prefixo oficial 'CTDS-2026-02-'.")
             if re.search(r"\.(pdf|docx|pptx)\.(pdf|docx|pptx)$", nome_arq, re.IGNORECASE):
                 alertas.append(f"Extensão duplicada no nome do arquivo ('{nome_arq}').")
-            if re.search(r"\(\d+\)", nome_arq):
-                alertas.append(f"Sufixo de cópia de download '{re.search(r'\(\d+\)', nome_arq).group(0)}' presente no nome.")  # type: ignore[union-attr]
+            m_sufixo = re.search(r"\(\d+\)", nome_arq)
+            if m_sufixo:
+                alertas.append(f"Sufixo de cópia de download '{m_sufixo.group(0)}' presente no nome.")
             if "-." in nome_arq:
                 alertas.append("Hífen sobrando antes da extensão ('-.').")
 

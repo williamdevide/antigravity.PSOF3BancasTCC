@@ -55,6 +55,7 @@ import {
   iniciarSessaoBanca,
   escutarSessaoBanca,
   escutarTodasSessoesAtivas,
+  escutarTodasSessoesBanca,
   encerrarMinhaAvaliacao,
   encerrarEConsolidarBanca,
   resetarBancaGrupo,
@@ -159,9 +160,11 @@ export function App() {
   // Estados de Autenticação Firebase & Avaliação Multi-Docente (2 Professores)
   const [usuarioAuth, setUsuarioAuth] = useState<User | null>(null);
   const [authModalAberto, setAuthModalAberto] = useState<boolean>(false);
+  const [authPronto, setAuthPronto] = useState<boolean>(false);
   const [bancaConsolidada, setBancaConsolidada] = useState<BancaConsolidada | null>(null);
   const [sessaoAoVivo, setSessaoAoVivo] = useState<SessaoBancaAoVivo | null>(null);
   const [sessoesAtivas, setSessoesAtivas] = useState<SessaoBancaAoVivo[]>([]);
+  const [mapaSessoesBanca, setMapaSessoesBanca] = useState<Record<string, SessaoBancaAoVivo>>({});
 
   // Estados editáveis da Ficha MSEP do grupo selecionado
   const [rubricasEdit, setRubricasEdit] = useState<RubricaItemAvaliacao[]>([]);
@@ -229,12 +232,18 @@ export function App() {
     void carregarTudo();
   }, []);
 
-  // Monitorar estado de autenticação Firebase dos Professores Avaliadores
+  // Monitorar estado de autenticação Firebase dos Professores Avaliadores (Identificação Obrigatória)
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setUsuarioAuth(user);
-      if (user && user.displayName) {
-        setAvaliadorEdit(user.displayName);
+      setAuthPronto(true);
+      if (!user) {
+        setAuthModalAberto(true);
+      } else {
+        setAuthModalAberto(false);
+        if (user.displayName) {
+          setAvaliadorEdit(user.displayName);
+        }
       }
     });
     return () => unsub();
@@ -280,9 +289,11 @@ export function App() {
   // Como o sistema é exclusivo dos docentes avaliadores, qualquer professor autenticado tem poderes de gestão da banca
   const isProfessorTitular = Boolean(usuarioAuth);
 
-  // Escutar todas as sessões de bancas ao vivo (para o Banner Ao Vivo no topo de todas as telas)
+  // Escutar todas as sessões de bancas cadastradas no Firestore (para status dos cards e banner ao vivo)
   useEffect(() => {
-    const unsub = escutarTodasSessoesAtivas((ativas) => {
+    const unsub = escutarTodasSessoesBanca((mapa) => {
+      setMapaSessoesBanca(mapa);
+      const ativas = Object.values(mapa).filter((s) => s.status === 'em_andamento');
       setSessoesAtivas(ativas);
     });
     return () => unsub();
@@ -892,6 +903,35 @@ export function App() {
   const totalEntregues = bancas.filter((b) => b.entregue_na_pasta).length;
   const entreguesI2DEVA = bancas.filter((b) => b.turma === 'I2DEV-A' && b.entregue_na_pasta).length;
   const entreguesI2DEVB = bancas.filter((b) => b.turma === 'I2DEV-B' && b.entregue_na_pasta).length;
+  const totalApresentados = Object.values(mapaSessoesBanca).filter((s) => s.status === 'concluida').length;
+
+  const formatarDataHoraEfetivaBanca = (
+    iniciadoEm: string | null | undefined,
+    encerradoEm: string | null | undefined,
+    dataFallback: string,
+    horarioFallback: string,
+  ): string => {
+    try {
+      if (iniciadoEm && encerradoEm) {
+        const dIni = new Date(iniciadoEm);
+        const dFim = new Date(encerradoEm);
+        const dataStr = dIni.toLocaleDateString('pt-BR');
+        const horaIni = dIni.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const horaFim = dFim.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        return `${dataStr} das ${horaIni} às ${horaFim}`;
+      }
+      if (encerradoEm) {
+        const dFim = new Date(encerradoEm);
+        return `${dFim.toLocaleDateString('pt-BR')} às ${dFim.toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`;
+      }
+    } catch {
+      // Fallback em caso de data inválida
+    }
+    return `${dataFallback} • ${horarioFallback}`;
+  };
 
   const badgeResultadoFinal = (res: ResultadoFinalTipo) => {
     if (res === 'Aprovado') {
@@ -967,6 +1007,63 @@ export function App() {
     grupoAtual && !grupoAtual.entregue_na_pasta
       ? 'Grupo sem entrega dos arquivos obrigatórios na pasta da turma.'
       : `Média final calculada em ${mediaGrupoEdit.toFixed(2)} pts, inferior ao mínimo regulamentar de 50,0 pts exigido para aprovação direta.`;
+
+  // Dados consolidados pós-banca realizada para o grupo selecionado
+  const sessaoAtual = (grupoAtual ? mapaSessoesBanca[grupoAtual.id] : null) || sessaoAoVivo;
+  const bancaJaRealizadaAtual = sessaoAtual?.status === 'concluida';
+  const consolidadaAtual = sessaoAtual?.banca_consolidada || bancaConsolidada;
+  const avaliacoesIndividuaisMap = consolidadaAtual?.avaliacoes_individuais || {};
+  const avaliacoesIndividuaisList = Object.values(avaliacoesIndividuaisMap);
+  const statusFinalGrupoAtual = bancaJaRealizadaAtual
+    ? (sessaoAtual?.status_liberacao_final ??
+      consolidadaAtual?.status_liberacao_final ??
+      grupoAtual?.status_liberacao_nota ??
+      'Aprovado')
+    : (grupoAtual?.status_liberacao_nota ?? 'Aprovado');
+  const mediaFinalGrupoAtual = bancaJaRealizadaAtual
+    ? (sessaoAtual?.media_final_consolidada ??
+      consolidadaAtual?.media_final ??
+      grupoAtual?.media_nota_final_grupo ??
+      0)
+    : (grupoAtual?.media_nota_final_grupo ?? 0);
+
+  const nomesAvaliadoresBanca: string[] = [];
+  if (sessaoAtual?.avaliadores_presentes?.length) {
+    sessaoAtual.avaliadores_presentes.forEach((n) => {
+      if (!nomesAvaliadoresBanca.includes(n)) nomesAvaliadoresBanca.push(n);
+    });
+  }
+  if (avaliacoesIndividuaisList.length > 0) {
+    avaliacoesIndividuaisList.forEach((av) => {
+      if (!nomesAvaliadoresBanca.includes(av.professor_nome)) nomesAvaliadoresBanca.push(av.professor_nome);
+    });
+  }
+  if (nomesAvaliadoresBanca.length === 0 && sessaoAtual?.titular_nome) {
+    nomesAvaliadoresBanca.push(sessaoAtual.titular_nome);
+  }
+
+  const pareceresAvaliadoresBanca: {
+    professor_nome: string;
+    parecer: string;
+    atualizado_em?: string;
+  }[] = [];
+  if (consolidadaAtual?.pareceres_professores?.length) {
+    consolidadaAtual.pareceres_professores.forEach((p) => {
+      pareceresAvaliadoresBanca.push({
+        professor_nome: p.professor_nome,
+        parecer: p.parecer,
+        atualizado_em: p.atualizado_em,
+      });
+    });
+  } else if (avaliacoesIndividuaisList.length > 0) {
+    avaliacoesIndividuaisList.forEach((av) => {
+      pareceresAvaliadoresBanca.push({
+        professor_nome: av.professor_nome,
+        parecer: av.parecer_tecnico,
+        atualizado_em: av.atualizado_em,
+      });
+    });
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -1452,6 +1549,17 @@ export function App() {
                         ) : (
                           bancasFiltradas.map((b) => {
                             const selecionado = grupoAtual?.id === b.id;
+                            const sessaoB = mapaSessoesBanca[b.id];
+                            const bancaJaRealizada = sessaoB?.status === 'concluida';
+                            const mediaFinalApresentada =
+                              sessaoB?.media_final_consolidada ??
+                              sessaoB?.banca_consolidada?.media_final ??
+                              b.media_nota_final_grupo;
+                            const statusFinalApresentado =
+                              sessaoB?.status_liberacao_final ??
+                              sessaoB?.banca_consolidada?.status_liberacao_final ??
+                              b.status_liberacao_nota;
+
                             return (
                               <div
                                 key={b.id}
@@ -1459,6 +1567,8 @@ export function App() {
                                 className={`cursor-pointer rounded-xl border p-3.5 transition ${
                                   selecionado
                                     ? 'border-red-600 bg-red-50/30 ring-2 ring-red-500/20 shadow-sm'
+                                    : bancaJaRealizada
+                                    ? 'border-purple-300 bg-purple-50/30 hover:border-purple-400 shadow-2xs'
                                     : b.entregue_na_pasta
                                     ? 'border-emerald-200 bg-white hover:border-emerald-400'
                                     : 'border-slate-200 bg-white/80 opacity-85 hover:opacity-100'
@@ -1497,7 +1607,33 @@ export function App() {
                                   </div>
 
                                   <div className="text-right">
-                                    {b.entregue_na_pasta ? (
+                                    {bancaJaRealizada ? (
+                                      <>
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-900 shadow-2xs">
+                                          <Award className="h-3 w-3 text-purple-700" />
+                                          Apresentado
+                                        </span>
+                                        <p className="mt-1.5 text-base font-extrabold text-slate-900">
+                                          {mediaFinalApresentada.toFixed(1)}
+                                          <span className="text-[10px] font-normal text-slate-500">
+                                            /100
+                                          </span>
+                                        </p>
+                                        <span
+                                          className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                                            statusFinalApresentado === 'Aprovado'
+                                              ? 'bg-emerald-100 text-emerald-800'
+                                              : statusFinalApresentado ===
+                                                  'Nota Retida (Pendências)' ||
+                                                statusFinalApresentado === 'Nota Retida'
+                                              ? 'bg-amber-100 text-amber-900'
+                                              : 'bg-red-100 text-red-800'
+                                          }`}
+                                        >
+                                          {statusFinalApresentado}
+                                        </span>
+                                      </>
+                                    ) : b.entregue_na_pasta ? (
                                       <>
                                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                                           <CheckCircle2 className="h-3 w-3" />
@@ -1530,27 +1666,40 @@ export function App() {
                                   </div>
                                 </div>
 
-                                {b.entregue_na_pasta && (
+                                {(bancaJaRealizada || b.entregue_na_pasta) && (
                                   <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] text-slate-600">
-                                    <span>
-                                      P1: <strong>{b.p1_total.toFixed(1)}</strong>/30 • P2:{' '}
-                                      <strong>{b.p2_total.toFixed(1)}</strong>/40
-                                    </span>
-                                    <span
-                                      className={`font-semibold ${
-                                        b.auditoria_tecnica.banco_exclusivo_nuvem &&
-                                        !b.auditoria_tecnica.usa_localstorage_indevido &&
-                                        b.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                          ? 'text-emerald-700'
-                                          : 'text-red-600'
-                                      }`}
-                                    >
-                                      {b.auditoria_tecnica.usa_localstorage_indevido
-                                        ? '⚠️ localStorage Indevido'
-                                        : b.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                        ? `✅ ${b.auditoria_tecnica.banco_provedor_nuvem || 'Cloud DB'}`
-                                        : `⚠️ SQL < 20 regs`}
-                                    </span>
+                                    {bancaJaRealizada ? (
+                                      <>
+                                        <span className="font-semibold text-purple-900">
+                                          ⏱️ Duração: <strong>{sessaoB?.duracao_formatada || 'Concluída'}</strong>
+                                        </span>
+                                        <span className="font-semibold text-purple-700">
+                                          👨‍🏫 {sessaoB?.avaliadores_presentes?.length || 2} Avaliadores
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span>
+                                          P1: <strong>{b.p1_total.toFixed(1)}</strong>/30 • P2:{' '}
+                                          <strong>{b.p2_total.toFixed(1)}</strong>/40
+                                        </span>
+                                        <span
+                                          className={`font-semibold ${
+                                            b.auditoria_tecnica.banco_exclusivo_nuvem &&
+                                            !b.auditoria_tecnica.usa_localstorage_indevido &&
+                                            b.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                              ? 'text-emerald-700'
+                                              : 'text-red-600'
+                                          }`}
+                                        >
+                                          {b.auditoria_tecnica.usa_localstorage_indevido
+                                            ? '⚠️ localStorage Indevido'
+                                            : b.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                            ? `✅ ${b.auditoria_tecnica.banco_provedor_nuvem || 'Cloud DB'}`
+                                            : `⚠️ SQL < 20 regs`}
+                                        </span>
+                                      </>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -1582,7 +1731,15 @@ export function App() {
                               <span className="text-xs font-semibold text-slate-600">
                                 Banca: {grupoAtual.data_banca} ({grupoAtual.horario})
                               </span>
-                              {grupoAtual.entregue_na_pasta ? (
+                              {bancaJaRealizadaAtual ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-100 px-2.5 py-0.5 text-xs font-bold text-purple-900 shadow-2xs">
+                                    <Award className="h-3.5 w-3.5 text-purple-700" />
+                                    Apresentado
+                                  </span>
+                                  {badgeResultadoFinal(statusFinalGrupoAtual)}
+                                </div>
+                              ) : grupoAtual.entregue_na_pasta ? (
                                 badgeResultadoFinal(grupoAtual.status_liberacao_nota)
                               ) : (
                                 <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
@@ -1711,98 +1868,369 @@ export function App() {
                             {/* Banner da Regra Final de Liberação de Nota */}
                             <div
                               className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
-                                grupoAtual.status_liberacao_nota === 'Aprovado'
+                                statusFinalGrupoAtual === 'Aprovado'
                                   ? 'border-emerald-300 bg-emerald-50/70 text-emerald-950'
-                                  : grupoAtual.status_liberacao_nota === 'Nota Retida (Pendências)'
+                                  : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
+                                    statusFinalGrupoAtual === 'Nota Retida'
                                   ? 'border-amber-300 bg-amber-50/80 text-amber-950'
                                   : 'border-red-300 bg-red-50/80 text-red-950'
                               }`}
                             >
                               <div className="flex items-start gap-3">
-                                {grupoAtual.status_liberacao_nota === 'Aprovado' ? (
+                                {statusFinalGrupoAtual === 'Aprovado' ? (
                                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
-                                ) : grupoAtual.status_liberacao_nota ===
-                                  'Nota Retida (Pendências)' ? (
+                                ) : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
+                                  statusFinalGrupoAtual === 'Nota Retida' ? (
                                   <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
                                 ) : (
                                   <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
                                 )}
                                 <div>
                                   <h4 className="text-xs font-extrabold uppercase tracking-wider">
-                                    Status de Liberação de Nota: {grupoAtual.status_liberacao_nota}
+                                    Status de Liberação de Nota: {statusFinalGrupoAtual}{' '}
+                                    {bancaJaRealizadaAtual && '(Média Oficial Consolidada)'}
                                   </h4>
                                   <p className="mt-0.5 text-xs leading-relaxed">
-                                    {grupoAtual.status_liberacao_nota === 'Aprovado'
-                                      ? 'Grupo atingiu média >= 50 pontos e não possui nenhum item em nível Insuficiente. Nota final liberada!'
-                                      : grupoAtual.status_liberacao_nota ===
-                                        'Nota Retida (Pendências)'
-                                      ? `A nota final (${grupoAtual.media_nota_final_grupo.toFixed(
+                                    {statusFinalGrupoAtual === 'Aprovado'
+                                      ? `Banca concluída com média final de ${mediaFinalGrupoAtual.toFixed(
                                           2,
-                                        )} pts >= 50) já está calculada, porém a liberação da nota fica RETIDA até a entrega/regularização dos itens Insuficientes: [${grupoAtual.itens_insuficientes_grupo.join(
+                                        )} pts (>= 50) e sem itens insuficientes bloqueantes. Nota final liberada!`
+                                      : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
+                                        statusFinalGrupoAtual === 'Nota Retida'
+                                      ? `A média final oficial (${mediaFinalGrupoAtual.toFixed(
+                                          2,
+                                        )} pts >= 50) está calculada, porém a liberação da nota fica RETIDA até a regularização dos itens Insuficientes: [${grupoAtual.itens_insuficientes_grupo.join(
                                           ', ',
                                         )}].`
-                                      : 'Média inferior a 50,0 pontos. O(s) aluno(s) terão uma nova chance de apresentação em data futura.'}
+                                      : `Média final de ${mediaFinalGrupoAtual.toFixed(
+                                          2,
+                                        )} pts inferior a 50,0 pontos. Aluno(s) necessitam de nova oportunidade de apresentação em data futura.`}
                                   </p>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Mini Placar dos 4 Pilares + Média Calculada (5 Cards) */}
+                            {/* Mini Placar dos 4 Pilares + Média (5 Cards) */}
                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <span className="text-[11px] font-semibold text-slate-500">
-                                  Pilar 1 • Doc (30%)
-                                </span>
-                                <p className="mt-0.5 text-lg font-extrabold text-slate-900">
-                                  {grupoAtual.p1_total.toFixed(2)}{' '}
-                                  <span className="text-xs font-normal text-slate-400">/ 30</span>
-                                </p>
+                              {/* Pilar 1 */}
+                              <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
+                                <div>
+                                  <span className="text-[11px] font-semibold text-slate-500">
+                                    Pilar 1 • Doc (30%)
+                                  </span>
+                                  <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                                    {(consolidadaAtual?.media_p1 ?? grupoAtual.p1_total).toFixed(2)}
+                                    <span className="text-xs font-normal text-slate-400"> / 30</span>
+                                  </p>
+                                </div>
+                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
+                                  <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-1.5 text-left text-[11px]">
+                                    {avaliacoesIndividuaisList.map((av) => (
+                                      <div
+                                        key={av.professor_uid}
+                                        className="flex items-center justify-between text-slate-600"
+                                      >
+                                        <span
+                                          className="truncate max-w-[85px] font-medium"
+                                          title={av.professor_nome}
+                                        >
+                                          {av.professor_nome.split(' ')[0]}:
+                                        </span>
+                                        <span className="font-bold text-slate-800">
+                                          {av.p1_total.toFixed(2)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <span className="text-[11px] font-semibold text-slate-500">
-                                  Pilar 2 • Sistema (40%)
-                                </span>
-                                <p className="mt-0.5 text-lg font-extrabold text-slate-900">
-                                  {grupoAtual.p2_total.toFixed(2)}{' '}
-                                  <span className="text-xs font-normal text-slate-400">/ 40</span>
-                                </p>
+
+                              {/* Pilar 2 */}
+                              <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
+                                <div>
+                                  <span className="text-[11px] font-semibold text-slate-500">
+                                    Pilar 2 • Sistema (40%)
+                                  </span>
+                                  <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                                    {(consolidadaAtual?.media_p2 ?? grupoAtual.p2_total).toFixed(2)}
+                                    <span className="text-xs font-normal text-slate-400"> / 40</span>
+                                  </p>
+                                </div>
+                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
+                                  <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-1.5 text-left text-[11px]">
+                                    {avaliacoesIndividuaisList.map((av) => (
+                                      <div
+                                        key={av.professor_uid}
+                                        className="flex items-center justify-between text-slate-600"
+                                      >
+                                        <span
+                                          className="truncate max-w-[85px] font-medium"
+                                          title={av.professor_nome}
+                                        >
+                                          {av.professor_nome.split(' ')[0]}:
+                                        </span>
+                                        <span className="font-bold text-slate-800">
+                                          {av.p2_total.toFixed(2)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                              <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3 text-center">
-                                <span className="text-[11px] font-semibold text-amber-900">
-                                  Pilar 3 • Banca (15%)
-                                </span>
-                                <p className="mt-0.5 text-lg font-extrabold text-amber-800">
-                                  {grupoAtual.p3_grupo_base.toFixed(2)}{' '}
-                                  <span className="text-[11px] font-normal text-amber-700">
+
+                              {/* Pilar 3 */}
+                              <div className="flex flex-col justify-between rounded-xl border border-amber-200 bg-amber-50/40 p-3 text-center">
+                                <div>
+                                  <span className="text-[11px] font-semibold text-amber-900">
+                                    Pilar 3 • Banca (15%)
+                                  </span>
+                                  <p className="mt-1 text-2xl font-extrabold text-amber-800">
+                                    {(consolidadaAtual?.media_p3 ?? grupoAtual.p3_grupo_base).toFixed(2)}
+                                    <span className="text-xs font-normal text-amber-700"> / 15</span>
+                                  </p>
+                                </div>
+                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 ? (
+                                  <div className="mt-2 space-y-0.5 border-t border-amber-200/80 pt-1.5 text-left text-[11px]">
+                                    {avaliacoesIndividuaisList.map((av) => (
+                                      <div
+                                        key={av.professor_uid}
+                                        className="flex items-center justify-between text-amber-900"
+                                      >
+                                        <span
+                                          className="truncate max-w-[85px] font-medium"
+                                          title={av.professor_nome}
+                                        >
+                                          {av.professor_nome.split(' ')[0]}:
+                                        </span>
+                                        <span className="font-bold">
+                                          {av.p3_grupo_base.toFixed(2)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : !bancaJaRealizadaAtual ? (
+                                  <span className="text-[10px] text-amber-700 font-medium">
                                     (3.1/3.2 Ao Vivo)
                                   </span>
-                                </p>
+                                ) : null}
                               </div>
-                              <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-3 text-center">
-                                <span className="text-[11px] font-semibold text-indigo-900">
-                                  Pilar 4 • Sprints (15%)
-                                </span>
-                                <p className="mt-0.5 text-lg font-extrabold text-indigo-800">
-                                  {(
-                                    grupoAtual.integrantes_notas.length > 0
-                                      ? grupoAtual.integrantes_notas.reduce(
-                                          (acc, curr) => acc + curr.p4_nota,
-                                          0,
-                                        ) / grupoAtual.integrantes_notas.length
-                                      : 0
-                                  ).toFixed(2)}{' '}
-                                  <span className="text-xs font-normal text-indigo-400">/ 15</span>
-                                </p>
+
+                              {/* Pilar 4 */}
+                              <div className="flex flex-col justify-between rounded-xl border border-indigo-200 bg-indigo-50/40 p-3 text-center">
+                                <div>
+                                  <span className="text-[11px] font-semibold text-indigo-900">
+                                    Pilar 4 • Sprints (15%)
+                                  </span>
+                                  <p className="mt-1 text-2xl font-extrabold text-indigo-800">
+                                    {(
+                                      consolidadaAtual?.media_p4 ??
+                                      (grupoAtual.integrantes_notas.length > 0
+                                        ? grupoAtual.integrantes_notas.reduce(
+                                            (acc, curr) => acc + curr.p4_nota,
+                                            0,
+                                          ) / grupoAtual.integrantes_notas.length
+                                        : 0)
+                                    ).toFixed(2)}
+                                    <span className="text-xs font-normal text-indigo-400"> / 15</span>
+                                  </p>
+                                </div>
+                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
+                                  <div className="mt-2 space-y-0.5 border-t border-indigo-200/80 pt-1.5 text-left text-[11px]">
+                                    {avaliacoesIndividuaisList.map((av) => {
+                                      const avP4 =
+                                        av.integrantes_notas.length > 0
+                                          ? av.integrantes_notas.reduce(
+                                              (acc, curr) => acc + curr.p4_nota,
+                                              0,
+                                            ) / av.integrantes_notas.length
+                                          : 0;
+                                      return (
+                                        <div
+                                          key={av.professor_uid}
+                                          className="flex items-center justify-between text-indigo-900"
+                                        >
+                                          <span
+                                            className="truncate max-w-[85px] font-medium"
+                                            title={av.professor_nome}
+                                          >
+                                            {av.professor_nome.split(' ')[0]}:
+                                          </span>
+                                          <span className="font-bold">{avP4.toFixed(2)}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
-                              <div className="rounded-xl border border-red-200 bg-red-50/50 p-3 text-center">
-                                <span className="text-[11px] font-semibold text-red-800">
-                                  Média Calculada
-                                </span>
-                                <p className="mt-0.5 text-lg font-extrabold text-red-700">
-                                  {grupoAtual.media_nota_final_grupo.toFixed(2)}%
-                                </p>
+
+                              {/* Média Final */}
+                              <div className="flex flex-col justify-between rounded-xl border border-red-200 bg-red-50/50 p-3 text-center">
+                                <div>
+                                  <span className="text-[11px] font-semibold text-red-800">
+                                    {bancaJaRealizadaAtual ? 'Média Consolidada' : 'Média Calculada'}
+                                  </span>
+                                  <p className="mt-1 text-2xl font-extrabold text-red-700">
+                                    {mediaFinalGrupoAtual.toFixed(2)}%
+                                  </p>
+                                </div>
+                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
+                                  <div className="mt-2 space-y-0.5 border-t border-red-200/80 pt-1.5 text-left text-[11px]">
+                                    {avaliacoesIndividuaisList.map((av) => (
+                                      <div
+                                        key={av.professor_uid}
+                                        className="flex items-center justify-between text-red-900"
+                                      >
+                                        <span
+                                          className="truncate max-w-[85px] font-medium"
+                                          title={av.professor_nome}
+                                        >
+                                          {av.professor_nome.split(' ')[0]}:
+                                        </span>
+                                        <span className="font-bold">
+                                          {av.nota_final_grupo.toFixed(2)}%
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
+
+                            {/* Bloco da Ata da Banca Realizada: Pareceres Oficiais, Avaliadores, Data/Hora e Duração */}
+                            {bancaJaRealizadaAtual && (
+                              <div className="rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 p-5 shadow-xs">
+                                {/* Cabeçalho da Ata */}
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-indigo-100 pb-3.5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+                                      <Award className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <h3 className="text-sm font-extrabold uppercase tracking-wide text-indigo-950">
+                                          Ata da Banca Realizada & Pareceres Oficiais
+                                        </h3>
+                                        <span className="inline-flex items-center gap-1 rounded-full border border-purple-200 bg-purple-100 px-2.5 py-0.5 text-[10px] font-extrabold text-purple-900">
+                                          <CheckCircle2 className="h-3 w-3 text-purple-700" />
+                                          Apresentado
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-indigo-800/80">
+                                        Registro formal da defesa, notas e considerações individuais de cada avaliador
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Badges de Metadados: Duração e Data/Horário Efetivo */}
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <div className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs shadow-2xs">
+                                      <Clock className="h-3.5 w-3.5 text-indigo-600" />
+                                      <span className="font-medium text-slate-500">Duração:</span>
+                                      <span className="font-extrabold text-indigo-950">
+                                        {sessaoAtual?.duracao_formatada || '—'}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs shadow-2xs">
+                                      <Calendar className="h-3.5 w-3.5 text-red-500" />
+                                      <span className="font-medium text-slate-500">Realizada em:</span>
+                                      <span className="font-extrabold text-slate-900">
+                                        {formatarDataHoraEfetivaBanca(
+                                          sessaoAtual?.iniciado_em,
+                                          sessaoAtual?.encerrado_em,
+                                          grupoAtual.data_banca,
+                                          grupoAtual.horario,
+                                        )}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Nomes dos Professores Avaliadores da Banca */}
+                                <div className="mt-3.5 flex flex-wrap items-center gap-2 text-xs">
+                                  <span className="flex items-center gap-1.5 font-bold text-indigo-950">
+                                    <Users className="h-4 w-4 text-indigo-600" />
+                                    Banca Examinadora:
+                                  </span>
+                                  {nomesAvaliadoresBanca.length > 0 ? (
+                                    nomesAvaliadoresBanca.map((nome, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="inline-flex items-center gap-1 rounded-lg border border-indigo-200/80 bg-white px-3 py-1 font-semibold text-indigo-900 shadow-2xs"
+                                      >
+                                        👨‍🏫 {nome}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span className="text-slate-500 italic">
+                                      Docentes da banca registrados na sessão
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Pareceres Consolidados de Cada Avaliador */}
+                                <div className="mt-4">
+                                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-indigo-900">
+                                    Parecer Técnico & Considerações de Cada Avaliador:
+                                  </h4>
+                                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                                    {pareceresAvaliadoresBanca.length > 0 ? (
+                                      pareceresAvaliadoresBanca.map((item, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="flex flex-col justify-between rounded-xl border border-indigo-100 bg-white p-4 shadow-2xs"
+                                        >
+                                          <div>
+                                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                              <div className="flex items-center gap-2">
+                                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-800">
+                                                  {item.professor_nome.charAt(0)}
+                                                </div>
+                                                <div>
+                                                  <h5 className="text-xs font-bold text-slate-900">
+                                                    {item.professor_nome}
+                                                  </h5>
+                                                  {item.atualizado_em && (
+                                                    <p className="text-[10px] text-slate-400">
+                                                      {new Date(item.atualizado_em).toLocaleDateString(
+                                                        'pt-BR',
+                                                      )}{' '}
+                                                      às{' '}
+                                                      {new Date(item.atualizado_em).toLocaleTimeString(
+                                                        'pt-BR',
+                                                        {
+                                                          hour: '2-digit',
+                                                          minute: '2-digit',
+                                                        },
+                                                      )}
+                                                    </p>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <span className="rounded bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                                                Avaliador {idx + 1}
+                                              </span>
+                                            </div>
+                                            <div className="mt-3 text-xs leading-relaxed text-slate-700 italic whitespace-pre-wrap">
+                                              {item.parecer && item.parecer.trim() ? (
+                                                `"${item.parecer}"`
+                                              ) : (
+                                                <span className="text-slate-400 not-italic">
+                                                  Nenhum texto de parecer digitado por este avaliador.
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <div className="col-span-2 rounded-xl border border-dashed border-indigo-200 bg-white/70 p-4 text-center text-xs text-slate-500">
+                                        Pareceres dos avaliadores registrados na ata da banca.
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Blocos Rápidos e Diretos: Deploy Online, Banco de Dados em Nuvem e Repositório GitHub */}
                             <div className="grid gap-3 sm:grid-cols-3">
@@ -3900,13 +4328,21 @@ export function App() {
 
       {/* Modal de Autenticação / Identificação do Professor Avaliador */}
       <AuthModal
-        aberto={authModalAberto}
-        onClose={() => setAuthModalAberto(false)}
+        aberto={authModalAberto || (!usuarioAuth && authPronto)}
+        obrigatorio={!usuarioAuth}
+        onClose={() => {
+          if (usuarioAuth) setAuthModalAberto(false);
+        }}
         onSucesso={(usuario: User) => {
           setUsuarioAuth(usuario);
+          setAuthModalAberto(false);
           if (usuario.displayName) {
             setAvaliadorEdit(usuario.displayName);
           }
+          setAviso({
+            tipo: 'ok',
+            texto: `Avaliador identificado: ${usuario.displayName || usuario.email}!`,
+          });
         }}
       />
     </div>

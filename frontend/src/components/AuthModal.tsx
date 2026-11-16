@@ -16,6 +16,7 @@ interface AuthModalProps {
   usuarioAtual?: User | null;
   onSucesso?: (user: User) => void;
   onLoginSucesso?: (user: User) => void;
+  obrigatorio?: boolean;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -24,6 +25,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onFechar,
   onSucesso,
   onLoginSucesso,
+  obrigatorio = false,
 }) => {
   const fechar = onClose || onFechar || (() => {});
   const sucessoLogin = onSucesso || onLoginSucesso || (() => {});
@@ -117,17 +119,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={fechar}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          {obrigatorio ? (
+            <span className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
+              Obrigatório
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={fechar}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         {/* Corpo */}
         <div className="space-y-4 p-5">
+          {obrigatorio && (
+            <div className="flex items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+              <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
+              <p className="leading-snug">
+                <strong>Identificação Obrigatória:</strong> Identifique-se com sua conta de avaliador para ter acesso às análises e avaliações das bancas.
+              </p>
+            </div>
+          )}
           {erro && (
             <div className="flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-950/50 p-3 text-xs text-red-200">
               <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />

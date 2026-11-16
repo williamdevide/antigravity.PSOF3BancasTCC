@@ -369,6 +369,36 @@ export function escutarSessaoBanca(
 }
 
 /**
+ * Escuta todas as sessões de bancas cadastradas no Firestore (em andamento, concluídas, etc.)
+ */
+export function escutarTodasSessoesBanca(
+  onUpdate: (sessoes: Record<string, SessaoBancaAoVivo>) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  try {
+    const colRef = collection(db, COLECAO_SESSOES_BANCA);
+    const q = query(colRef);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const mapa: Record<string, SessaoBancaAoVivo> = {};
+        snapshot.docs.forEach((d) => {
+          mapa[d.id] = d.data() as SessaoBancaAoVivo;
+        });
+        onUpdate(mapa);
+      },
+      (error) => {
+        if (onError) onError(error);
+      },
+    );
+    return unsubscribe;
+  } catch (e: unknown) {
+    if (onError && e instanceof Error) onError(e);
+    return () => {};
+  }
+}
+
+/**
  * Escuta todas as sessões de bancas ativas (para o banner de alerta "Ao Vivo" em qualquer tela)
  */
 export function escutarTodasSessoesAtivas(

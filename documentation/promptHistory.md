@@ -318,3 +318,27 @@ o botão para resetar / excluir banca não apareceu para mim. acho que nosso rep
      - Upload via SCP dos novos bundles e arquivos backend para a VM Oracle.
      - Reinício dos serviços `psof3-bancas.service` e Caddy Server com sucesso.
   6. Git: Commit `070c5e3` realizado na branch principal.
+
+---
+
+## Sessão 14 — 16/11/2026 (11:55)
+
+### Prompt 14 (16/11/2026 - 11:55)
+```text
+/agente-orquestrador /grill-me /goal quero que seja obrigatorio identificar o avaliador logo que carregamos a página.
+em [Auditoria & Bancas] os cards já estão exibindo se o tcc esta Aguardando ou Entregue. após realizar a banca ele deve exibir Apresentado, a média final e o status (Nota Retida ou os outros). ainda nessa aba do lado direito, se a banca já foi realizada ele exibe nos cards dos pilares a nota de cada avaliador e maior a nota consolidada. logo abaixo exibe o texto com o texto consolidado de cada avaliador, o nome dos avaliadores, a data e hora que foi realizada a banca efetivamente e o tempo de duração
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 14
+1. **Identificação Obrigatória do Avaliador ao Carregar a Página:**
+   - Tela/Modal de Bloqueio Obrigatório (sem botão de fechar): ao abrir a aplicação sem login ativo ou ao deslogar, bloqueia o acesso e exige identificação imediata via Conta Google, E-mail/Senha institucional ou Atalho Rápido de Docente, liberando o sistema apenas após autenticação bem-sucedida.
+2. **Gatilho e Visual de "Apresentado" nos Cards da Aba [Auditoria & Bancas]:**
+   - Quando a banca for oficialmente concluída (`status: 'concluida'` na coleção `psof3_sessoes_banca`), o card da esquerda passa de "Entregue" para **"Apresentado"**, exibindo em destaque a **média final consolidada oficial** e o badge de **status de liberação da nota** (Aprovado / Nota Retida / Nova Apresentação).
+   - Grupos não apresentados mantêm o status atual ("Entregue" se arquivos entregues, ou "Aguardando" se pendente de entrega).
+3. **Exibição na Coluna da Direita de [Auditoria & Bancas] pós-Banca Realizada:**
+   - **Nos 5 Cards dos Pilares (P1, P2, P3, P4 e Média Final):** Exibição da nota atribuída por cada avaliador individualmente (em tipografia secundária) e a nota consolidada (média oficial) em destaque maior.
+   - **Bloco Nobre da Ata da Banca Realizada (logo abaixo dos 5 cards dos pilares):** Cabeçalho com data/hora efetiva de realização (início e término), tempo total de duração (ex.: `28m 15s`) e nomes dos professores avaliadores; seguido pelas caixas de texto com o parecer consolidado / considerações técnicas de cada professor.
+   - Abaixo da Ata, permanecem os cards de auditoria técnica (Deploy, BD, GitHub, Anexos e Tabelas).
+
+
+

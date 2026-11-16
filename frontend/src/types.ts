@@ -334,6 +334,7 @@ export interface SessaoBancaAoVivo {
   justificativa_contingencia?: string;
   media_final_consolidada?: number;
   status_liberacao_final?: ResultadoFinalTipo;
+  banca_consolidada?: BancaConsolidada;
   atualizado_em: string;
 }
 
