@@ -14,6 +14,8 @@ frontend/dist/
 .vite/
 
 # Arquivos de Sistema & Chaves
+.env
+*.env
 *.key
 *.pem
 deploy_bancas.tar.gz
