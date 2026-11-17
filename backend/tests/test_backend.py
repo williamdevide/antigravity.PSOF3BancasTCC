@@ -113,11 +113,20 @@ def test_auditoria_grupos_i2dev_a():
     assert r_bancas.status_code == 200
     mapa = {b["id"]: b for b in r_bancas.json()["bancas"]}
 
-    # Grupo 05 - LabwareNext
+    # Grupo 05 - LabwareNext (Hospedado na VM Oracle 147.15.2.73)
     g_lab = mapa["I2DEV-A_Grupo05"]
     assert g_lab["entregue_na_pasta"] is True
     assert "LabWare" in g_lab["projeto"] or "Labware" in g_lab["projeto"]
     assert len(g_lab["perguntas_arguicao"]) >= 3
+    assert g_lab["auditoria_tecnica"]["hospedado_vm_oracle"] is True
+    assert "VM Oracle" in g_lab["auditoria_tecnica"]["deploy_provedor"]
+    assert g_lab["auditoria_tecnica"]["deploy_online_ok"] is True
+    assert g_lab["auditoria_tecnica"]["sql_tabelas_qtd"] == 8
+    assert g_lab["auditoria_tecnica"]["tabelas_sql_presentes_online_qtd"] == 8
+    assert g_lab["auditoria_tecnica"]["tabelas_ciclo_completo_qtd"] == 8
+    rub_lab = {r["codigo"]: r for r in g_lab["rubricas"]}
+    assert rub_lab["2.3"]["nota"] >= 9.0
+    assert rub_lab["2.4"]["nota"] >= 4.4
 
     # Grupo 12 - BRIO
     g_brio = mapa["I2DEV-A_Grupo12"]
@@ -137,12 +146,31 @@ def test_auditoria_grupos_i2dev_a():
 def test_exportar_relatorios_endpoints():
     r_ficha = client.post("/api/bancas/I2DEV-B_Grupo05/exportar/ficha-pdf")
     assert r_ficha.status_code == 200
-    assert r_ficha.json()["arquivo"].endswith(".pdf")
+    dados_ficha = r_ficha.json()
+    assert dados_ficha["arquivo"].endswith(".pdf")
+    p_ficha = Path(dados_ficha["caminho"])
+    assert p_ficha.exists()
+    assert p_ficha.stat().st_size > 5000
+    conteudo_ficha = p_ficha.read_bytes()
+    assert conteudo_ficha.startswith(b"%PDF-1.")
+
+    # Testar download do arquivo gerado via GET
+    r_dl = client.get(dados_ficha["url_download"])
+    assert r_dl.status_code == 200
+    assert r_dl.content.startswith(b"%PDF-1.")
 
     r_dossie = client.post("/api/bancas/I2DEV-B_Grupo05/exportar/dossie")
     assert r_dossie.status_code == 200
-    assert r_dossie.json()["arquivo_pdf"].endswith(".pdf")
-    assert r_dossie.json()["arquivo_md"].endswith(".md")
+    dados_dossie = r_dossie.json()
+    assert dados_dossie["arquivo_pdf"].endswith(".pdf")
+    assert dados_dossie["arquivo_md"].endswith(".md")
+    r_dl_pdf = client.get(dados_dossie["url_pdf"])
+    assert r_dl_pdf.status_code == 200
+    assert r_dl_pdf.content.startswith(b"%PDF-1.")
+    assert len(r_dl_pdf.content) > 5000
+    r_dl_md = client.get(dados_dossie["url_md"])
+    assert r_dl_md.status_code == 200
+    assert len(r_dl_md.text) > 500
 
     r_xlsx = client.post("/api/exportar/consolidado-xlsx?turma=I2DEV-B")
     assert r_xlsx.status_code == 200

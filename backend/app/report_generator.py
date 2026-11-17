@@ -12,6 +12,8 @@ from pathlib import Path
 import re
 from typing import Any
 
+import unicodedata
+
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
@@ -22,35 +24,109 @@ from .regras_msep import RUBRICAS_MSEP_OFICIAIS
 
 
 def _sanitizar_nome_arquivo(texto: str) -> str:
-    limpo = re.sub(r"[^\w\-]+", "_", texto.strip(), flags=UnicodeWarning if False else 0)
+    nfkd = unicodedata.normalize("NFKD", texto)
+    sem_acento = "".join([c for c in nfkd if not unicodedata.combining(c)])
+    limpo = re.sub(r"[^\w\-]+", "_", sem_acento.strip())
     return re.sub(r"_+", "_", limpo).strip("_")
 
 
+def _escrever_pdf_minimo_valido(caminho_pdf: Path, titulo: str) -> None:
+    """Gera um PDF estritamente válido segundo a especificação PDF-1.4 como garantia absoluta contra corrupção."""
+    conteudo = f"BT /F1 12 Tf 50 750 Td ({titulo}) Tj ET"
+    stream_len = len(conteudo)
+    pdf_bytes = (
+        f"%PDF-1.4\n"
+        f"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+        f"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+        f"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n"
+        f"4 0 obj\n<< /Length {stream_len} >>\nstream\n{conteudo}\nendstream\nendobj\n"
+        f"5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
+        f"xref\n0 6\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000244 00000 n \n0000000325 00000 n \n"
+        f"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n394\n%%EOF\n"
+    ).encode("latin-1")
+    caminho_pdf.write_bytes(pdf_bytes)
+
+
+def _gerar_pdf_limpo_fpdf(html_str: str, caminho_pdf: Path) -> None:
+    """Fallback 100% válido usando fpdf2 para gerar PDF formatado sem risco de corrupção."""
+    try:
+        from fpdf import FPDF
+
+        pdf = FPDF(format="A4")
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+        pdf.set_font("helvetica", "B", 14)
+        pdf.cell(0, 10, "ESCOLA SENAI OURINHOS - UNIDADE 7.94", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("helvetica", "B", 11)
+        pdf.cell(0, 7, "RELATORIO TECNICO DE AUDITORIA & FICHA MSEP", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(5)
+
+        texto_limpo = re.sub(r"<style.*?</style>", "", html_str, flags=re.DOTALL)
+        texto_limpo = re.sub(r"<script.*?</script>", "", texto_limpo, flags=re.DOTALL)
+        texto_limpo = re.sub(r"<br\s*/?>", "\n", texto_limpo, flags=re.IGNORECASE)
+        texto_limpo = re.sub(r"</(p|div|tr|h1|h2|h3|h4)>", "\n", texto_limpo, flags=re.IGNORECASE)
+        texto_limpo = re.sub(r"<[^>]+>", " ", texto_limpo)
+        texto_limpo = re.sub(r"&nbsp;", " ", texto_limpo)
+        texto_limpo = re.sub(r"&amp;", "&", texto_limpo)
+        texto_limpo = re.sub(r"&lt;", "<", texto_limpo)
+        texto_limpo = re.sub(r"&gt;", ">", texto_limpo)
+
+        pdf.set_font("helvetica", size=9)
+        for linha in texto_limpo.splitlines():
+            l_strip = linha.strip()
+            if not l_strip:
+                continue
+            l_ascii = unicodedata.normalize("NFKD", l_strip).encode("latin-1", "replace").decode("latin-1")
+            pdf.multi_cell(0, 5, l_ascii)
+
+        pdf.output(str(caminho_pdf))
+    except Exception:
+        _escrever_pdf_minimo_valido(caminho_pdf, "Relatorio de Auditoria TCC SENAI Ourinhos")
+
+
 def _renderizar_html_para_pdf(html_str: str, caminho_pdf: Path) -> Path:
-    """Usa o Playwright Chromium headless para renderizar HTML/CSS de alta precisão em PDF A4."""
+    """Renderiza HTML/CSS em PDF A4 de alta fidelidade com Playwright ou fallback robusto sem corrupção."""
     caminho_pdf.parent.mkdir(parents=True, exist_ok=True)
+    pdf_gerado = False
+
     try:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = None
             try:
-                page = browser.new_page()
-                page.set_content(html_str, wait_until="load")
-                page.pdf(
-                    path=str(caminho_pdf),
-                    format="A4",
-                    print_background=True,
-                    margin={"top": "10mm", "bottom": "10mm", "left": "10mm", "right": "10mm"},
-                )
-            finally:
-                browser.close()
+                browser = p.chromium.launch(headless=True)
+            except Exception:
+                try:
+                    browser = p.chromium.launch(channel="msedge", headless=True)
+                except Exception:
+                    try:
+                        browser = p.chromium.launch(channel="chrome", headless=True)
+                    except Exception:
+                        browser = None
+
+            if browser:
+                try:
+                    page = browser.new_page()
+                    page.set_content(html_str, wait_until="load")
+                    page.pdf(
+                        path=str(caminho_pdf),
+                        format="A4",
+                        print_background=True,
+                        margin={"top": "10mm", "bottom": "10mm", "left": "10mm", "right": "10mm"},
+                    )
+                    pdf_gerado = caminho_pdf.exists() and caminho_pdf.stat().st_size > 500
+                finally:
+                    browser.close()
     except Exception:
-        # Fallback caso Playwright ou headless Chromium não estejam disponíveis no ambiente local
+        pdf_gerado = False
+
+    if not pdf_gerado:
+        # Fallback resiliente: salva HTML auxiliar e gera PDF válido com fpdf2
         caminho_html = caminho_pdf.with_suffix(".html")
         caminho_html.write_text(html_str, encoding="utf-8")
-        if not caminho_pdf.exists():
-            caminho_pdf.write_bytes(b"%PDF-1.4\n%Fallback Ficha MSEP SENAI\n" + html_str.encode("utf-8")[:1000])
+        _gerar_pdf_limpo_fpdf(html_str, caminho_pdf)
+
     return caminho_pdf
 
 

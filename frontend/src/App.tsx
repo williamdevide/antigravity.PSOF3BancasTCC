@@ -1682,16 +1682,9 @@ export function App() {
                                           </span>
                                         </p>
                                         <span
-                                          className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[9px] font-bold ${
-                                            b.status_liberacao_nota === 'Aprovado'
-                                              ? 'bg-emerald-100 text-emerald-800'
-                                              : b.status_liberacao_nota ===
-                                                'Nota Retida (Pendências)'
-                                              ? 'bg-amber-100 text-amber-900'
-                                              : 'bg-red-100 text-red-800'
-                                          }`}
+                                          className="mt-0.5 inline-block rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold text-blue-800"
                                         >
-                                          {b.status_liberacao_nota}
+                                          Aguardando Banca
                                         </span>
                                       </>
                                     ) : (
@@ -1776,7 +1769,10 @@ export function App() {
                                   {badgeResultadoFinal(statusFinalGrupoAtual)}
                                 </div>
                               ) : grupoAtual.entregue_na_pasta ? (
-                                badgeResultadoFinal(grupoAtual.status_liberacao_nota)
+                                <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-900 shadow-2xs">
+                                  <Clock className="h-3.5 w-3.5 text-blue-700" />
+                                  Aguardando Banca
+                                </span>
                               ) : (
                                 <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
                                   Aguardando Entrega na Pasta
@@ -1902,49 +1898,69 @@ export function App() {
                         ) : (
                           <div className="mt-5 space-y-5">
                             {/* Banner da Regra Final de Liberação de Nota */}
-                            <div
-                              className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
-                                statusFinalGrupoAtual === 'Aprovado'
-                                  ? 'border-emerald-300 bg-emerald-50/70 text-emerald-950'
-                                  : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
-                                    statusFinalGrupoAtual === 'Nota Retida'
-                                  ? 'border-amber-300 bg-amber-50/80 text-amber-950'
-                                  : 'border-red-300 bg-red-50/80 text-red-950'
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                {statusFinalGrupoAtual === 'Aprovado' ? (
-                                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
-                                ) : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
-                                  statusFinalGrupoAtual === 'Nota Retida' ? (
-                                  <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
-                                ) : (
-                                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
-                                )}
-                                <div>
-                                  <h4 className="text-xs font-extrabold uppercase tracking-wider">
-                                    Status de Liberação de Nota: {statusFinalGrupoAtual}{' '}
-                                    {bancaJaRealizadaAtual && '(Média Oficial Consolidada)'}
-                                  </h4>
-                                  <p className="mt-0.5 text-xs leading-relaxed">
-                                    {statusFinalGrupoAtual === 'Aprovado'
-                                      ? `Banca concluída com média final de ${mediaFinalGrupoAtual.toFixed(
-                                          2,
-                                        )} pts (>= 50) e sem itens insuficientes bloqueantes. Nota final liberada!`
-                                      : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
-                                        statusFinalGrupoAtual === 'Nota Retida'
-                                      ? `A média final oficial (${mediaFinalGrupoAtual.toFixed(
-                                          2,
-                                        )} pts >= 50) está calculada, porém a liberação da nota fica RETIDA até a regularização dos itens Insuficientes: [${grupoAtual.itens_insuficientes_grupo.join(
-                                          ', ',
-                                        )}].`
-                                      : `Média final de ${mediaFinalGrupoAtual.toFixed(
-                                          2,
-                                        )} pts inferior a 50,0 pontos. Aluno(s) necessitam de nova oportunidade de apresentação em data futura.`}
-                                  </p>
+                            {!bancaJaRealizadaAtual ? (
+                              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50/80 p-4 text-blue-950">
+                                <div className="flex items-start gap-3">
+                                  <Clock className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
+                                  <div>
+                                    <h4 className="text-xs font-extrabold uppercase tracking-wider">
+                                      Status de Liberação: Aguardando Banca (Entrega Realizada)
+                                    </h4>
+                                    <p className="mt-0.5 text-xs leading-relaxed">
+                                      Os artefatos e a documentação do projeto foram auditados preliminarmente na pasta de entrega. O status oficial definitivo de liberação da nota será consolidado ao vivo após a apresentação e arguição da banca examinadora.
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-[11px] font-semibold text-blue-800">Média Preliminar IA:</span>
+                                  <p className="text-base font-extrabold text-blue-950">{grupoAtual.media_nota_final_grupo.toFixed(1)} pts</p>
                                 </div>
                               </div>
-                            </div>
+                            ) : (
+                              <div
+                                className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
+                                  statusFinalGrupoAtual === 'Aprovado'
+                                    ? 'border-emerald-300 bg-emerald-50/70 text-emerald-950'
+                                    : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
+                                      statusFinalGrupoAtual === 'Nota Retida'
+                                    ? 'border-amber-300 bg-amber-50/80 text-amber-950'
+                                    : 'border-red-300 bg-red-50/80 text-red-950'
+                                }`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  {statusFinalGrupoAtual === 'Aprovado' ? (
+                                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+                                  ) : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
+                                    statusFinalGrupoAtual === 'Nota Retida' ? (
+                                    <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+                                  ) : (
+                                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
+                                  )}
+                                  <div>
+                                    <h4 className="text-xs font-extrabold uppercase tracking-wider">
+                                      Status de Liberação de Nota: {statusFinalGrupoAtual}{' '}
+                                      {bancaJaRealizadaAtual && '(Média Oficial Consolidada)'}
+                                    </h4>
+                                    <p className="mt-0.5 text-xs leading-relaxed">
+                                      {statusFinalGrupoAtual === 'Aprovado'
+                                        ? `Banca concluída com média final de ${mediaFinalGrupoAtual.toFixed(
+                                            2,
+                                          )} pts (>= 50) e sem itens insuficientes bloqueantes. Nota final liberada!`
+                                        : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
+                                          statusFinalGrupoAtual === 'Nota Retida'
+                                        ? `A média final oficial (${mediaFinalGrupoAtual.toFixed(
+                                            2,
+                                          )} pts >= 50) está calculada, porém a liberação da nota fica RETIDA até a regularização dos itens Insuficientes: [${grupoAtual.itens_insuficientes_grupo.join(
+                                            ', ',
+                                          )}].`
+                                        : `Média final de ${mediaFinalGrupoAtual.toFixed(
+                                            2,
+                                          )} pts inferior a 50,0 pontos. Aluno(s) necessitam de nova oportunidade de apresentação em data futura.`}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Mini Placar dos 4 Pilares + Média (5 Cards) */}
                             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -2302,14 +2318,22 @@ export function App() {
                                             <div className="mt-0.5">
                                               <span
                                                 className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-black uppercase ${
-                                                  isAprovado
+                                                  !bancaJaRealizadaAtual
+                                                    ? 'border border-blue-200 bg-blue-50 text-blue-800'
+                                                    : isAprovado
                                                     ? 'bg-emerald-100 text-emerald-800'
                                                     : isRetido
                                                     ? 'bg-amber-100 text-amber-900'
                                                     : 'bg-red-100 text-red-800'
                                                 }`}
                                               >
-                                                {isAprovado ? 'Aprovado' : isRetido ? 'Nota Retida' : 'Nova Apresentação'}
+                                                {!bancaJaRealizadaAtual
+                                                  ? 'Aguardando Banca'
+                                                  : isAprovado
+                                                  ? 'Aprovado'
+                                                  : isRetido
+                                                  ? 'Nota Retida'
+                                                  : 'Nova Apresentação'}
                                               </span>
                                             </div>
                                           </div>
@@ -2325,12 +2349,12 @@ export function App() {
                             <div className="grid gap-3 sm:grid-cols-3">
                               {/* Card 1: Deploy Online (Item 2.4) */}
                               <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">
                                     Deploy Online (Item 2.4)
                                   </span>
                                   <span
-                                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                    className={`inline-flex shrink-0 whitespace-nowrap items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                                       grupoAtual.auditoria_tecnica.deploy_online_ok
                                         ? 'bg-emerald-100 text-emerald-800'
                                         : 'bg-red-100 text-red-800'
@@ -2373,12 +2397,12 @@ export function App() {
 
                               {/* Card 2: Banco de Dados em Nuvem (Item 2.3) */}
                               <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                    Banco de Dados em Nuvem (Item 2.3)
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">
+                                    Banco de Dados (Item 2.3)
                                   </span>
                                   <span
-                                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                    className={`inline-flex shrink-0 whitespace-nowrap items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                                       grupoAtual.auditoria_tecnica.banco_provedor_nuvem &&
                                       grupoAtual.auditoria_tecnica.tabelas_sql_presentes_online_qtd > 0
                                         ? 'bg-emerald-100 text-emerald-800'
@@ -2423,12 +2447,12 @@ export function App() {
 
                               {/* Card 3: Repositório GitHub (Item 2.5) */}
                               <div className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                    Repositório GitHub (Item 2.5)
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 truncate">
+                                    Repositório GitHub (2.5)
                                   </span>
                                   <span
-                                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                    className={`inline-flex shrink-0 whitespace-nowrap items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                                       grupoAtual.auditoria_tecnica.github_online_ok
                                         ? 'bg-emerald-100 text-emerald-800'
                                         : 'bg-amber-100 text-amber-900'
@@ -2677,6 +2701,10 @@ export function App() {
                                               {arq.nomenclatura_conforme ? (
                                                 <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
                                                   <CheckCircle2 className="h-3.5 w-3.5" /> Conforme
+                                                </span>
+                                              ) : arq.possui_apenas_aviso_leve ? (
+                                                <span className="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[10px]">
+                                                  ℹ️ Ponto de Atenção (Sufixo adicional — Nota Integral)
                                                 </span>
                                               ) : (
                                                 <span className="font-medium text-amber-700">
@@ -3089,9 +3117,9 @@ export function App() {
                                   </div>
                                 )}
                               </div>
-                                </div>
-                              )}
                             </div>
+                          )}
+                        </div>
 
                             {/* 4. Pontuação Oficial do Pilar 4 (PDFs anexados em ./tcc) */}
                             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs transition">
@@ -3136,7 +3164,7 @@ export function App() {
                                           <th className="pb-2">Aluno</th>
                                           <th className="pb-2 text-center">4.1 Relatórios Semanais</th>
                                           <th className="pb-2 text-center">4.2 Participação Aulas</th>
-                                          <th className="pb-2 text-center">Total P4</th>
+                                          <th className="pb-2 text-center w-28 min-w-[100px]">Total P4 (15,0)</th>
                                           <th className="pb-2 text-center">Nota Final</th>
                                           <th className="pb-2 text-center">Status Liberação</th>
                                         </tr>
@@ -3174,14 +3202,24 @@ export function App() {
                                                 {ind.nivel_4_2})
                                               </span>
                                             </td>
-                                            <td className="py-2 text-center font-mono font-bold text-indigo-700">
+                                            <td className="py-2 text-center font-mono font-extrabold text-sm text-indigo-700 w-28 min-w-[100px]">
                                               {ind.p4_nota.toFixed(2)} / 15.0
                                             </td>
                                             <td className="py-2 text-center font-mono text-sm font-black text-slate-900">
                                               {ind.nota_final.toFixed(2)}%
                                             </td>
                                             <td className="py-2 text-center">
-                                              {badgeResultadoFinal(ind.resultado)}
+                                              <span
+                                                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold whitespace-nowrap ${
+                                                  ind.resultado === 'Aprovado'
+                                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                    : ind.resultado === 'Nota Retida (Pendências)' || ind.resultado === 'Nota Retida'
+                                                    ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                                                    : 'bg-red-100 text-red-800 border border-red-200'
+                                                }`}
+                                              >
+                                                {ind.resultado === 'Aprovado' ? 'Aprovado' : ind.resultado === 'Nota Retida (Pendências)' ? 'Nota Retida' : 'Nova Chance'}
+                                              </span>
                                             </td>
                                           </tr>
                                         ))}

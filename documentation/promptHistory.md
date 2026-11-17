@@ -439,3 +439,61 @@ a guia ficha msep e arguição não pode ter nenhum valor alterado pelo professo
 3. **Bloqueio de Edição Acidental na Ficha MSEP & Arguição:**
    - Acesso em modo somente leitura quando a banca não tiver sido iniciada ou estiver concluída.
    - Edição permitida durante a banca (`em_andamento`) ou via botão "Editar Banca", que reabre para ajuste e, ao salvar, recalcula e atualiza as médias e descrições no Firestore.
+
+---
+
+## Sessão 18 — 17/11/2026 (07:37)
+
+### Prompt 18 (17/11/2026 - 07:37)
+```text
+/agente-orquestrador /grill-me /goal vamos a pequenas correções e melhoras na tela Auditoria & Bancas:
+- enquanto um tcc estiver entregue, mas ainda não tiver sido apresentado, não exiba que ele está com Nota Retida e sim Aguardando Banca
+- existem projjetos que estão hospedados na minha vm oracle, e o banco está lá dentro, preciso que consiga entender isso e analisar o bd online
+- os botões Ficha PDF e Dossie PDF/MD estão sendo gerados, mas dão erro de arquivo corrompido e não abrem
+- nos cards deploy online, banco de dados em nuvem e repositório github os shapes ao lado do titulo que indicam problema ou sucesso estão estreitos e com isso o conteudo ocupa duas linhas, melhores essa visualização.
+- No parecer técnico card 1: quando os arquivos enviados estiverem no padrão solicitado e simplesmente tiverem acréscimos no final com (1), (2), virgulas ou pontos, aponte como pontos de atenção, mas não precisa diminuir pontos por isso, agora se estiverem realmente fora do nosso padrão daí mantenha o comportamento atual.
+- No parecer técnico card 2: quando você exibe que a entrega tem 12/14 seções da ABNT preciso que indique quais estão faltando. além disso quero um olhar mais criterioso sobre a formatação do documento (espaçamento, alinhamento, margens, tamanho de papel, numeração de páginas, fontes e tamanho de fonte, titulos, sumário, enfim tudo pertinente a norma), caso o grupo tenha entregue com as seções corretas, mas com pendencias nesse sentido a nota ficará retida até que enviem corrigido.
+- No parecer técnico card 4:  diminua o shape do objeto na coluna status liberação e com isso deixe a coluna nota P4 um pouco maior
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 18
+1. **Critério e Tolerância para a Retenção de Nota por Formatação ABNT (Card 2):**
+   - `(Recommended) Retenção por Não Conformidades Estruturais Principais`: Reter a liberação da nota se houver desvios nas regras nucleares da ABNT (margens fora de 3x3x2x2 cm, papel diferente de A4, espaçamento entrelinhas diferente de 1.5 no corpo, texto sem alinhamento justificado ou fonte fora de Arial/Times 12pt). O Card 2 lista explicitamente todas as seções faltantes (ex: 12/14) e enumera detalhadamente cada não conformidade de formatação. Divergências menores de elementos gráficos são apontadas como pontos de atenção.
+
+### Implementações Realizadas — Sessão 18
+1. **Status "Aguardando Banca" (Item 1):**
+   - Na barra lateral, no cabeçalho do grupo selecionado, no banner principal de status e na Ata da Banca/resumos, enquanto um TCC estiver entregue na pasta e a banca ainda não tiver sido apresentada/concluída, o status exibido é **"Aguardando Banca"** (com badge azul suave e ícone de relógio), reservando a classificação definitiva de liberação para a consolidação ao vivo da banca.
+2. **Suporte Completo a Projetos na VM Oracle (`147.15.2.73`) (Item 2):**
+   - Detecção automática de projetos hospedados na VM Oracle a partir do link de deploy (`*.147.15.2.73.sslip.io` ou IP da VM).
+   - Reconhecimento do SGBD MySQL / MariaDB rodando na VM.
+   - Extração automática de tabelas a partir das queries no código caso o arquivo `.sql` entregue seja vazio (como no LabWareNext, onde 8 tabelas foram detectadas no PHP).
+   - Validação da conectividade com o deploy e rotas de dados (HTTP 200), marcando as 8 tabelas como ativas e com ciclo completo sem penalizar as rubricas 2.3 e 2.4 (ambas atingindo nível Avançado).
+3. **Resolução de Arquivos PDF Corrompidos (Ficha PDF e Dossiê PDF/MD) (Item 3):**
+   - Instalação do binário Chromium do Playwright (`playwright install chromium`).
+   - Implementação de fallback com `fpdf2` e geração em baixo nível de PDF 1.4 estrito com caracteres sanitizados para Latin-1.
+   - Sanitização de caracteres especiais/acentos nos nomes de arquivos com decomposição NFKD.
+   - Teste automatizado validando que os bytes iniciam com `%PDF-1.` e o tamanho supera 10 KB.
+4. **Alinhamento dos Shapes nos Cards Rápidos (Deploy, Banco, GitHub) (Item 4):**
+   - Ajustados os cabeçalhos dos 3 cards para incluir `flex items-center justify-between gap-2`, `truncate` nos títulos e `inline-flex shrink-0 whitespace-nowrap items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold` nos badges, eliminando qualquer quebra de linha indesejada.
+5. **Auditoria de Nomenclatura com Sufixos Leves (Card 1) (Item 5):**
+   - Arquivos que seguem o padrão `CTDS-2026-02-...` e apenas possuem acréscimos finais como `(1)`, `(2)`, vírgulas ou pontos antes da extensão são classificados com `possui_apenas_aviso_leve: True`, recebendo pontuação integral (100% de conformidade) e apontados apenas como pontos de atenção para a banca.
+6. **Auditoria Criteriosa de Formatação ABNT (Card 2) (Item 6):**
+   - Exibição explícita da lista de seções ABNT faltantes (ex: 12/14 indicando quais faltam).
+   - Análise aprofundada via `python-docx` com inspeção de papel A4 (21 x 29,7 cm), margens (3 x 3 x 2 x 2 cm), espaçamento entrelinhas 1,5, texto justificado (com parsing resiliente para XML `w:jc` como `'start'`) e tipografia.
+   - Vinculação de pendências estruturais de formatação à retenção da nota do grupo até que seja enviado corrigido.
+7. **Tabela do Card 4 (Notas P4) (Item 7):**
+   - Coluna "Total P4" aumentada com largura dedicada (`w-28 min-w-[100px] text-center font-mono font-extrabold text-sm text-indigo-700`).
+   - Shape do badge na coluna "Status Liberação" compactado (`rounded-md px-2 py-0.5 text-[10px] font-bold whitespace-nowrap`).
+
+---
+
+## Sessão 19 — 17/11/2026 (08:43)
+
+### Prompt 19 (17/11/2026 - 08:43)
+```text
+atualize nosso repositorio e o projeto na vmoracle
+```
+
+
+
+

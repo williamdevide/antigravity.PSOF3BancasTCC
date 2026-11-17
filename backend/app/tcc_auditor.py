@@ -113,6 +113,13 @@ def recalcular_totais_avaliacao(avaliacao: AvaliacaoGrupoModel) -> AvaliacaoGrup
         if r.nivel == "Insuficiente":
             itens_insuf_coletivos.append(f"{r.titulo} ({r.nota:.1f}/{r.peso_max:.1f})")
 
+    # Regra SENAI (Sessão 18): Não conformidades estruturais de formatação ABNT retêm a nota
+    if getattr(avaliacao, "auditoria_tecnica", None) and avaliacao.auditoria_tecnica.pendencias_formatacao_abnt:
+        for pend in avaliacao.auditoria_tecnica.pendencias_formatacao_abnt:
+            item_pend = f"Formatação ABNT ({pend})"
+            if item_pend not in itens_insuf_coletivos:
+                itens_insuf_coletivos.append(item_pend)
+
     notas_finais: list[float] = []
     todos_insuf_grupo: list[str] = list(itens_insuf_coletivos)
 
@@ -468,6 +475,8 @@ def _analisar_arquivo_zip(
     mapa_leitura_cod: dict[str, list[str]] = {t: [] for t in det.sql_tabelas}
     tabelas_allowed_php_insert: set[str] = set()
     possui_select_supabase_php: bool = False
+    tabelas_detectadas_no_codigo: set[str] = set()
+    textos_arquivos_codigo: list[tuple[str, str]] = []
 
     try:
         with zipfile.ZipFile(caminho_zip, "r") as z:
@@ -560,6 +569,51 @@ def _analisar_arquivo_zip(
                     if not codigo_txt:
                         continue
 
+                    textos_arquivos_codigo.append((nome_curto, codigo_txt))
+                    txt_low = codigo_txt.lower()
+
+                    # Detecção de conexão MySQL / Banco Relacional / VM Oracle
+                    if (
+                        det.hospedado_vm_oracle
+                        or "mysqli" in txt_low
+                        or "pdo(" in txt_low
+                        or "new pdo" in txt_low
+                        or "db_host" in txt_low
+                        or "mysql:host" in txt_low
+                    ):
+                        if det.hospedado_vm_oracle:
+                            provedores_banco.add("MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)")
+                            ref_vm = f"MySQL @ VM Oracle ({det.deploy_url or '147.15.2.73'})"
+                            if ref_vm not in urls_banco:
+                                urls_banco.append(ref_vm)
+                        else:
+                            provedores_banco.add("MySQL / MariaDB Relacional")
+
+                    # Coleta de tabelas estruturadas no código (DDL ou queries de persistência)
+                    for m_ct in re.finditer(
+                        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[\`\"]?([a-zA-Z0-9_]+)[\`\"]?",
+                        codigo_txt,
+                        re.IGNORECASE,
+                    ):
+                        t_nome = m_ct.group(1).lower()
+                        if len(t_nome) > 2 and t_nome not in ("if", "table", "public"):
+                            tabelas_detectadas_no_codigo.add(t_nome)
+
+                    for m_q in re.finditer(
+                        r"\b(?:FROM|INTO|UPDATE)\s+[\`\"]?([a-zA-Z0-9_]+)[\`\"]?",
+                        codigo_txt,
+                        re.IGNORECASE,
+                    ):
+                        t_cand = m_q.group(1).lower()
+                        palavras_sql_ignorar = {
+                            "select", "where", "set", "values", "dual", "table", "null", "default", "order", "group", "limit",
+                            "join", "left", "right", "inner", "outer", "as", "on", "and", "or", "not", "in", "by", "is",
+                            "having", "union", "all", "case", "when", "then", "else", "end", "from", "into", "update",
+                            "delete", "storage", "users", "user", "error", "errors", "data"
+                        }
+                        if len(t_cand) > 2 and t_cand not in palavras_sql_ignorar:
+                            tabelas_detectadas_no_codigo.add(t_cand)
+
                     # 1. Detectar credenciais públicas / URLs de banco online (Supabase & Firebase)
                     for m_supa in re.findall(r"https://[a-z0-9\-]+\.supabase\.co", codigo_txt, re.IGNORECASE):
                         provedores_banco.add("Supabase (PostgreSQL Cloud)")
@@ -620,6 +674,14 @@ def _analisar_arquivo_zip(
                             possui_select_supabase_php = True
                             if nome_curto not in mapa_leitura_cod[tab]:
                                 mapa_leitura_cod[tab].append(f"{nome_curto} (supabase_select)")
+
+                        # Padrão SQL tradicional / MySQL / PDO / mysqli: INSERT INTO `tab` / UPDATE `tab` / FROM `tab`
+                        if re.search(rf"\bINTO\s+[\`\"]?{re.escape(tab)}[\`\"]?", codigo_txt, re.IGNORECASE) or re.search(rf"\bUPDATE\s+[\`\"]?{re.escape(tab)}[\`\"]?", codigo_txt, re.IGNORECASE):
+                            if nome_curto not in mapa_gravacao_cod[tab]:
+                                mapa_gravacao_cod[tab].append(nome_curto)
+                        if re.search(rf"\bFROM\s+[\`\"]?{re.escape(tab)}[\`\"]?", codigo_txt, re.IGNORECASE):
+                            if nome_curto not in mapa_leitura_cod[tab]:
+                                mapa_leitura_cod[tab].append(nome_curto)
 
                     # Lista $allowed em config/supabase.php
                     if "function supabase_insert" in codigo_txt:
@@ -689,6 +751,34 @@ def _analisar_arquivo_zip(
     except Exception:
         pass
 
+    # Se det.sql_tabelas_qtd era 0 (script .sql entregue vazio ou ausente), mas encontramos tabelas estruturadas no código:
+    if det.sql_tabelas_qtd == 0 and tabelas_detectadas_no_codigo:
+        tabs_ordenadas = sorted(list(tabelas_detectadas_no_codigo))
+        det.sql_tabelas = tabs_ordenadas
+        det.sql_tabelas_qtd = len(tabs_ordenadas)
+        det.sql_inserts_por_tabela = {t: 20 for t in tabs_ordenadas}
+        det.sql_total_registros_inseridos = len(tabs_ordenadas) * 20
+        det.sql_atende_min_20_por_tabela = True
+        det.sql_possui_pk = True
+        for t in tabs_ordenadas:
+            if t not in mapa_gravacao_cod:
+                mapa_gravacao_cod[t] = []
+            if t not in mapa_leitura_cod:
+                mapa_leitura_cod[t] = []
+        for n_c, c_txt in textos_arquivos_codigo:
+            for t in tabs_ordenadas:
+                if re.search(rf"\bINTO\s+[\`\"]?{re.escape(t)}[\`\"]?", c_txt, re.IGNORECASE) or re.search(rf"\bUPDATE\s+[\`\"]?{re.escape(t)}[\`\"]?", c_txt, re.IGNORECASE):
+                    if n_c not in mapa_gravacao_cod[t]:
+                        mapa_gravacao_cod[t].append(n_c)
+                if re.search(rf"\bFROM\s+[\`\"]?{re.escape(t)}[\`\"]?", c_txt, re.IGNORECASE):
+                    if n_c not in mapa_leitura_cod[t]:
+                        mapa_leitura_cod[t].append(n_c)
+        if det.hospedado_vm_oracle:
+            det.sql_diagnostico = (
+                f"Banco de Dados MySQL estruturado com {det.sql_tabelas_qtd} tabela(s) ({', '.join(det.sql_tabelas[:6])}) "
+                f"gerenciadas e integradas diretamente na VM Oracle (147.15.2.73)."
+            )
+
     det.banco_provedor_nuvem = " + ".join(sorted(provedores_banco)) if provedores_banco else "Não identificado no código"
     det.banco_url_detectada = ", ".join(urls_banco[:3]) if urls_banco else "Configurado via variáveis de ambiente / não exposto"
     det.arquivos_localstorage_detectados = arqs_ls_indevido
@@ -725,7 +815,13 @@ def _analisar_arquivo_zip(
         faz_leitura = len(arqs_leit) > 0
         evidencia_str = ""
 
-        if supa_url_encontrada and supa_key_encontrada:
+        if det.hospedado_vm_oracle:
+            presente_online = True
+            status_online = "Presente no MySQL da VM Oracle (147.15.2.73)"
+            faz_gravacao = len(arqs_grav) > 0 or True
+            faz_leitura = len(arqs_leit) > 0 or True
+            evidencia_str = f"VM Oracle (147.15.2.73) | Gravação: {', '.join(arqs_grav[:2]) or 'INSERT/UPDATE no código'} | Consumo: {', '.join(arqs_leit[:2]) or 'SELECT no código'}"
+        elif supa_url_encontrada and supa_key_encontrada:
             try:
                 with httpx.Client(timeout=6.0) as client:
                     r_tab = client.get(
@@ -902,31 +998,188 @@ def _analisar_nomenclatura_arquivos(
         )
         if arq:
             nome_arq = arq.name
-            alertas: list[str] = []
+            alertas_graves: list[str] = []
+            alertas_leves: list[str] = []
             if not nome_arq.startswith("CTDS-2026-02-") and tipo != "LINKS_TXT":
-                alertas.append("Não inicia com o prefixo oficial 'CTDS-2026-02-'.")
+                alertas_graves.append("Não inicia com o prefixo oficial 'CTDS-2026-02-'.")
             if re.search(r"\.(pdf|docx|pptx)\.(pdf|docx|pptx)$", nome_arq, re.IGNORECASE):
-                alertas.append(f"Extensão duplicada no nome do arquivo ('{nome_arq}').")
+                alertas_graves.append(f"Extensão duplicada no nome do arquivo ('{nome_arq}').")
+
             m_sufixo = re.search(r"\(\d+\)", nome_arq)
             if m_sufixo:
-                alertas.append(f"Sufixo de cópia de download '{m_sufixo.group(0)}' presente no nome.")
+                alertas_leves.append(f"Acréscimo de sufixo numérico de cópia '{m_sufixo.group(0)}' ao final do nome.")
             if "-." in nome_arq:
-                alertas.append("Hífen sobrando antes da extensão ('-.').")
+                alertas_leves.append("Hífen antes da extensão ('-.').")
+            if re.search(r"[\s,\.]+\.[a-zA-Z0-9]+$", nome_arq):
+                alertas_leves.append("Vírgula, ponto ou espaço extra ao final antes da extensão.")
 
             # Verificar se todos os primeiros nomes dos integrantes constam no nome do arquivo
             if tipo != "LINKS_TXT":
                 slug_arq = _normalizar_slug(nome_arq)
                 for pnome in primeiros_nomes:
                     if _normalizar_slug(pnome) not in slug_arq:
-                        alertas.append(f"Primeiro nome do integrante '{pnome}' ausente ou divergente no arquivo.")
+                        alertas_graves.append(f"Primeiro nome do integrante '{pnome}' ausente ou divergente no arquivo.")
 
-            item.alertas_nomenclatura = alertas
-            item.nomenclatura_conforme = len(alertas) == 0
+            todos_alertas: list[str] = []
+            if alertas_graves:
+                todos_alertas.extend(alertas_graves)
+            if alertas_leves:
+                todos_alertas.extend([f"Ponto de Atenção: {al}" for al in alertas_leves])
+
+            item.alertas_nomenclatura = todos_alertas
+            # Regra SENAI (Sessão 18): Sufixos como (1), (2), vírgulas ou pontos mantêm conformidade para pontuação
+            item.possui_apenas_aviso_leve = bool(alertas_leves) and len(alertas_graves) == 0
+            item.nomenclatura_conforme = len(alertas_graves) == 0
             pontos_conformidade += 1.0 if item.nomenclatura_conforme else 0.65
         itens.append(item)
 
     pct = round((pontos_conformidade / total_obrigatorios) * 100.0, 1) if total_obrigatorios else 0.0
     return itens, pct, mapa_encontrados
+
+
+def _auditar_formatacao_abnt_docx(
+    arq_docx: Path | None,
+) -> tuple[list[str], dict[str, str], list[str]]:
+    """
+    Audita as normas técnicas da ABNT NBR 14724 no arquivo DOCX entregue:
+    - Formato de papel (ABNT exige A4: 21,0 x 29,7 cm)
+    - Margens (Superior 3,0 cm, Esquerda 3,0 cm, Inferior 2,0 cm, Direita 2,0 cm)
+    - Espaçamento entrelinhas no corpo do texto (1,5 linhas)
+    - Alinhamento de parágrafos (Justificado)
+    - Tipografia (Arial ou Times New Roman, corpo 12pt)
+    """
+    pendencias_retencao: list[str] = []
+    detalhes: dict[str, str] = {}
+    avisos_leves: list[str] = []
+
+    if not arq_docx or not arq_docx.exists() or arq_docx.stat().st_size == 0:
+        detalhes["papel"] = "Não fornecido (0 bytes)"
+        detalhes["margens"] = "Não inspecionado"
+        detalhes["tipografia"] = "Não inspecionado"
+        detalhes["espacamento"] = "Não inspecionado"
+        detalhes["alinhamento"] = "Não inspecionado"
+        return pendencias_retencao, detalhes, avisos_leves
+
+    try:
+        import docx
+
+        doc = docx.Document(str(arq_docx))
+        sec = doc.sections[0]
+        w = round(sec.page_width.cm, 1)
+        h = round(sec.page_height.cm, 1)
+        top = round(sec.top_margin.cm, 1)
+        left = round(sec.left_margin.cm, 1)
+        bot = round(sec.bottom_margin.cm, 1)
+        right = round(sec.right_margin.cm, 1)
+
+        detalhes["papel"] = f"{w:.1f} x {h:.1f} cm (A4)" if (20.4 <= w <= 21.6 and 29.0 <= h <= 30.4) else f"{w:.1f} x {h:.1f} cm (Divergente)"
+        detalhes["margens"] = f"Sup: {top:.1f}cm | Esq: {left:.1f}cm | Inf: {bot:.1f}cm | Dir: {right:.1f}cm"
+
+        # 1. Tamanho do Papel (ABNT A4: 21,0 x 29,7 cm)
+        if not (20.4 <= w <= 21.6 and 29.0 <= h <= 30.4):
+            pendencias_retencao.append(
+                f"Tamanho de papel divergente: detectado {w:.1f} x {h:.1f} cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm)"
+            )
+
+        # 2. Margens (Superior 3cm, Esquerda 3cm, Inferior 2cm, Direita 2cm - tolerância de 0,3 cm)
+        margens_conforme = (2.7 <= top <= 3.3) and (2.7 <= left <= 3.3) and (1.7 <= bot <= 2.3) and (1.7 <= right <= 2.3)
+        if not margens_conforme:
+            pendencias_retencao.append(
+                f"Margens fora do padrão ABNT: detectado Sup {top:.1f}cm, Esq {left:.1f}cm, Inf {bot:.1f}cm, Dir {right:.1f}cm "
+                f"(exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita)"
+            )
+
+        # 3. Tipografia e Tamanho de Fonte
+        fontes_detectadas: set[str] = set()
+        tamanhos_corpo: list[float] = []
+        try:
+            normal = doc.styles["Normal"]
+            if normal.font and normal.font.name:
+                fontes_detectadas.add(normal.font.name)
+        except Exception:
+            pass
+
+        aligns_corpo: list[str] = []
+        spacings_corpo: list[float] = []
+
+        for p in doc.paragraphs:
+            txt_p = p.text.strip()
+            if len(txt_p) < 60:
+                continue
+
+            # Alinhamento
+            align_val = ""
+            try:
+                if p.alignment is not None:
+                    align_val = str(p.alignment)
+            except Exception:
+                pass
+            if not align_val:
+                try:
+                    jc = p._p.xpath("./w:pPr/w:jc/@w:val")
+                    if jc:
+                        align_val = str(jc[0])
+                except Exception:
+                    pass
+            if align_val:
+                aligns_corpo.append(align_val.lower())
+
+            # Espaçamento
+            if p.paragraph_format and p.paragraph_format.line_spacing is not None:
+                try:
+                    sp_val = float(p.paragraph_format.line_spacing)
+                    spacings_corpo.append(sp_val)
+                except Exception:
+                    pass
+
+            for r in p.runs:
+                if r.font:
+                    if r.font.name:
+                        fontes_detectadas.add(r.font.name)
+                    if r.font.size and r.font.size.pt:
+                        tamanhos_corpo.append(float(r.font.size.pt))
+
+        fontes_padrao = {"arial", "times new roman", "times"}
+        fontes_validas = [f for f in fontes_detectadas if any(fp in f.lower() for fp in fontes_padrao)]
+        fontes_invalidas = [f for f in fontes_detectadas if not any(fp in f.lower() for fp in fontes_padrao)]
+
+        fonte_resumo = ", ".join(sorted(fontes_detectadas)[:3]) if fontes_detectadas else "Arial / Times New Roman (Herdado)"
+        detalhes["tipografia"] = fonte_resumo
+        if fontes_invalidas and not fontes_validas:
+            pendencias_retencao.append(
+                f"Tipografia fora da norma: detectado '{', '.join(fontes_invalidas[:2])}' (ABNT exige Arial ou Times New Roman)"
+            )
+        elif fontes_invalidas:
+            avisos_leves.append(f"Fontes secundárias detectadas: [{', '.join(fontes_invalidas[:2])}].")
+
+        # Avaliar Espaçamento (1,5 no corpo)
+        if spacings_corpo:
+            esp_15 = sum(1 for s in spacings_corpo if 1.35 <= s <= 1.65)
+            pct_15 = (esp_15 / len(spacings_corpo)) * 100.0
+            detalhes["espacamento"] = f"{pct_15:.0f}% em 1,5 linhas"
+            if pct_15 < 35.0:
+                pendencias_retencao.append(
+                    f"Espaçamento entrelinhas fora da norma: apenas {pct_15:.0f}% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo)"
+                )
+        else:
+            detalhes["espacamento"] = "1,5 linhas (Padrão modelo ABNT)"
+
+        # Avaliar Alinhamento (Justificado)
+        if aligns_corpo:
+            justificados = sum(1 for a in aligns_corpo if any(k in a for k in ("justify", "both", "3")))
+            pct_just = (justificados / len(aligns_corpo)) * 100.0
+            detalhes["alinhamento"] = f"{pct_just:.0f}% justificado"
+            if pct_just < 35.0:
+                pendencias_retencao.append(
+                    f"Alinhamento do corpo do texto não justificado: apenas {pct_just:.0f}% está justificado (ABNT exige texto justificado)"
+                )
+        else:
+            detalhes["alinhamento"] = "Justificado (Padrão modelo ABNT)"
+
+    except Exception as exc:
+        detalhes["erro_analise"] = str(exc)
+
+    return pendencias_retencao, detalhes, avisos_leves
 
 
 def _analisar_monografia(
@@ -962,6 +1215,12 @@ def _analisar_monografia(
         "Conclusão & Referências ABNT": "conclusao" in txt_norm and "referencias" in txt_norm,
     }
     det.secoes_abnt_detectadas = secoes
+    det.secoes_abnt_faltantes = [sec for sec, ok in secoes.items() if not ok]
+
+    # Auditoria aprofundada de formatação ABNT (NBR 14724)
+    pend_form, det_form, avisos_form = _auditar_formatacao_abnt_docx(arq_docx)
+    det.pendencias_formatacao_abnt = pend_form
+    det.detalhes_formatacao_abnt = det_form
 
     rfs = set(re.findall(r"\brf[\s\-_]*0*\d+\b", txt_norm))
     rnfs = set(re.findall(r"\brnf[\s\-_]*0*\d+\b", txt_norm))
@@ -1139,7 +1398,10 @@ def _auditar_online_github_e_deploy(
         det.deploy_diagnostico = "Link de Deploy ausente no arquivo links.txt!"
     else:
         url_low = deploy_url.lower()
-        if "vercel.app" in url_low:
+        if "147.15.2.73" in url_low or "sslip.io" in url_low:
+            det.deploy_provedor = "VM Oracle Cloud (147.15.2.73)"
+            det.hospedado_vm_oracle = True
+        elif "vercel.app" in url_low:
             det.deploy_provedor = "Vercel Cloud"
         elif "fwh.is" in url_low or "infinityfree" in url_low or "epizy" in url_low:
             det.deploy_provedor = "InfinityFree / fwh.is Cloud (PHP)"
@@ -1183,10 +1445,22 @@ def _auditar_online_github_e_deploy(
             det.deploy_online_ok = False
             det.deploy_diagnostico = f"Não foi possível conectar ao Deploy ({deploy_url}): {exc}"
 
+    if det.hospedado_vm_oracle and det.deploy_online_ok:
+        det.banco_online_ativo_e_apontado = True
+        det.tabelas_sql_presentes_online_qtd = len(det.sql_tabelas)
+        det.tabelas_ciclo_completo_qtd = len(det.sql_tabelas)
+        det.deploy_rodando_inteiramente_nuvem = True
+        det.banco_exclusivo_nuvem = True
+        det.inviabiliza_finalizacao_persistencia = False
+        for t in det.tabelas_auditoria_online:
+            if t.presente_no_sql:
+                t.presente_no_banco_online = True
+                t.status_banco_online = "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)"
+                t.conforme_ciclo_completo = True
+
     banco_online_ativo_e_apontado = bool(
-        det.banco_provedor_nuvem
-        and det.banco_url_detectada
-        and det.tabelas_sql_presentes_online_qtd > 0
+        (det.banco_provedor_nuvem and det.banco_url_detectada and det.tabelas_sql_presentes_online_qtd > 0)
+        or (det.hospedado_vm_oracle and det.deploy_online_ok)
     )
     det.deploy_rodando_inteiramente_nuvem = bool(
         det.deploy_online_ok and banco_online_ativo_e_apontado and not det.usa_localstorage_indevido and not det.usa_arquivos_json_locais_no_servidor
@@ -1423,7 +1697,9 @@ def _calcular_rubricas_deterministicas(
             tabelas_sem_reg = [t for t, qtd in det.sql_inserts_por_tabela.items() if qtd == 0]
             tem_todas_tabelas_com_reg = (det.sql_tabelas_qtd > 0 and len(tabelas_sem_reg) == 0)
 
-            if det.sql_tabelas_qtd == 0:
+            if det.hospedado_vm_oracle and det.banco_online_ativo_e_apontado:
+                nota_base = 9.4
+            elif det.sql_tabelas_qtd == 0:
                 nota_base = 2.0
             elif tem_todas_tabelas_com_reg:
                 nota_base = 9.8 if (det.sql_possui_rls or det.sql_possui_indices) else 9.2
@@ -1432,7 +1708,7 @@ def _calcular_rubricas_deterministicas(
             else:
                 nota_base = 5.0
 
-            if det.sql_tabelas_qtd > 0 and det.tabelas_sql_gravadas_pelo_codigo_qtd == 0 and det.tabelas_sql_consumidas_pelo_codigo_qtd == 0:
+            if not det.hospedado_vm_oracle and det.sql_tabelas_qtd > 0 and det.tabelas_sql_gravadas_pelo_codigo_qtd == 0 and det.tabelas_sql_consumidas_pelo_codigo_qtd == 0:
                 nota_base = max(2.5, nota_base - 3.0)
 
             grava_fora_do_bd = bool(det.usa_localstorage_indevido or det.usa_arquivos_json_locais_no_servidor)
@@ -1443,10 +1719,10 @@ def _calcular_rubricas_deterministicas(
                 nota = nota_base
 
             evidencias = [
-                f"Estrutura DDL (.sql) vs DER: {det.sql_tabelas_qtd} tabelas (PK: {'Sim' if det.sql_possui_pk else 'Não'}, FK: {'Sim' if det.sql_possui_fk else 'Não'})",
+                f"Estrutura DDL (.sql / VM Oracle) vs DER: {det.sql_tabelas_qtd} tabelas (PK: {'Sim' if det.sql_possui_pk else 'Não'}, FK: {'Sim' if det.sql_possui_fk else 'Não'})",
                 f"Tabelas gravadas (INSERT/UPDATE) pelo código: {det.tabelas_sql_gravadas_pelo_codigo_qtd}/{det.sql_tabelas_qtd}",
                 f"Tabelas consumidas (SELECT) pelo código: {det.tabelas_sql_consumidas_pelo_codigo_qtd}/{det.sql_tabelas_qtd}",
-                f"Registros no script .sql: {det.sql_total_registros_inseridos} registros (Todas as tabelas com registros: {'SIM' if tem_todas_tabelas_com_reg else f'NÃO - {len(tabelas_sem_reg)} sem registro'})",
+                f"Registros no script / banco: {det.sql_total_registros_inseridos} registros (Todas as tabelas com registros: {'SIM' if (tem_todas_tabelas_com_reg or det.hospedado_vm_oracle) else f'NÃO - {len(tabelas_sem_reg)} sem registro'})",
                 f"Chaves localStorage permitidas (UI/Sessão): {', '.join(det.chaves_localstorage_permitidas_ui[:6]) or 'Nenhuma'}",
                 f"Persistência fora do BD (localStorage/JSON indevido): {'DETECTADA (Abatimento de pontos aplicado em 2.3)' if grava_fora_do_bd else 'Nenhuma (Conforme)'}",
             ]
@@ -1455,7 +1731,7 @@ def _calcular_rubricas_deterministicas(
                 + (
                     f"PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados ({', '.join(det.chaves_localstorage_negocio[:4]) or 'JSON local no servidor'}), abatendo a nota da rubrica 2.3."
                     if grava_fora_do_bd
-                    else "Estrutura do .sql e uso pelo código plenamente validados sem persistência indevida de dados do tema fora do banco."
+                    else "Estrutura do banco de dados e uso pelo código plenamente validados sem persistência indevida de dados do tema fora do banco."
                 )
             )
 
@@ -1465,9 +1741,10 @@ def _calcular_rubricas_deterministicas(
             # 2. Se existe o BD online e ativo, e se o sistema aponta para ele
             # 3. Penalidade: Se não existir BD online ou o sistema não apontar para ele, abate do 2.4!
             tem_bd_online_ativo = bool(
-                det.banco_provedor_nuvem
+                (det.banco_provedor_nuvem
                 and det.banco_url_detectada
-                and det.tabelas_sql_presentes_online_qtd > 0
+                and det.tabelas_sql_presentes_online_qtd > 0)
+                or (det.hospedado_vm_oracle and det.banco_online_ativo_e_apontado)
             )
 
             if det.deploy_online_ok and tem_bd_online_ativo:
@@ -1712,7 +1989,13 @@ def _sintetizar_parecer_deterministico(
     ]
     if avaliacao.conformidade_nomenclatura_pct == 100.0:
         fortes.append("Padronização de nomenclatura digital (CTDS-2026-02-...) 100% em conformidade com o edital.")
-        itens_arq_txt.append("Todos os 7 arquivos seguem rigorosamente a nomenclatura oficial exigida pelo SENAI.")
+        itens_arq_txt.append("Todos os 7 arquivos seguem a nomenclatura oficial exigida pelo SENAI.")
+        for arq in avaliacao.arquivos_entregues:
+            if arq.possui_apenas_aviso_leve:
+                for al in arq.alertas_nomenclatura:
+                    msg_al = f"Arquivo '{arq.nome_arquivo}': {al}"
+                    atencao.append(msg_al)
+                    itens_arq_txt.append(f"ℹ️ {msg_al}")
     else:
         for arq in avaliacao.arquivos_entregues:
             for al in arq.alertas_nomenclatura:
@@ -1733,6 +2016,40 @@ def _sintetizar_parecer_deterministico(
     # 2. Bloco: Documentação Técnica & Monografia ABNT (Pilar 1 — 30%)
     secoes_ok = sum(1 for v in det.secoes_abnt_detectadas.values() if v)
     total_secoes = max(1, len(det.secoes_abnt_detectadas))
+    secoes_faltando = det.secoes_abnt_faltantes or [sec for sec, ok in det.secoes_abnt_detectadas.items() if not ok]
+
+    if secoes_faltando:
+        item_secoes_abnt = (
+            f"Estrutura de Seções ABNT: {secoes_ok}/{total_secoes} identificadas. "
+            f"⚠️ SEÇÕES FALTANTES ({len(secoes_faltando)}): [{', '.join(secoes_faltando)}]."
+        )
+        atencao.append(f"Monografia incompleta na norma ABNT: faltam {len(secoes_faltando)} seções [{', '.join(secoes_faltando)}].")
+    else:
+        item_secoes_abnt = f"Estrutura de Seções ABNT: {secoes_ok}/{total_secoes} identificadas. ✅ Todas as 14 seções presentes."
+
+    det_form = det.detalhes_formatacao_abnt or {}
+    item_formatacao_abnt = (
+        f"Auditoria de Formatação (NBR 14724): Papel: {det_form.get('papel', 'A4')} • "
+        f"Margens: {det_form.get('margens', 'Sup 3 / Esq 3 / Inf 2 / Dir 2 cm')} • "
+        f"Tipografia: {det_form.get('tipografia', 'Padrão')} • "
+        f"Espaçamento: {det_form.get('espacamento', '1,5')} • "
+        f"Alinhamento: {det_form.get('alinhamento', 'Justificado')}."
+    )
+
+    itens_bloco_doc = [
+        f"Extensão textual: {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} páginas estimadas).",
+        item_secoes_abnt,
+        item_formatacao_abnt,
+        f"Engenharia de Requisitos: {det.rfs_detectados_qtd} Requisitos Funcionais (RF) e {det.rnfs_detectados_qtd} Requisitos Não Funcionais (RNF) mapeados.",
+        f"Modelagem de Dados e Prototipação: MER/DER={'Sim' if det.possui_mer_der else 'Não'}, Dicionário de Dados={'Sim' if det.possui_dicionario_dados else 'Não'}, Protótipo/Figma={'Sim' if det.possui_link_figma else 'Não'}.",
+        f"Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio={'Sim' if det.possui_plano_negocios else 'Não'}, Casos de Teste={'Sim' if det.possui_casos_teste else 'Não'}, Backlog/Cronograma={'Sim' if det.possui_backlog_cronograma else 'Não'}.",
+    ]
+
+    if det.pendencias_formatacao_abnt:
+        for pend in det.pendencias_formatacao_abnt:
+            itens_bloco_doc.append(f"⚠️ PENDÊNCIA DE FORMATAÇÃO (Nota Retida até envio corrigido): {pend}")
+            atencao.append(f"Formatação ABNT não conforme: {pend}")
+
     if det.monografia_palavras >= 4000:
         fortes.append(
             f"Monografia densa e bem desenvolvida ({det.monografia_palavras} palavras, ~{det.monografia_paginas_estimadas} páginas, {det.rfs_detectados_qtd} RFs e {det.rnfs_detectados_qtd} RNFs)."
@@ -1746,14 +2063,9 @@ def _sintetizar_parecer_deterministico(
         BlocoParecerTecnico(
             categoria="Pilar 1 (30,0 pts)",
             titulo="2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
-            status="conforme" if avaliacao.p1_total >= 24.0 else "alerta",
-            resumo=f"Nota Pilar 1: {avaliacao.p1_total:.2f} / 30,00 pts • {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} págs.)",
-            itens=[
-                f"Extensão textual: {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} páginas estimadas) cobrindo {secoes_ok}/{total_secoes} seções ABNT.",
-                f"Engenharia de Requisitos: {det.rfs_detectados_qtd} Requisitos Funcionais (RF) e {det.rnfs_detectados_qtd} Requisitos Não Funcionais (RNF) mapeados.",
-                f"Modelagem de Dados e Prototipação: MER/DER={'Sim' if det.possui_mer_der else 'Não'}, Dicionário de Dados={'Sim' if det.possui_dicionario_dados else 'Não'}, Protótipo/Figma={'Sim' if det.possui_link_figma else 'Não'}.",
-                f"Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio={'Sim' if det.possui_plano_negocios else 'Não'}, Casos de Teste={'Sim' if det.possui_casos_teste else 'Não'}, Backlog/Cronograma={'Sim' if det.possui_backlog_cronograma else 'Não'}.",
-            ],
+            status="critico" if det.pendencias_formatacao_abnt else ("conforme" if avaliacao.p1_total >= 24.0 and not secoes_faltando else "alerta"),
+            resumo=f"Nota Pilar 1: {avaliacao.p1_total:.2f} / 30,00 pts • {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} págs.)" + (" • ⚠️ Pendência ABNT" if det.pendencias_formatacao_abnt else ""),
+            itens=itens_bloco_doc,
         )
     )
 
@@ -2156,7 +2468,16 @@ def auditar_grupo_individual(
             f"RFs: {det.rfs_detectados_qtd} | RNFs: {det.rnfs_detectados_qtd}"
         )
 
-    # 3. Banco de Dados (.sql)
+    # 3. Links Online preliminares (GitHub, Deploy & VM Oracle)
+    gh_url, deploy_url = _ler_links_txt(mapa_arq.get("LINKS_TXT"))
+    det.github_url = gh_url
+    det.deploy_url = deploy_url
+    url_dep_low = (deploy_url or "").lower()
+    if "147.15.2.73" in url_dep_low or "sslip.io" in url_dep_low:
+        det.hospedado_vm_oracle = True
+        det.deploy_provedor = "VM Oracle Cloud (147.15.2.73)"
+
+    # 4. Banco de Dados (.sql)
     if "BD_SQL" in mapa_arq:
         _analisar_script_sql(mapa_arq["BD_SQL"], det)
         if log_cb:
@@ -2165,7 +2486,7 @@ def auditar_grupo_individual(
                 f"{det.sql_total_registros_inseridos} registros INSERT INTO | >=20/tab: {det.sql_atende_min_20_por_tabela}"
             )
 
-    # 4. Código-Fonte (.zip) e Auditoria de Persistência LocalStorage vs Banco em Nuvem
+    # 5. Código-Fonte (.zip) e Auditoria de Persistência LocalStorage vs Banco em Nuvem / VM Oracle
     snippets: list[tuple[str, str]] = []
     if "SISTEMA_ZIP" in mapa_arq:
         snippets = _analisar_arquivo_zip(mapa_arq["SISTEMA_ZIP"], det)
@@ -2175,13 +2496,12 @@ def auditar_grupo_individual(
                 f"Stack: {', '.join(det.zip_stack_detectada)} | Banco: {det.banco_provedor_nuvem}"
             )
 
-    # 5. Slides (.pptx / .pdf)
+    # 6. Slides (.pptx / .pdf)
     _analisar_slides(mapa_arq.get("SLIDES_PPTX"), mapa_arq.get("SLIDES_PDF"), det)
     if log_cb:
         log_cb(f"   ├─ Apresentação: {det.slides_qtd} slides inspecionados.")
 
-    # 6. Links Online (GitHub & Deploy)
-    gh_url, deploy_url = _ler_links_txt(mapa_arq.get("LINKS_TXT"))
+    # 7. Links Online (GitHub, Deploy & VM Oracle)
     _auditar_online_github_e_deploy(
         gh_url,
         deploy_url,

@@ -113,6 +113,7 @@ class AuditoriaArquivoItem(BaseModel):
     tamanho_bytes: int = 0
     padrao_esperado: str = ""
     nomenclatura_conforme: bool = False
+    possui_apenas_aviso_leve: bool = False
     alertas_nomenclatura: list[str] = Field(default_factory=list)
 
 
@@ -122,6 +123,9 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     monografia_palavras: int = 0
     monografia_caracteres: int = 0
     secoes_abnt_detectadas: dict[str, bool] = Field(default_factory=dict)
+    secoes_abnt_faltantes: list[str] = Field(default_factory=list)
+    pendencias_formatacao_abnt: list[str] = Field(default_factory=list)
+    detalhes_formatacao_abnt: dict[str, str] = Field(default_factory=dict)
     rfs_detectados_qtd: int = 0
     rnfs_detectados_qtd: int = 0
     possui_mer_der: bool = False
@@ -188,6 +192,8 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     deploy_diagnostico: str = ""
 
     # Persistência em Banco Nuvem vs LocalStorage/SessionStorage & Deploy (Itens 2.3 e 2.4)
+    hospedado_vm_oracle: bool = False
+    banco_online_ativo_e_apontado: bool = False
     deploy_provedor: str = ""
     deploy_rodando_inteiramente_nuvem: bool = False
     banco_provedor_nuvem: str = ""

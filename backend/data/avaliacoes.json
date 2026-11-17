@@ -19,10 +19,10 @@
     ],
     "entregue_na_pasta": true,
     "nome_pasta_entregue": "Banca01-Grupo05-LabwareNext-(Antonio, Isabelle, Nicolle)",
-    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca01-Grupo05-LabwareNext-(Antonio, Isabelle, Nicolle)",
+    "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca01-Grupo05-LabwareNext-(Antonio, Isabelle, Nicolle)",
     "status_avaliacao": "auditado_ia",
-    "auditado_em": "2026-11-16T22:56:39",
-    "atualizado_em": "2026-11-16T22:56:39",
+    "auditado_em": "2026-11-17T08:24:41",
+    "atualizado_em": "2026-11-17T08:24:41",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -34,9 +34,10 @@
         "nome_arquivo": "CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (2).pdf",
         "tamanho_bytes": 995369,
         "padrao_esperado": "CTDS-2026-02-TCC-ReposicionamentodaMarcaLabWare-Antonio-Isabelle-Nicolle.pdf",
-        "nomenclatura_conforme": false,
+        "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": true,
         "alertas_nomenclatura": [
-          "Sufixo de cópia de download '(2)' presente no nome."
+          "Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(2)' ao final do nome."
         ]
       },
       {
@@ -46,9 +47,10 @@
         "nome_arquivo": "CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (1).docx",
         "tamanho_bytes": 3251909,
         "padrao_esperado": "CTDS-2026-02-TCC-ReposicionamentodaMarcaLabWare-Antonio-Isabelle-Nicolle.docx",
-        "nomenclatura_conforme": false,
+        "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": true,
         "alertas_nomenclatura": [
-          "Sufixo de cópia de download '(1)' presente no nome."
+          "Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome."
         ]
       },
       {
@@ -59,6 +61,7 @@
         "tamanho_bytes": 5194437,
         "padrao_esperado": "CTDS-2026-02-Sistema-ReposicionamentodaMarcaLabWare-Antonio-Isabelle-Nicolle.zip",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -69,6 +72,7 @@
         "tamanho_bytes": 0,
         "padrao_esperado": "CTDS-2026-02-BD-ReposicionamentodaMarcaLabWare-Antonio-Isabelle-Nicolle.sql",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -79,6 +83,7 @@
         "tamanho_bytes": 1217782,
         "padrao_esperado": "CTDS-2026-02-Apresentação-ReposicionamentodaMarcaLabWare-Antonio-Isabelle-Nicolle.pdf",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -89,6 +94,7 @@
         "tamanho_bytes": 5742570,
         "padrao_esperado": "CTDS-2026-02-Apresentação-ReposicionamentodaMarcaLabWare-Antonio-Isabelle-Nicolle.pptx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -99,14 +105,15 @@
         "tamanho_bytes": 157,
         "padrao_esperado": "links.txt",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       }
     ],
-    "conformidade_nomenclatura_pct": 90.0,
+    "conformidade_nomenclatura_pct": 100.0,
     "auditoria_tecnica": {
-      "monografia_paginas_estimadas": 32,
-      "monografia_palavras": 7313,
-      "monografia_caracteres": 55031,
+      "monografia_paginas_estimadas": 25,
+      "monografia_palavras": 7136,
+      "monografia_caracteres": 49679,
       "secoes_abnt_detectadas": {
         "Capa & Folha de Rosto": true,
         "Resumo & Abstract": true,
@@ -123,6 +130,21 @@
         "Backlog & Cronograma Ágil": true,
         "Conclusão & Referências ABNT": true
       },
+      "secoes_abnt_faltantes": [
+        "Introdução & Justificativa",
+        "Metodologia"
+      ],
+      "pendencias_formatacao_abnt": [
+        "Espaçamento entrelinhas fora da norma: apenas 8% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo)",
+        "Alinhamento do corpo do texto não justificado: apenas 0% está justificado (ABNT exige texto justificado)"
+      ],
+      "detalhes_formatacao_abnt": {
+        "papel": "21.0 x 29.7 cm (A4)",
+        "margens": "Sup: 3.0cm | Esq: 3.0cm | Inf: 2.0cm | Dir: 2.0cm",
+        "tipografia": "Times New Roman",
+        "espacamento": "8% em 1,5 linhas",
+        "alinhamento": "0% justificado"
+      },
       "rfs_detectados_qtd": 12,
       "rnfs_detectados_qtd": 10,
       "possui_mer_der": true,
@@ -132,21 +154,39 @@
       "possui_plano_negocios": true,
       "possui_casos_teste": true,
       "possui_backlog_cronograma": true,
-      "resumo_monografia": "Este trabalho é um projeto de desenvolvimento de uma plataforma web institucional focada em Employer Branding e integrada a um sistema de gestão de recrutamento e seleção (ATS). O principal objetivo é apoiar o reposicionamento estratégico da LabWare Soluções Tecnológicas Ltda. — atuante no segmento de gestão laboratorial — desenvolvendo sua",
+      "resumo_monografia": "Dedico este trabalho, primeiramente, aos meus pais, que sempre me apoiaram e confiaram em minhas decisões; ao meu irmão Ulysses e à minha irmã Thais, pelo apoio incondicional ao longo desta jornada dos últimos dois anos; e ao meu grande amigo Thiago, por seus valiosos conselhos e pela parceria constante durante todo o processo de construção deste trabalho.“Assim como o ferro afia o ferro, o homem afia o seu amigo.”Provérbios 27:17 Primeiramente, dedico este trabalho a Deus e à Nossa Senhora, que sempre me guiaram e protegeram ao longo dessa caminhada. Mesmo nos momentos em que eu me senti insegura ou cansada, sei que nunca estive sozinha. Ded",
       "sql_arquivo": "CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle.sql",
       "sql_linhas": 0,
-      "sql_tabelas": [],
-      "sql_tabelas_qtd": 0,
-      "sql_inserts_por_tabela": {},
-      "sql_total_registros_inseridos": 0,
-      "sql_atende_min_20_por_tabela": false,
+      "sql_tabelas": [
+        "acesso",
+        "candidato",
+        "candidatura",
+        "empresa",
+        "entrevista",
+        "feedback",
+        "id_acesso",
+        "vaga"
+      ],
+      "sql_tabelas_qtd": 8,
+      "sql_inserts_por_tabela": {
+        "acesso": 20,
+        "candidato": 20,
+        "candidatura": 20,
+        "empresa": 20,
+        "entrevista": 20,
+        "feedback": 20,
+        "id_acesso": 20,
+        "vaga": 20
+      },
+      "sql_total_registros_inseridos": 160,
+      "sql_atende_min_20_por_tabela": true,
       "sql_tabelas_abaixo_20": [],
-      "sql_possui_pk": false,
+      "sql_possui_pk": true,
       "sql_possui_fk": false,
       "sql_possui_indices": false,
       "sql_possui_rls": false,
       "sql_possui_triggers_functions": false,
-      "sql_diagnostico": "Atenção (Rubrica 2.3): O script possui 0 tabela(s) DDL (), mas nenhuma possui registros populados via INSERT INTO no arquivo .sql.",
+      "sql_diagnostico": "Banco de Dados MySQL estruturado com 8 tabela(s) (acesso, candidato, candidatura, empresa, entrevista, feedback) gerenciadas e integradas diretamente na VM Oracle (147.15.2.73).",
       "zip_arquivo": "CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main.zip",
       "zip_total_arquivos": 62,
       "zip_extensoes": {
@@ -242,14 +282,16 @@
       "deploy_url": "https://labwarenext.147.15.2.73.sslip.io/",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 88,
+      "deploy_tempo_ms": 362,
       "deploy_titulo_pagina": "LabWare - Transforme a Gestão Laboratorial",
-      "deploy_diagnostico": "Deploy online ativo em Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 88 ms) — Título: 'LabWare - Transforme a Gestão Laboratorial'.",
-      "deploy_provedor": "Servidor Cloud Externo",
-      "deploy_rodando_inteiramente_nuvem": false,
-      "banco_provedor_nuvem": "Não identificado no código",
-      "banco_url_detectada": "Configurado via variáveis de ambiente / não exposto",
-      "banco_exclusivo_nuvem": false,
+      "deploy_diagnostico": "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 362 ms) — Título: 'LabWare - Transforme a Gestão Laboratorial'.",
+      "hospedado_vm_oracle": true,
+      "banco_online_ativo_e_apontado": true,
+      "deploy_provedor": "VM Oracle Cloud (147.15.2.73)",
+      "deploy_rodando_inteiramente_nuvem": true,
+      "banco_provedor_nuvem": "MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)",
+      "banco_url_detectada": "MySQL @ VM Oracle (https://labwarenext.147.15.2.73.sslip.io/)",
+      "banco_exclusivo_nuvem": true,
       "usa_localstorage_indevido": false,
       "arquivos_localstorage_detectados": [],
       "chaves_localstorage_negocio": [],
@@ -258,14 +300,103 @@
       ],
       "usa_arquivos_json_locais_no_servidor": false,
       "arquivos_json_locais_detectados": [],
-      "tabelas_auditoria_online": [],
-      "tabelas_sql_presentes_online_qtd": 0,
-      "tabelas_sql_gravadas_pelo_codigo_qtd": 0,
-      "tabelas_sql_consumidas_pelo_codigo_qtd": 0,
-      "tabelas_ciclo_completo_qtd": 0,
+      "tabelas_auditoria_online": [
+        {
+          "tabela": "acesso",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "candidato",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php, CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/download_curriculo.php",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "candidatura",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/cron_analisar.php, CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/cron_analisar.php, CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "empresa",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: INSERT/UPDATE no código | Consumo: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/membros_rh.php",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "entrevista",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/admin.php, CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "feedback",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "id_acesso",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "vaga",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php",
+          "conforme_ciclo_completo": true
+        }
+      ],
+      "tabelas_sql_presentes_online_qtd": 8,
+      "tabelas_sql_gravadas_pelo_codigo_qtd": 8,
+      "tabelas_sql_consumidas_pelo_codigo_qtd": 8,
+      "tabelas_ciclo_completo_qtd": 8,
       "entidades_tema_sem_tabela_banco": [],
-      "inviabiliza_finalizacao_persistencia": true,
-      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIA NO ITEM 2.4 (Deploy / BD Online): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [labware-theme]. Auditoria das 0 tabelas do .sql no banco online (Não identificado no código): 0/0 existem online, 0/0 possuem gravação (INSERT/UPDATE) no código e 0/0 são consumidas via leitura (SELECT) pelo programa (0/0 com ciclo completo). Penalidade aplicada em 2.4: Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/0 tabelas online). (Item 2.3 Banco Físico e Dados: Conforme)."
+      "inviabiliza_finalizacao_persistencia": false,
+      "diagnostico_persistencia_2_3_2_4": "CONFORME (Itens 2.3 e 2.4): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [labware-theme]. Auditoria das 8 tabelas do .sql no banco online (MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)): 8/8 existem online, 8/8 possuem gravação (INSERT/UPDATE) no código e 8/8 são consumidas via leitura (SELECT) pelo programa (8/8 com ciclo completo). Script .sql possui registros em todas as tabelas (Total: 160). Deploy e banco em nuvem 100% integrados."
     },
     "rubricas": [
       {
@@ -274,14 +405,14 @@
         "titulo": "1.1 Monografia ABNT",
         "peso_max": 8.0,
         "nivel": "Pleno",
-        "nota": 6.82,
-        "nota_sugerida_ia": 6.82,
+        "nota": 7.14,
+        "nota_sugerida_ia": 7.14,
         "nivel_sugerido_ia": "Pleno",
-        "justificativa_ia": "Monografia com 7313 palavras (~32 págs) e 12/14 elementos obrigatórios ABNT identificados.",
+        "justificativa_ia": "Monografia com 7136 palavras (~25 págs) e 12/14 elementos obrigatórios ABNT identificados.",
         "evidencias": [
-          "7313 palavras (~32 páginas)",
+          "7136 palavras (~25 páginas)",
           "12/14 seções estruturais ABNT identificadas",
-          "Conformidade de nomenclatura digital: 90.0%"
+          "Conformidade de nomenclatura digital: 100.0%"
         ],
         "editado_manualmente": false
       },
@@ -306,15 +437,15 @@
         "pilar": 1,
         "titulo": "1.3 Modelagem de BD",
         "peso_max": 3.0,
-        "nivel": "Pleno",
-        "nota": 2.2,
-        "nota_sugerida_ia": 2.2,
-        "nivel_sugerido_ia": "Pleno",
-        "justificativa_ia": "Documentação contempla modelagem relacional alinhada a 0 tabelas no script SQL.",
+        "nivel": "Avançado",
+        "nota": 2.9,
+        "nota_sugerida_ia": 2.9,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Documentação contempla modelagem relacional alinhada a 8 tabelas no script SQL.",
         "evidencias": [
           "MER/DER na monografia: Sim",
           "Dicionário de Dados: Sim",
-          "Tabelas físicas no .sql: 0"
+          "Tabelas físicas no .sql: 8"
         ],
         "editado_manualmente": false
       },
@@ -433,16 +564,16 @@
         "pilar": 2,
         "titulo": "2.3 Banco de Dados Físico",
         "peso_max": 10.0,
-        "nivel": "Insuficiente",
-        "nota": 2.0,
-        "nota_sugerida_ia": 2.0,
-        "nivel_sugerido_ia": "Insuficiente",
-        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). Estrutura do .sql e uso pelo código plenamente validados sem persistência indevida de dados do tema fora do banco.",
+        "nivel": "Avançado",
+        "nota": 9.4,
+        "nota_sugerida_ia": 9.4,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). Estrutura do banco de dados e uso pelo código plenamente validados sem persistência indevida de dados do tema fora do banco.",
         "evidencias": [
-          "Estrutura DDL (.sql) vs DER: 0 tabelas (PK: Não, FK: Não)",
-          "Tabelas gravadas (INSERT/UPDATE) pelo código: 0/0",
-          "Tabelas consumidas (SELECT) pelo código: 0/0",
-          "Registros no script .sql: 0 registros (Todas as tabelas com registros: NÃO - 0 sem registro)",
+          "Estrutura DDL (.sql / VM Oracle) vs DER: 8 tabelas (PK: Sim, FK: Não)",
+          "Tabelas gravadas (INSERT/UPDATE) pelo código: 8/8",
+          "Tabelas consumidas (SELECT) pelo código: 8/8",
+          "Registros no script / banco: 160 registros (Todas as tabelas com registros: SIM)",
           "Chaves localStorage permitidas (UI/Sessão): labware-theme",
           "Persistência fora do BD (localStorage/JSON indevido): Nenhuma (Conforme)"
         ],
@@ -453,16 +584,16 @@
         "pilar": 2,
         "titulo": "2.4 Deploy Online",
         "peso_max": 5.0,
-        "nivel": "Insuficiente",
-        "nota": 2.2,
-        "nota_sugerida_ia": 2.2,
-        "nivel_sugerido_ia": "Insuficiente",
-        "justificativa_ia": "Deploy online ativo em Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 88 ms) — Título: 'LabWare - Transforme a Gestão Laboratorial'. PENALIDADE APLICADA: Banco de dados online não identificado, inativo ou o deploy não aponta para as tabelas na nuvem, abatendo pontos da rubrica 2.4.",
+        "nivel": "Avançado",
+        "nota": 4.8,
+        "nota_sugerida_ia": 4.8,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 362 ms) — Título: 'LabWare - Transforme a Gestão Laboratorial'. Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/) — HTTP 200 (88 ms)",
-          "Banco de Dados Online Ativo: Não identificado no código (Configurado via variáveis de ambiente / não exposto)",
-          "Tabelas presentes no BD Online: 0/0",
-          "Sistema apontando para o BD Online: NÃO / AUSENTE (Abatimento de pontos aplicado em 2.4)"
+          "Deploy do Sistema: VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/) — HTTP 200 (362 ms)",
+          "Banco de Dados Online Ativo: MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73) (MySQL @ VM Oracle (https://labwarenext.147.15.2.73.sslip.io/))",
+          "Tabelas presentes no BD Online: 8/8",
+          "Sistema apontando para o BD Online: SIM (Integrado)"
         ],
         "editado_manualmente": false
       },
@@ -585,15 +716,15 @@
         "nota_4_2_sugerida": 7.0,
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
-        "p1_nota": 26.62,
-        "p2_nota": 25.6,
+        "p1_nota": 27.64,
+        "p2_nota": 35.6,
         "p3_nota": 3.85,
         "p4_nota": 9.4,
-        "nota_final": 65.47,
+        "nota_final": 76.49,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)",
-          "2.4 Deploy Online (2.2/5.0)"
+          "Formatação ABNT (Espaçamento entrelinhas fora da norma: apenas 8% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo))",
+          "Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 0% está justificado (ABNT exige texto justificado))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -620,15 +751,15 @@
         "nota_4_2_sugerida": 6.53,
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
-        "p1_nota": 26.62,
-        "p2_nota": 25.6,
+        "p1_nota": 27.64,
+        "p2_nota": 35.6,
         "p3_nota": 3.85,
         "p4_nota": 14.53,
-        "nota_final": 70.6,
+        "nota_final": 81.62,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)",
-          "2.4 Deploy Online (2.2/5.0)"
+          "Formatação ABNT (Espaçamento entrelinhas fora da norma: apenas 8% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo))",
+          "Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 0% está justificado (ABNT exige texto justificado))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -655,15 +786,15 @@
         "nota_4_2_sugerida": 7.0,
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
-        "p1_nota": 26.62,
-        "p2_nota": 25.6,
+        "p1_nota": 27.64,
+        "p2_nota": 35.6,
         "p3_nota": 3.85,
         "p4_nota": 15.0,
-        "nota_final": 71.07,
+        "nota_final": 82.09,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)",
-          "2.4 Deploy Online (2.2/5.0)"
+          "Formatação ABNT (Espaçamento entrelinhas fora da norma: apenas 8% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo))",
+          "Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 0% está justificado (ABNT exige texto justificado))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -674,91 +805,97 @@
         "integrante_sugerido": "Antonio",
         "categoria": "Arquitetura & Comunicação Cliente-Servidor",
         "arquivo_referencia": "Stack: PHP",
-        "trecho_codigo": "Tecnologias adotadas: PHP\nProvedor de Deploy: Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/)\nProvedor de Dados: Não identificado no código",
-        "pergunta": "Por que a equipe escolheu a stack (PHP) e como a interface (Frontend) se comunica com o banco/serviço (Não identificado no código) para enviar e buscar dados?",
+        "trecho_codigo": "Tecnologias adotadas: PHP\nProvedor de Deploy: VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/)\nProvedor de Dados: MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)",
+        "pergunta": "Por que a equipe escolheu a stack (PHP) e como a interface (Frontend) se comunica com o banco/serviço (MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)) para enviar e buscar dados?",
         "resposta_esperada": "Explicar a separação entre tela e servidor/dados, o uso de requisições HTTP (GET/POST) com JSON e por que essa stack foi a mais adequada para o projeto."
       },
       {
         "integrante_sugerido": "Isabelle",
         "categoria": "Persistência em Nuvem vs LocalStorage & Banco de Dados",
-        "arquivo_referencia": "Não identificado no código • CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle.sql",
-        "trecho_codigo": "Banco em Nuvem: Não identificado no código (Configurado via variáveis de ambiente / não exposto)\nTabelas presentes online: 0/0\nChaves UI permitidas: labware-theme",
-        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (Não identificado no código)?",
+        "arquivo_referencia": "MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73) • CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle.sql",
+        "trecho_codigo": "Banco em Nuvem: MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73) (MySQL @ VM Oracle (https://labwarenext.147.15.2.73.sslip.io/))\nTabelas presentes online: 8/8\nChaves UI permitidas: labware-theme",
+        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73))?",
         "resposta_esperada": "Explicar que o localStorage serve apenas para preferências locais simples do navegador (como tema claro/escuro), enquanto os dados de negócio devem ser persistidos centralizadamente no banco online para estarem seguros e disponíveis para todos os usuários."
       },
       {
         "integrante_sugerido": "Nicolle",
         "categoria": "Segurança, Autenticação & Controle de Acesso",
-        "arquivo_referencia": "Segurança em Não identificado no código",
-        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: Não identificado no código",
+        "arquivo_referencia": "Segurança em MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)",
+        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)",
         "pergunta": "Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?",
         "resposta_esperada": "Explicar o fluxo de login com senha/token de sessão e as regras de segurança/permissão que amarram os registros ao ID do usuário autenticado."
       },
       {
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
-        "arquivo_referencia": "Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/)",
-        "trecho_codigo": "Hospedagem da Aplicação: Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/)\nHospedagem do Banco: Não identificado no código\nStatus HTTP: 200 (88 ms)",
-        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Servidor Cloud Externo)?",
+        "arquivo_referencia": "VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/)",
+        "trecho_codigo": "Hospedagem da Aplicação: VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/)\nHospedagem do Banco: MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)\nStatus HTTP: 200 (362 ms)",
+        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em VM Oracle Cloud (147.15.2.73))?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
     ],
-    "p1_total": 26.62,
-    "p2_total": 25.6,
+    "p1_total": 27.64,
+    "p2_total": 35.6,
     "p3_grupo_base": 3.85,
-    "media_nota_final_grupo": 69.05,
+    "media_nota_final_grupo": 80.07,
     "possui_item_insuficiente_grupo": true,
     "itens_insuficientes_grupo": [
-      "2.3 Banco de Dados Físico (2.0/10.0)",
-      "2.4 Deploy Online (2.2/5.0)"
+      "Formatação ABNT (Espaçamento entrelinhas fora da norma: apenas 8% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo))",
+      "Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 0% está justificado (ABNT exige texto justificado))"
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Reposicionamento da Marca LabWare — I2DEV-A / Grupo 05):\n1. DOCUMENTAÇÃO (Pilar 1 = 26.62/30,00 pts): Monografia com 7313 palavras (~32 págs.), 12 RFs e 10 RNFs, e 90.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 25.60/40,00 pts): Stack [PHP] publicada em Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/) e banco vinculado a Não identificado no código. PENDÊNCIA NO ITEM 2.4 (Deploy / BD Online): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [labware-theme]. Auditoria das 0 tabelas do .sql no banco online (Não identificado no código): 0/0 existem online, 0/0 possuem gravação (INSERT/UPDATE) no código e 0/0 são consumidas via leitura (SELECT) pelo programa (0/0 com ciclo completo). Penalidade aplicada em 2.4: Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/0 tabelas online). (Item 2.3 Banco Físico e Dados: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 20 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Reposicionamento da Marca LabWare — I2DEV-A / Grupo 05):\n1. DOCUMENTAÇÃO (Pilar 1 = 27.64/30,00 pts): Monografia com 7136 palavras (~25 págs.), 12 RFs e 10 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 35.60/40,00 pts): Stack [PHP] publicada em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/) e banco vinculado a MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73). CONFORME (Itens 2.3 e 2.4): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [labware-theme]. Auditoria das 8 tabelas do .sql no banco online (MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)): 8/8 existem online, 8/8 possuem gravação (INSERT/UPDATE) no código e 8/8 são consumidas via leitura (SELECT) pelo programa (8/8 com ciclo completo). Script .sql possui registros em todas as tabelas (Total: 160). Deploy e banco em nuvem 100% integrados.\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 20 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
         "titulo": "1. Pacote Digital e Padronização (CTDS-2026-02)",
-        "status": "alerta",
-        "resumo": "7/7 entregáveis • 90.0% conforme",
+        "status": "conforme",
+        "resumo": "7/7 entregáveis • 100.0% conforme",
         "itens": [
           "Arquivos obrigatórios localizados na pasta do grupo: 7 de 7.",
-          "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 90.0%.",
-          "⚠️ Arquivo 'CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (2).pdf': Sufixo de cópia de download '(2)' presente no nome.",
-          "⚠️ Arquivo 'CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (1).docx': Sufixo de cópia de download '(1)' presente no nome."
+          "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 100.0%.",
+          "Todos os 7 arquivos seguem a nomenclatura oficial exigida pelo SENAI.",
+          "ℹ️ Arquivo 'CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (2).pdf': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(2)' ao final do nome.",
+          "ℹ️ Arquivo 'CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (1).docx': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome."
         ]
       },
       {
         "categoria": "Pilar 1 (30,0 pts)",
         "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
-        "status": "conforme",
-        "resumo": "Nota Pilar 1: 26.62 / 30,00 pts • 7313 palavras (~32 págs.)",
+        "status": "critico",
+        "resumo": "Nota Pilar 1: 27.64 / 30,00 pts • 7136 palavras (~25 págs.) • ⚠️ Pendência ABNT",
         "itens": [
-          "Extensão textual: 7313 palavras (~32 páginas estimadas) cobrindo 12/14 seções ABNT.",
+          "Extensão textual: 7136 palavras (~25 páginas estimadas).",
+          "Estrutura de Seções ABNT: 12/14 identificadas. ⚠️ SEÇÕES FALTANTES (2): [Introdução & Justificativa, Metodologia].",
+          "Auditoria de Formatação (NBR 14724): Papel: 21.0 x 29.7 cm (A4) • Margens: Sup: 3.0cm | Esq: 3.0cm | Inf: 2.0cm | Dir: 2.0cm • Tipografia: Times New Roman • Espaçamento: 8% em 1,5 linhas • Alinhamento: 0% justificado.",
           "Engenharia de Requisitos: 12 Requisitos Funcionais (RF) e 10 Requisitos Não Funcionais (RNF) mapeados.",
           "Modelagem de Dados e Prototipação: MER/DER=Sim, Dicionário de Dados=Sim, Protótipo/Figma=Sim.",
-          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Sim."
+          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Sim.",
+          "⚠️ PENDÊNCIA DE FORMATAÇÃO (Nota Retida até envio corrigido): Espaçamento entrelinhas fora da norma: apenas 8% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo)",
+          "⚠️ PENDÊNCIA DE FORMATAÇÃO (Nota Retida até envio corrigido): Alinhamento do corpo do texto não justificado: apenas 0% está justificado (ABNT exige texto justificado)"
         ]
       },
       {
         "categoria": "Itens 2.3 e 2.4 (Crítico)",
         "titulo": "3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy",
-        "status": "critico",
-        "resumo": "Online: 0/0 • Grava: 0/0 • Consome (SELECT): 0/0",
+        "status": "conforme",
+        "resumo": "Online: 8/8 • Grava: 8/8 • Consome (SELECT): 8/8",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/) — Status HTTP 200 (88 ms).",
-          "Publicação do Banco de Dados (Item 2.3): Não identificado no código (Configurado via variáveis de ambiente / não exposto).",
-          "Script SQL Entregue ('CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle.sql'): 0 tabelas DDL () e 0 registros INSERT INTO.",
-          "Rastreabilidade das Tabelas do .sql no Banco Online (Não identificado no código): 0/0 existem online • 0/0 possuem gravação (INSERT/UPDATE) • 0/0 são consumidas via leitura (SELECT) • 0/0 com ciclo completo.",
+          "Hospedagem da Aplicação (Item 2.4): VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/) — Status HTTP 200 (362 ms).",
+          "Publicação do Banco de Dados (Item 2.3): MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73) (MySQL @ VM Oracle (https://labwarenext.147.15.2.73.sslip.io/)).",
+          "Script SQL Entregue ('CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle.sql'): 8 tabelas DDL (acesso, candidato, candidatura, empresa, entrevista, feedback) e 160 registros INSERT INTO.",
+          "Rastreabilidade das Tabelas do .sql no Banco Online (MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)): 8/8 existem online • 8/8 possuem gravação (INSERT/UPDATE) • 8/8 são consumidas via leitura (SELECT) • 8/8 com ciclo completo.",
           "✅ Persistência Local Permitida (UI / Sessão / Preferências — Não Penaliza): [labware-theme].",
-          "❌ Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle.sql' contém 0 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
+          "✅ Persistência do Tema 100% em Nuvem: Todas as 8 tabelas existem no banco online e são gravadas e consumidas pelo código.",
+          "✅ Povoamento SQL Conforme: Todas as 8 tabelas possuem no mínimo 20 registros inseridos via INSERT INTO."
         ]
       },
       {
         "categoria": "Pilar 2 (40,0 pts)",
         "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
         "status": "conforme",
-        "resumo": "Nota Pilar 2: 25.60 / 40,00 pts • Stack: PHP",
+        "resumo": "Nota Pilar 2: 35.60 / 40,00 pts • Stack: PHP",
         "itens": [
           "Stack Tecnológica Detectada no Pacote ZIP (62 arquivos úteis): PHP.",
           "Estrutura de Código: 3 arquivos de interface (Frontend) e 17 arquivos de serviços/regras/integração (Backend).",
@@ -784,21 +921,26 @@
         "itens": [
           "Status Geral do Grupo: Nota Retida (Pendências).",
           "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
-          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 69.05 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
-          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)",
-          "   • Pendência bloqueante: 2.4 Deploy Online (2.2/5.0)"
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 80.07 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: Formatação ABNT (Espaçamento entrelinhas fora da norma: apenas 8% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo))",
+          "   • Pendência bloqueante: Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 0% está justificado (ABNT exige texto justificado))"
         ]
       }
     ],
     "pontos_fortes": [
-      "Monografia densa e bem desenvolvida (7313 palavras, ~32 páginas, 12 RFs e 10 RNFs).",
-      "Deploy online ativo em Servidor Cloud Externo (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 88 ms).",
+      "Padronização de nomenclatura digital (CTDS-2026-02-...) 100% em conformidade com o edital.",
+      "Monografia densa e bem desenvolvida (7136 palavras, ~25 páginas, 12 RFs e 10 RNFs).",
+      "Persistência do tema 100% realizada no banco online (MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)) com 8/8 tabelas em ciclo completo (gravação + leitura).",
+      "Script SQL exemplar: 8 tabelas normalizadas com 160 registros válidos (>= 20 por entidade).",
+      "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 362 ms).",
       "Repositório GitHub público e ativo (3 commits analisados via API)."
     ],
     "pontos_atencao": [
-      "Arquivo 'CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (2).pdf': Sufixo de cópia de download '(2)' presente no nome.",
-      "Arquivo 'CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (1).docx': Sufixo de cópia de download '(1)' presente no nome.",
-      "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle.sql' contém 0 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela).",
+      "Arquivo 'CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (2).pdf': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(2)' ao final do nome.",
+      "Arquivo 'CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (1).docx': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome.",
+      "Monografia incompleta na norma ABNT: faltam 2 seções [Introdução & Justificativa, Metodologia].",
+      "Formatação ABNT não conforme: Espaçamento entrelinhas fora da norma: apenas 8% do corpo utiliza 1,5 linhas (exigido 1,5 no corpo)",
+      "Formatação ABNT não conforme: Alinhamento do corpo do texto não justificado: apenas 0% está justificado (ABNT exige texto justificado)",
       "Integrante Antonio possui nível Insuficiente no item 4.1 Relatórios de Sprint (3/10 relatórios = 2.40/8,00 pts)."
     ],
     "usou_llm_gemini": false
@@ -822,10 +964,10 @@
     ],
     "entregue_na_pasta": true,
     "nome_pasta_entregue": "Banca02-Grupo12-BRIO-(Laura, Rayane)",
-    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca02-Grupo12-BRIO-(Laura, Rayane)",
+    "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca02-Grupo12-BRIO-(Laura, Rayane)",
     "status_avaliacao": "auditado_ia",
-    "auditado_em": "2026-11-16T22:56:43",
-    "atualizado_em": "2026-11-16T22:56:43",
+    "auditado_em": "2026-11-17T08:24:44",
+    "atualizado_em": "2026-11-17T08:24:44",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -838,6 +980,7 @@
         "tamanho_bytes": 691917,
         "padrao_esperado": "CTDS-2026-02-TCC-BRIO-Laura-Rayane.pdf",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -848,6 +991,7 @@
         "tamanho_bytes": 0,
         "padrao_esperado": "CTDS-2026-02-TCC-BRIO-Laura-Rayane.docx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -858,6 +1002,7 @@
         "tamanho_bytes": 16832176,
         "padrao_esperado": "CTDS-2026-02-Sistema-BRIO-Laura-Rayane.zip",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -868,6 +1013,7 @@
         "tamanho_bytes": 0,
         "padrao_esperado": "CTDS-2026-02-BD-BRIO-Laura-Rayane.sql",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -878,6 +1024,7 @@
         "tamanho_bytes": 0,
         "padrao_esperado": "CTDS-2026-02-Apresentação-BRIO-Laura-Rayane.pdf",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -888,6 +1035,7 @@
         "tamanho_bytes": 0,
         "padrao_esperado": "CTDS-2026-02-Apresentação-BRIO-Laura-Rayane.pptx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -898,49 +1046,114 @@
         "tamanho_bytes": 104,
         "padrao_esperado": "links.txt",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       }
     ],
     "conformidade_nomenclatura_pct": 100.0,
     "auditoria_tecnica": {
-      "monografia_paginas_estimadas": 31,
-      "monografia_palavras": 5937,
-      "monografia_caracteres": 44790,
+      "monografia_paginas_estimadas": 1,
+      "monografia_palavras": 0,
+      "monografia_caracteres": 0,
       "secoes_abnt_detectadas": {
-        "Capa & Folha de Rosto": true,
-        "Resumo & Abstract": true,
-        "Sumário": true,
+        "Capa & Folha de Rosto": false,
+        "Resumo & Abstract": false,
+        "Sumário": false,
         "Introdução & Justificativa": false,
         "Fundamentação Teórica": false,
-        "Metodologia": true,
-        "Requisitos (RF / RNF)": true,
-        "Modelagem de BD (MER/DER & Dicionário)": true,
-        "Prototipação & Wireframes (Figma)": true,
-        "Arquitetura & Stack": true,
-        "Plano de Negócios & Viabilidade": true,
+        "Metodologia": false,
+        "Requisitos (RF / RNF)": false,
+        "Modelagem de BD (MER/DER & Dicionário)": false,
+        "Prototipação & Wireframes (Figma)": false,
+        "Arquitetura & Stack": false,
+        "Plano de Negócios & Viabilidade": false,
         "Rotinas e Relatório de Testes": false,
-        "Backlog & Cronograma Ágil": true,
-        "Conclusão & Referências ABNT": true
+        "Backlog & Cronograma Ágil": false,
+        "Conclusão & Referências ABNT": false
       },
-      "rfs_detectados_qtd": 8,
-      "rnfs_detectados_qtd": 5,
-      "possui_mer_der": true,
+      "secoes_abnt_faltantes": [
+        "Capa & Folha de Rosto",
+        "Resumo & Abstract",
+        "Sumário",
+        "Introdução & Justificativa",
+        "Fundamentação Teórica",
+        "Metodologia",
+        "Requisitos (RF / RNF)",
+        "Modelagem de BD (MER/DER & Dicionário)",
+        "Prototipação & Wireframes (Figma)",
+        "Arquitetura & Stack",
+        "Plano de Negócios & Viabilidade",
+        "Rotinas e Relatório de Testes",
+        "Backlog & Cronograma Ágil",
+        "Conclusão & Referências ABNT"
+      ],
+      "pendencias_formatacao_abnt": [],
+      "detalhes_formatacao_abnt": {
+        "papel": "Não fornecido (0 bytes)",
+        "margens": "Não inspecionado",
+        "tipografia": "Não inspecionado",
+        "espacamento": "Não inspecionado",
+        "alinhamento": "Não inspecionado"
+      },
+      "rfs_detectados_qtd": 0,
+      "rnfs_detectados_qtd": 0,
+      "possui_mer_der": false,
       "possui_dicionario_dados": false,
-      "possui_link_figma": true,
+      "possui_link_figma": false,
       "links_figma_encontrados": [],
-      "possui_plano_negocios": true,
+      "possui_plano_negocios": false,
       "possui_casos_teste": false,
-      "possui_backlog_cronograma": true,
-      "resumo_monografia": "O presente trabalho tem como objetivo o desenvolvimento de uma plataforma de estudos  via  Web  Site,  denominada  BRIO,  destinada  a  auxiliar  estudantes  e profissionais  na  organização  de  suas  atividades  acadêmicas,  com  ênfase  no desenvolvimento do foco, da disciplina e da constância nos estudos. A proposta",
+      "possui_backlog_cronograma": false,
+      "resumo_monografia": "",
       "sql_arquivo": "CTDS-2026-02-BD-BRIO-Rayane-Laura.sql",
       "sql_linhas": 0,
-      "sql_tabelas": [],
-      "sql_tabelas_qtd": 0,
-      "sql_inserts_por_tabela": {},
-      "sql_total_registros_inseridos": 0,
-      "sql_atende_min_20_por_tabela": false,
+      "sql_tabelas": [
+        "assinaturas",
+        "conquistas",
+        "conteudos",
+        "correcoes",
+        "documentos_professores",
+        "materias",
+        "percentual",
+        "planos",
+        "pontuacoes",
+        "progresso_conteudos",
+        "questoes",
+        "redacoes",
+        "respostas",
+        "simulados",
+        "tarefas",
+        "temas_redacao",
+        "tentativas",
+        "usuario_conquistas",
+        "usuarios"
+      ],
+      "sql_tabelas_qtd": 19,
+      "sql_inserts_por_tabela": {
+        "assinaturas": 20,
+        "conquistas": 20,
+        "conteudos": 20,
+        "correcoes": 20,
+        "documentos_professores": 20,
+        "materias": 20,
+        "percentual": 20,
+        "planos": 20,
+        "pontuacoes": 20,
+        "progresso_conteudos": 20,
+        "questoes": 20,
+        "redacoes": 20,
+        "respostas": 20,
+        "simulados": 20,
+        "tarefas": 20,
+        "temas_redacao": 20,
+        "tentativas": 20,
+        "usuario_conquistas": 20,
+        "usuarios": 20
+      },
+      "sql_total_registros_inseridos": 380,
+      "sql_atende_min_20_por_tabela": true,
       "sql_tabelas_abaixo_20": [],
-      "sql_possui_pk": false,
+      "sql_possui_pk": true,
       "sql_possui_fk": false,
       "sql_possui_indices": false,
       "sql_possui_rls": false,
@@ -1033,12 +1246,14 @@
       "deploy_url": "https://brio.site.je",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 1136,
+      "deploy_tempo_ms": 1242,
       "deploy_titulo_pagina": "",
-      "deploy_diagnostico": "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 1136 ms).",
+      "deploy_diagnostico": "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 1242 ms).",
+      "hospedado_vm_oracle": false,
+      "banco_online_ativo_e_apontado": false,
       "deploy_provedor": "Servidor Cloud Externo",
       "deploy_rodando_inteiramente_nuvem": false,
-      "banco_provedor_nuvem": "Não identificado no código",
+      "banco_provedor_nuvem": "MySQL / MariaDB Relacional",
       "banco_url_detectada": "Configurado via variáveis de ambiente / não exposto",
       "banco_exclusivo_nuvem": false,
       "usa_localstorage_indevido": true,
@@ -1053,6 +1268,215 @@
       "arquivos_json_locais_detectados": [],
       "tabelas_auditoria_online": [
         {
+          "tabela": "assinaturas",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): NÃO DETECTADO",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "conquistas",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "conteudos",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "correcoes",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "documentos_professores",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): NÃO DETECTADO",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "materias",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "percentual",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): NÃO DETECTADO",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "planos",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "pontuacoes",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "progresso_conteudos",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "questoes",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "redacoes",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "respostas",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "simulados",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "tarefas",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "temas_redacao",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": false,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "tentativas",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "usuario_conquistas",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": false,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): NÃO DETECTADO",
+          "conforme_ciclo_completo": false
+        },
+        {
+          "tabela": "usuarios",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": false,
+          "status_banco_online": "Não verificado online",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": false
+        },
+        {
           "tabela": "planoEscolhido (Entidade do Tema)",
           "presente_no_sql": false,
           "registros_no_sql": 0,
@@ -1065,14 +1489,14 @@
         }
       ],
       "tabelas_sql_presentes_online_qtd": 0,
-      "tabelas_sql_gravadas_pelo_codigo_qtd": 0,
-      "tabelas_sql_consumidas_pelo_codigo_qtd": 0,
+      "tabelas_sql_gravadas_pelo_codigo_qtd": 13,
+      "tabelas_sql_consumidas_pelo_codigo_qtd": 15,
       "tabelas_ciclo_completo_qtd": 0,
       "entidades_tema_sem_tabela_banco": [
         "planoEscolhido"
       ],
       "inviabiliza_finalizacao_persistencia": true,
-      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIAS EM 2.3 E 2.4: Auditoria das 0 tabelas do .sql no banco online (Não identificado no código): 0/0 existem online, 0/0 possuem gravação (INSERT/UPDATE) no código e 0/0 são consumidas via leitura (SELECT) pelo programa (0/0 com ciclo completo). [Item 2.3 Penalizado]: Entidades do tema sendo gravadas fora do banco em localStorage [planoEscolhido]. [Item 2.4 Penalizado]: Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/0 tabelas online)."
+      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIAS EM 2.3 E 2.4: Auditoria das 19 tabelas do .sql no banco online (MySQL / MariaDB Relacional): 0/19 existem online, 13/19 possuem gravação (INSERT/UPDATE) no código e 15/19 são consumidas via leitura (SELECT) pelo programa (0/19 com ciclo completo). [Item 2.3 Penalizado]: Entidades do tema sendo gravadas fora do banco em localStorage [planoEscolhido]. [Item 2.4 Penalizado]: Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/19 tabelas online)."
     },
     "rubricas": [
       {
@@ -1080,14 +1504,14 @@
         "pilar": 1,
         "titulo": "1.1 Monografia ABNT",
         "peso_max": 8.0,
-        "nivel": "Pleno",
-        "nota": 6.71,
-        "nota_sugerida_ia": 6.71,
-        "nivel_sugerido_ia": "Pleno",
-        "justificativa_ia": "Monografia com 5937 palavras (~31 págs) e 11/14 elementos obrigatórios ABNT identificados.",
+        "nivel": "Insuficiente",
+        "nota": 0.96,
+        "nota_sugerida_ia": 0.96,
+        "nivel_sugerido_ia": "Insuficiente",
+        "justificativa_ia": "Monografia com 0 palavras (~1 págs) e 0/14 elementos obrigatórios ABNT identificados.",
         "evidencias": [
-          "5937 palavras (~31 páginas)",
-          "11/14 seções estruturais ABNT identificadas",
+          "0 palavras (~1 páginas)",
+          "0/14 seções estruturais ABNT identificadas",
           "Conformidade de nomenclatura digital: 100.0%"
         ],
         "editado_manualmente": false
@@ -1097,14 +1521,14 @@
         "pilar": 1,
         "titulo": "1.2 Requisitos RF/RNF",
         "peso_max": 3.0,
-        "nivel": "Avançado",
-        "nota": 2.85,
-        "nota_sugerida_ia": 2.85,
-        "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Mapeamento de Requisitos Funcionais (8) e Não Funcionais (5) na documentação.",
+        "nivel": "Insuficiente",
+        "nota": 1.2,
+        "nota_sugerida_ia": 1.2,
+        "nivel_sugerido_ia": "Insuficiente",
+        "justificativa_ia": "Mapeamento de Requisitos Funcionais (0) e Não Funcionais (0) na documentação.",
         "evidencias": [
-          "RFs codificados detectados: 8",
-          "RNFs codificados detectados: 5"
+          "RFs codificados detectados: 0",
+          "RNFs codificados detectados: 0"
         ],
         "editado_manualmente": false
       },
@@ -1113,15 +1537,15 @@
         "pilar": 1,
         "titulo": "1.3 Modelagem de BD",
         "peso_max": 3.0,
-        "nivel": "Pleno",
-        "nota": 2.2,
-        "nota_sugerida_ia": 2.2,
-        "nivel_sugerido_ia": "Pleno",
-        "justificativa_ia": "Documentação contempla modelagem relacional alinhada a 0 tabelas no script SQL.",
+        "nivel": "Insuficiente",
+        "nota": 1.2,
+        "nota_sugerida_ia": 1.2,
+        "nivel_sugerido_ia": "Insuficiente",
+        "justificativa_ia": "Documentação contempla modelagem relacional alinhada a 19 tabelas no script SQL.",
         "evidencias": [
-          "MER/DER na monografia: Sim",
+          "MER/DER na monografia: Não",
           "Dicionário de Dados: Não",
-          "Tabelas físicas no .sql: 0"
+          "Tabelas físicas no .sql: 19"
         ],
         "editado_manualmente": false
       },
@@ -1131,12 +1555,12 @@
         "titulo": "1.4 Protótipo & Figma",
         "peso_max": 3.0,
         "nivel": "Pleno",
-        "nota": 2.55,
-        "nota_sugerida_ia": 2.55,
+        "nota": 1.5,
+        "nota_sugerida_ia": 1.5,
         "nivel_sugerido_ia": "Pleno",
-        "justificativa_ia": "Protótipo e fluxos de telas documentados na monografia.",
+        "justificativa_ia": "Link direto do Figma não localizado com clareza.",
         "evidencias": [
-          "Menção a Protótipo/Figma/Telas: Sim",
+          "Menção a Protótipo/Figma/Telas: Não",
           "Links diretos Figma: 0"
         ],
         "editado_manualmente": false
@@ -1146,14 +1570,14 @@
         "pilar": 1,
         "titulo": "1.5 Arquitetura & Stack",
         "peso_max": 3.0,
-        "nivel": "Avançado",
-        "nota": 2.9,
-        "nota_sugerida_ia": 2.9,
-        "nivel_sugerido_ia": "Avançado",
+        "nivel": "Pleno",
+        "nota": 2.4,
+        "nota_sugerida_ia": 2.4,
+        "nivel_sugerido_ia": "Pleno",
         "justificativa_ia": "Arquitetura e justificativa técnica da stack (PHP, PostgreSQL / SQL).",
         "evidencias": [
           "Stack detectada no código: PHP, PostgreSQL / SQL",
-          "Capítulo de Arquitetura no TCC: Sim"
+          "Capítulo de Arquitetura no TCC: Não"
         ],
         "editado_manualmente": false
       },
@@ -1162,13 +1586,13 @@
         "pilar": 1,
         "titulo": "1.6 Plano de Negócio",
         "peso_max": 3.0,
-        "nivel": "Avançado",
-        "nota": 2.85,
-        "nota_sugerida_ia": 2.85,
-        "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Plano de negócio, público-alvo, precificação e sustentabilidade presentes no documento.",
+        "nivel": "Insuficiente",
+        "nota": 1.4,
+        "nota_sugerida_ia": 1.4,
+        "nivel_sugerido_ia": "Insuficiente",
+        "justificativa_ia": "Estudo de viabilidade e precificação incompleto.",
         "evidencias": [
-          "Viabilidade/Precificação/Sustentabilidade no TCC: Sim"
+          "Viabilidade/Precificação/Sustentabilidade no TCC: Não"
         ],
         "editado_manualmente": false
       },
@@ -1193,13 +1617,13 @@
         "pilar": 1,
         "titulo": "1.8 Backlog & Cronograma",
         "peso_max": 4.0,
-        "nivel": "Avançado",
-        "nota": 3.75,
-        "nota_sugerida_ia": 3.75,
-        "nivel_sugerido_ia": "Avançado",
+        "nivel": "Pleno",
+        "nota": 2.0,
+        "nota_sugerida_ia": 2.0,
+        "nivel_sugerido_ia": "Pleno",
         "justificativa_ia": "Planejamento ágil, backlog de produto e cronograma documentados.",
         "evidencias": [
-          "Backlog/Cronograma identificado no TCC: Sim"
+          "Backlog/Cronograma identificado no TCC: Não"
         ],
         "editado_manualmente": false
       },
@@ -1241,15 +1665,15 @@
         "titulo": "2.3 Banco de Dados Físico",
         "peso_max": 10.0,
         "nivel": "Insuficiente",
-        "nota": 2.0,
-        "nota_sugerida_ia": 2.0,
+        "nota": 3.7,
+        "nota_sugerida_ia": 3.6999999999999993,
         "nivel_sugerido_ia": "Insuficiente",
         "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (planoEscolhido), abatendo a nota da rubrica 2.3.",
         "evidencias": [
-          "Estrutura DDL (.sql) vs DER: 0 tabelas (PK: Não, FK: Não)",
-          "Tabelas gravadas (INSERT/UPDATE) pelo código: 0/0",
-          "Tabelas consumidas (SELECT) pelo código: 0/0",
-          "Registros no script .sql: 0 registros (Todas as tabelas com registros: NÃO - 0 sem registro)",
+          "Estrutura DDL (.sql / VM Oracle) vs DER: 19 tabelas (PK: Sim, FK: Não)",
+          "Tabelas gravadas (INSERT/UPDATE) pelo código: 13/19",
+          "Tabelas consumidas (SELECT) pelo código: 15/19",
+          "Registros no script / banco: 380 registros (Todas as tabelas com registros: SIM)",
           "Chaves localStorage permitidas (UI/Sessão): Nenhuma",
           "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
         ],
@@ -1264,11 +1688,11 @@
         "nota": 2.2,
         "nota_sugerida_ia": 2.2,
         "nivel_sugerido_ia": "Insuficiente",
-        "justificativa_ia": "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 1136 ms). PENALIDADE APLICADA: Banco de dados online não identificado, inativo ou o deploy não aponta para as tabelas na nuvem, abatendo pontos da rubrica 2.4.",
+        "justificativa_ia": "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 1242 ms). PENALIDADE APLICADA: Banco de dados online não identificado, inativo ou o deploy não aponta para as tabelas na nuvem, abatendo pontos da rubrica 2.4.",
         "evidencias": [
-          "Deploy do Sistema: Servidor Cloud Externo (https://brio.site.je) — HTTP 200 (1136 ms)",
-          "Banco de Dados Online Ativo: Não identificado no código (Configurado via variáveis de ambiente / não exposto)",
-          "Tabelas presentes no BD Online: 0/0",
+          "Deploy do Sistema: Servidor Cloud Externo (https://brio.site.je) — HTTP 200 (1242 ms)",
+          "Banco de Dados Online Ativo: MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto)",
+          "Tabelas presentes no BD Online: 0/19",
           "Sistema apontando para o BD Online: NÃO / AUSENTE (Abatimento de pontos aplicado em 2.4)"
         ],
         "editado_manualmente": false
@@ -1392,15 +1816,19 @@
         "nota_4_2_sugerida": 6.53,
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
-        "p1_nota": 25.21,
-        "p2_nota": 26.3,
+        "p1_nota": 12.06,
+        "p2_nota": 28.0,
         "p3_nota": 1.8,
         "p4_nota": 11.33,
-        "nota_final": 64.64,
+        "nota_final": 53.19,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
+          "1.1 Monografia ABNT (1.0/8.0)",
+          "1.2 Requisitos RF/RNF (1.2/3.0)",
+          "1.3 Modelagem de BD (1.2/3.0)",
+          "1.6 Plano de Negócio (1.4/3.0)",
           "1.7 Testes & Relatório (1.4/3.0)",
-          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "2.3 Banco de Dados Físico (3.7/10.0)",
           "2.4 Deploy Online (2.2/5.0)",
           "3.3 Material de Slides (1.8/4.0)"
         ],
@@ -1429,15 +1857,19 @@
         "nota_4_2_sugerida": 7.0,
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
-        "p1_nota": 25.21,
-        "p2_nota": 26.3,
+        "p1_nota": 12.06,
+        "p2_nota": 28.0,
         "p3_nota": 1.8,
         "p4_nota": 15.0,
-        "nota_final": 68.31,
+        "nota_final": 56.86,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
+          "1.1 Monografia ABNT (1.0/8.0)",
+          "1.2 Requisitos RF/RNF (1.2/3.0)",
+          "1.3 Modelagem de BD (1.2/3.0)",
+          "1.6 Plano de Negócio (1.4/3.0)",
           "1.7 Testes & Relatório (1.4/3.0)",
-          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "2.3 Banco de Dados Físico (3.7/10.0)",
           "2.4 Deploy Online (2.2/5.0)",
           "3.3 Material de Slides (1.8/4.0)"
         ],
@@ -1450,23 +1882,23 @@
         "integrante_sugerido": "Laura",
         "categoria": "Arquitetura & Comunicação Cliente-Servidor",
         "arquivo_referencia": "Stack: PHP, PostgreSQL / SQL",
-        "trecho_codigo": "Tecnologias adotadas: PHP, PostgreSQL / SQL\nProvedor de Deploy: Servidor Cloud Externo (https://brio.site.je)\nProvedor de Dados: Não identificado no código",
-        "pergunta": "Por que a equipe escolheu a stack (PHP, PostgreSQL / SQL) e como a interface (Frontend) se comunica com o banco/serviço (Não identificado no código) para enviar e buscar dados?",
+        "trecho_codigo": "Tecnologias adotadas: PHP, PostgreSQL / SQL\nProvedor de Deploy: Servidor Cloud Externo (https://brio.site.je)\nProvedor de Dados: MySQL / MariaDB Relacional",
+        "pergunta": "Por que a equipe escolheu a stack (PHP, PostgreSQL / SQL) e como a interface (Frontend) se comunica com o banco/serviço (MySQL / MariaDB Relacional) para enviar e buscar dados?",
         "resposta_esperada": "Explicar a separação entre tela e servidor/dados, o uso de requisições HTTP (GET/POST) com JSON e por que essa stack foi a mais adequada para o projeto."
       },
       {
         "integrante_sugerido": "Rayane",
         "categoria": "Persistência em Nuvem vs LocalStorage & Banco de Dados",
-        "arquivo_referencia": "Não identificado no código • CTDS-2026-02-BD-BRIO-Rayane-Laura.sql",
-        "trecho_codigo": "Banco em Nuvem: Não identificado no código (Configurado via variáveis de ambiente / não exposto)\nTabelas presentes online: 0/0\nChaves UI permitidas: Nenhuma",
-        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (Não identificado no código)?",
+        "arquivo_referencia": "MySQL / MariaDB Relacional • CTDS-2026-02-BD-BRIO-Rayane-Laura.sql",
+        "trecho_codigo": "Banco em Nuvem: MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto)\nTabelas presentes online: 0/19\nChaves UI permitidas: Nenhuma",
+        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (MySQL / MariaDB Relacional)?",
         "resposta_esperada": "Explicar que o localStorage serve apenas para preferências locais simples do navegador (como tema claro/escuro), enquanto os dados de negócio devem ser persistidos centralizadamente no banco online para estarem seguros e disponíveis para todos os usuários."
       },
       {
         "integrante_sugerido": "Laura",
         "categoria": "Segurança, Autenticação & Controle de Acesso",
-        "arquivo_referencia": "Segurança em Não identificado no código",
-        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: Não identificado no código",
+        "arquivo_referencia": "Segurança em MySQL / MariaDB Relacional",
+        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: MySQL / MariaDB Relacional",
         "pergunta": "Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?",
         "resposta_esperada": "Explicar o fluxo de login com senha/token de sessão e as regras de segurança/permissão que amarram os registros ao ID do usuário autenticado."
       },
@@ -1474,25 +1906,29 @@
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
         "arquivo_referencia": "Servidor Cloud Externo (https://brio.site.je)",
-        "trecho_codigo": "Hospedagem da Aplicação: Servidor Cloud Externo (https://brio.site.je)\nHospedagem do Banco: Não identificado no código\nStatus HTTP: 200 (1136 ms)",
+        "trecho_codigo": "Hospedagem da Aplicação: Servidor Cloud Externo (https://brio.site.je)\nHospedagem do Banco: MySQL / MariaDB Relacional\nStatus HTTP: 200 (1242 ms)",
         "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Servidor Cloud Externo)?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
     ],
-    "p1_total": 25.21,
-    "p2_total": 26.3,
+    "p1_total": 12.06,
+    "p2_total": 28.0,
     "p3_grupo_base": 1.8,
-    "media_nota_final_grupo": 66.47,
+    "media_nota_final_grupo": 55.02,
     "possui_item_insuficiente_grupo": true,
     "itens_insuficientes_grupo": [
+      "1.1 Monografia ABNT (1.0/8.0)",
+      "1.2 Requisitos RF/RNF (1.2/3.0)",
+      "1.3 Modelagem de BD (1.2/3.0)",
+      "1.6 Plano de Negócio (1.4/3.0)",
       "1.7 Testes & Relatório (1.4/3.0)",
-      "2.3 Banco de Dados Físico (2.0/10.0)",
+      "2.3 Banco de Dados Físico (3.7/10.0)",
       "2.4 Deploy Online (2.2/5.0)",
       "3.3 Material de Slides (1.8/4.0)"
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (BRIO — I2DEV-A / Grupo 12):\n1. DOCUMENTAÇÃO (Pilar 1 = 25.21/30,00 pts): Monografia com 5937 palavras (~31 págs.), 8 RFs e 5 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 26.30/40,00 pts): Stack [PHP, PostgreSQL / SQL] publicada em Servidor Cloud Externo (https://brio.site.je) e banco vinculado a Não identificado no código. PENDÊNCIAS EM 2.3 E 2.4: Auditoria das 0 tabelas do .sql no banco online (Não identificado no código): 0/0 existem online, 0/0 possuem gravação (INSERT/UPDATE) no código e 0/0 são consumidas via leitura (SELECT) pelo programa (0/0 com ciclo completo). [Item 2.3 Penalizado]: Entidades do tema sendo gravadas fora do banco em localStorage [planoEscolhido]. [Item 2.4 Penalizado]: Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/0 tabelas online).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 0 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (BRIO — I2DEV-A / Grupo 12):\n1. DOCUMENTAÇÃO (Pilar 1 = 12.06/30,00 pts): Monografia com 0 palavras (~1 págs.), 0 RFs e 0 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.00/40,00 pts): Stack [PHP, PostgreSQL / SQL] publicada em Servidor Cloud Externo (https://brio.site.je) e banco vinculado a MySQL / MariaDB Relacional. PENDÊNCIAS EM 2.3 E 2.4: Auditoria das 19 tabelas do .sql no banco online (MySQL / MariaDB Relacional): 0/19 existem online, 13/19 possuem gravação (INSERT/UPDATE) no código e 15/19 são consumidas via leitura (SELECT) pelo programa (0/19 com ciclo completo). [Item 2.3 Penalizado]: Entidades do tema sendo gravadas fora do banco em localStorage [planoEscolhido]. [Item 2.4 Penalizado]: Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/19 tabelas online).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 0 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
@@ -1502,40 +1938,43 @@
         "itens": [
           "Arquivos obrigatórios localizados na pasta do grupo: 7 de 7.",
           "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 100.0%.",
-          "Todos os 7 arquivos seguem rigorosamente a nomenclatura oficial exigida pelo SENAI."
+          "Todos os 7 arquivos seguem a nomenclatura oficial exigida pelo SENAI."
         ]
       },
       {
         "categoria": "Pilar 1 (30,0 pts)",
         "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
-        "status": "conforme",
-        "resumo": "Nota Pilar 1: 25.21 / 30,00 pts • 5937 palavras (~31 págs.)",
+        "status": "alerta",
+        "resumo": "Nota Pilar 1: 12.06 / 30,00 pts • 0 palavras (~1 págs.)",
         "itens": [
-          "Extensão textual: 5937 palavras (~31 páginas estimadas) cobrindo 11/14 seções ABNT.",
-          "Engenharia de Requisitos: 8 Requisitos Funcionais (RF) e 5 Requisitos Não Funcionais (RNF) mapeados.",
-          "Modelagem de Dados e Prototipação: MER/DER=Sim, Dicionário de Dados=Não, Protótipo/Figma=Sim.",
-          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Não, Backlog/Cronograma=Sim."
+          "Extensão textual: 0 palavras (~1 páginas estimadas).",
+          "Estrutura de Seções ABNT: 0/14 identificadas. ⚠️ SEÇÕES FALTANTES (14): [Capa & Folha de Rosto, Resumo & Abstract, Sumário, Introdução & Justificativa, Fundamentação Teórica, Metodologia, Requisitos (RF / RNF), Modelagem de BD (MER/DER & Dicionário), Prototipação & Wireframes (Figma), Arquitetura & Stack, Plano de Negócios & Viabilidade, Rotinas e Relatório de Testes, Backlog & Cronograma Ágil, Conclusão & Referências ABNT].",
+          "Auditoria de Formatação (NBR 14724): Papel: Não fornecido (0 bytes) • Margens: Não inspecionado • Tipografia: Não inspecionado • Espaçamento: Não inspecionado • Alinhamento: Não inspecionado.",
+          "Engenharia de Requisitos: 0 Requisitos Funcionais (RF) e 0 Requisitos Não Funcionais (RNF) mapeados.",
+          "Modelagem de Dados e Prototipação: MER/DER=Não, Dicionário de Dados=Não, Protótipo/Figma=Não.",
+          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Não, Casos de Teste=Não, Backlog/Cronograma=Não."
         ]
       },
       {
         "categoria": "Itens 2.3 e 2.4 (Crítico)",
         "titulo": "3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy",
         "status": "critico",
-        "resumo": "Online: 0/0 • Grava: 0/0 • Consome (SELECT): 0/0",
+        "resumo": "Online: 0/19 • Grava: 13/19 • Consome (SELECT): 15/19",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): Servidor Cloud Externo (https://brio.site.je) — Status HTTP 200 (1136 ms).",
-          "Publicação do Banco de Dados (Item 2.3): Não identificado no código (Configurado via variáveis de ambiente / não exposto).",
-          "Script SQL Entregue ('CTDS-2026-02-BD-BRIO-Rayane-Laura.sql'): 0 tabelas DDL () e 0 registros INSERT INTO.",
-          "Rastreabilidade das Tabelas do .sql no Banco Online (Não identificado no código): 0/0 existem online • 0/0 possuem gravação (INSERT/UPDATE) • 0/0 são consumidas via leitura (SELECT) • 0/0 com ciclo completo.",
-          "❌ PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql () possuem 0/0 ciclos completos no banco online, entidades centrais do tema [planoEscolhido] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: planoEscolhido).",
-          "❌ Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-BRIO-Rayane-Laura.sql' contém 0 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
+          "Hospedagem da Aplicação (Item 2.4): Servidor Cloud Externo (https://brio.site.je) — Status HTTP 200 (1242 ms).",
+          "Publicação do Banco de Dados (Item 2.3): MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto).",
+          "Script SQL Entregue ('CTDS-2026-02-BD-BRIO-Rayane-Laura.sql'): 19 tabelas DDL (assinaturas, conquistas, conteudos, correcoes, documentos_professores, materias) e 380 registros INSERT INTO.",
+          "Rastreabilidade das Tabelas do .sql no Banco Online (MySQL / MariaDB Relacional): 0/19 existem online • 13/19 possuem gravação (INSERT/UPDATE) • 15/19 são consumidas via leitura (SELECT) • 0/19 com ciclo completo.",
+          "❌ TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (MySQL / MariaDB Relacional): A(s) tabela(s) [assinaturas, conquistas, conteudos, correcoes, documentos_professores, materias, percentual, planos, pontuacoes, progresso_conteudos, questoes, redacoes, respostas, simulados, tarefas, temas_redacao, tentativas, usuario_conquistas, usuarios] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
+          "❌ PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (assinaturas, conquistas, conteudos, correcoes) possuem 0/19 ciclos completos no banco online, entidades centrais do tema [planoEscolhido] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: planoEscolhido).",
+          "✅ Povoamento SQL Conforme: Todas as 19 tabelas possuem no mínimo 20 registros inseridos via INSERT INTO."
         ]
       },
       {
         "categoria": "Pilar 2 (40,0 pts)",
         "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
         "status": "conforme",
-        "resumo": "Nota Pilar 2: 26.30 / 40,00 pts • Stack: PHP, PostgreSQL / SQL",
+        "resumo": "Nota Pilar 2: 28.00 / 40,00 pts • Stack: PHP, PostgreSQL / SQL",
         "itens": [
           "Stack Tecnológica Detectada no Pacote ZIP (56 arquivos úteis): PHP, PostgreSQL / SQL.",
           "Estrutura de Código: 24 arquivos de interface (Frontend) e 5 arquivos de serviços/regras/integração (Backend).",
@@ -1560,9 +1999,13 @@
         "itens": [
           "Status Geral do Grupo: Nota Retida (Pendências).",
           "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
-          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 66.47 pts (>= 50,0 pts), existem 4 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 55.02 pts (>= 50,0 pts), existem 8 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: 1.1 Monografia ABNT (1.0/8.0)",
+          "   • Pendência bloqueante: 1.2 Requisitos RF/RNF (1.2/3.0)",
+          "   • Pendência bloqueante: 1.3 Modelagem de BD (1.2/3.0)",
+          "   • Pendência bloqueante: 1.6 Plano de Negócio (1.4/3.0)",
           "   • Pendência bloqueante: 1.7 Testes & Relatório (1.4/3.0)",
-          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)",
+          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (3.7/10.0)",
           "   • Pendência bloqueante: 2.4 Deploy Online (2.2/5.0)",
           "   • Pendência bloqueante: 3.3 Material de Slides (1.8/4.0)"
         ]
@@ -1570,13 +2013,15 @@
     ],
     "pontos_fortes": [
       "Padronização de nomenclatura digital (CTDS-2026-02-...) 100% em conformidade com o edital.",
-      "Monografia densa e bem desenvolvida (5937 palavras, ~31 páginas, 8 RFs e 5 RNFs).",
-      "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 1136 ms).",
+      "Script SQL exemplar: 19 tabelas normalizadas com 380 registros válidos (>= 20 por entidade).",
+      "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 1242 ms).",
       "Repositório GitHub público e ativo (4 commits analisados via API)."
     ],
     "pontos_atencao": [
-      "PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql () possuem 0/0 ciclos completos no banco online, entidades centrais do tema [planoEscolhido] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: planoEscolhido).",
-      "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-BRIO-Rayane-Laura.sql' contém 0 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
+      "Monografia incompleta na norma ABNT: faltam 14 seções [Capa & Folha de Rosto, Resumo & Abstract, Sumário, Introdução & Justificativa, Fundamentação Teórica, Metodologia, Requisitos (RF / RNF), Modelagem de BD (MER/DER & Dicionário), Prototipação & Wireframes (Figma), Arquitetura & Stack, Plano de Negócios & Viabilidade, Rotinas e Relatório de Testes, Backlog & Cronograma Ágil, Conclusão & Referências ABNT].",
+      "Monografia com extensão enxuta (0 palavras); verificar aprofundamento teórico.",
+      "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (MySQL / MariaDB Relacional): A(s) tabela(s) [assinaturas, conquistas, conteudos, correcoes, documentos_professores, materias, percentual, planos, pontuacoes, progresso_conteudos, questoes, redacoes, respostas, simulados, tarefas, temas_redacao, tentativas, usuario_conquistas, usuarios] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
+      "PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (assinaturas, conquistas, conteudos, correcoes) possuem 0/19 ciclos completos no banco online, entidades centrais do tema [planoEscolhido] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: planoEscolhido)."
     ],
     "usou_llm_gemini": false
   },
@@ -1599,10 +2044,10 @@
     ],
     "entregue_na_pasta": true,
     "nome_pasta_entregue": "Banca03-Grupo03-Fitlink-(Cassiano, Gabriel)",
-    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca03-Grupo03-Fitlink-(Cassiano, Gabriel)",
+    "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca03-Grupo03-Fitlink-(Cassiano, Gabriel)",
     "status_avaliacao": "auditado_ia",
-    "auditado_em": "2026-11-16T22:56:44",
-    "atualizado_em": "2026-11-16T22:56:44",
+    "auditado_em": "2026-11-17T08:24:45",
+    "atualizado_em": "2026-11-17T08:24:45",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -1615,6 +2060,7 @@
         "tamanho_bytes": 0,
         "padrao_esperado": "CTDS-2026-02-TCC-Fitlink-Cassiano-Gabriel.pdf",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -1625,6 +2071,7 @@
         "tamanho_bytes": 5489011,
         "padrao_esperado": "CTDS-2026-02-TCC-Fitlink-Cassiano-Gabriel.docx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -1635,6 +2082,7 @@
         "tamanho_bytes": 4028620,
         "padrao_esperado": "CTDS-2026-02-Sistema-Fitlink-Cassiano-Gabriel.zip",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -1645,6 +2093,7 @@
         "tamanho_bytes": 33995,
         "padrao_esperado": "CTDS-2026-02-BD-Fitlink-Cassiano-Gabriel.sql",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -1655,6 +2104,7 @@
         "tamanho_bytes": 141124,
         "padrao_esperado": "CTDS-2026-02-Apresentação-Fitlink-Cassiano-Gabriel.pdf",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -1665,6 +2115,7 @@
         "tamanho_bytes": 43210,
         "padrao_esperado": "CTDS-2026-02-Apresentação-Fitlink-Cassiano-Gabriel.pptx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -1675,6 +2126,7 @@
         "tamanho_bytes": 16,
         "padrao_esperado": "links.txt",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       }
     ],
@@ -1698,6 +2150,32 @@
         "Rotinas e Relatório de Testes": false,
         "Backlog & Cronograma Ágil": false,
         "Conclusão & Referências ABNT": false
+      },
+      "secoes_abnt_faltantes": [
+        "Capa & Folha de Rosto",
+        "Resumo & Abstract",
+        "Sumário",
+        "Introdução & Justificativa",
+        "Fundamentação Teórica",
+        "Metodologia",
+        "Requisitos (RF / RNF)",
+        "Modelagem de BD (MER/DER & Dicionário)",
+        "Prototipação & Wireframes (Figma)",
+        "Arquitetura & Stack",
+        "Plano de Negócios & Viabilidade",
+        "Rotinas e Relatório de Testes",
+        "Backlog & Cronograma Ágil",
+        "Conclusão & Referências ABNT"
+      ],
+      "pendencias_formatacao_abnt": [
+        "Margens fora do padrão ABNT: detectado Sup 0.0cm, Esq 0.0cm, Inf 0.0cm, Dir 0.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita)"
+      ],
+      "detalhes_formatacao_abnt": {
+        "papel": "21.0 x 29.7 cm (A4)",
+        "margens": "Sup: 0.0cm | Esq: 0.0cm | Inf: 0.0cm | Dir: 0.0cm",
+        "tipografia": "Arial / Times New Roman (Herdado)",
+        "espacamento": "1,5 linhas (Padrão modelo ABNT)",
+        "alinhamento": "Justificado (Padrão modelo ABNT)"
       },
       "rfs_detectados_qtd": 0,
       "rnfs_detectados_qtd": 0,
@@ -1862,9 +2340,11 @@
       "deploy_tempo_ms": 0,
       "deploy_titulo_pagina": "",
       "deploy_diagnostico": "Link de Deploy ausente no arquivo links.txt!",
+      "hospedado_vm_oracle": false,
+      "banco_online_ativo_e_apontado": false,
       "deploy_provedor": "Não publicado / URL ausente",
       "deploy_rodando_inteiramente_nuvem": false,
-      "banco_provedor_nuvem": "Não identificado no código",
+      "banco_provedor_nuvem": "MySQL / MariaDB Relacional",
       "banco_url_detectada": "Configurado via variáveis de ambiente / não exposto",
       "banco_exclusivo_nuvem": false,
       "usa_localstorage_indevido": false,
@@ -1880,9 +2360,9 @@
           "registros_no_sql": 4,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/perfil.php | Consumo (SELECT): fitlink2.0/php/agendar.php, fitlink2.0/php/mensagens.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1891,9 +2371,9 @@
           "registros_no_sql": 248,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/agendar.php | Consumo (SELECT): fitlink2.0/php/agenda.php, fitlink2.0/php/agendar.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1902,9 +2382,9 @@
           "registros_no_sql": 10,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/agendar.php, fitlink2.0/php/mensagens.php | Consumo (SELECT): fitlink2.0/php/agendar.php, fitlink2.0/php/feedback.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1913,9 +2393,9 @@
           "registros_no_sql": 1,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/cadastroAluno.php, fitlink2.0/php/perfil_aluno.php | Consumo (SELECT): fitlink2.0/php/cadastroAluno.php, fitlink2.0/php/login.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1924,9 +2404,9 @@
           "registros_no_sql": 2,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/cadastroPersonal.php, fitlink2.0/php/perfil.php | Consumo (SELECT): fitlink2.0/php/agendar.php, fitlink2.0/php/aluno.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1935,9 +2415,9 @@
           "registros_no_sql": 1,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/meus_alunos.php | Consumo (SELECT): fitlink2.0/php/agendar.php, fitlink2.0/php/financeiro.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1946,9 +2426,9 @@
           "registros_no_sql": 113,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/disponibilidade.php | Consumo (SELECT): fitlink2.0/php/agendar.php, fitlink2.0/php/disponibilidade.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1957,9 +2437,9 @@
           "registros_no_sql": 0,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/feedback.php | Consumo (SELECT): fitlink2.0/php/aluno.php, fitlink2.0/php/feedback.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1968,9 +2448,9 @@
           "registros_no_sql": 19,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/agendar.php, fitlink2.0/php/mensagens.php | Consumo (SELECT): fitlink2.0/php/mensagens.php, fitlink2.0/php/meus_alunos.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1979,9 +2459,9 @@
           "registros_no_sql": 3,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/perfil.php | Consumo (SELECT): fitlink2.0/php/agendar.php, fitlink2.0/php/aluno.php",
           "conforme_ciclo_completo": false
         },
         {
@@ -1990,19 +2470,19 @@
           "registros_no_sql": 2,
           "presente_no_banco_online": false,
           "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO DETECTADO",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "Gravação: fitlink2.0/php/planos.php | Consumo (SELECT): fitlink2.0/php/aluno.php, fitlink2.0/php/feedback.php",
           "conforme_ciclo_completo": false
         }
       ],
       "tabelas_sql_presentes_online_qtd": 0,
-      "tabelas_sql_gravadas_pelo_codigo_qtd": 0,
-      "tabelas_sql_consumidas_pelo_codigo_qtd": 0,
+      "tabelas_sql_gravadas_pelo_codigo_qtd": 11,
+      "tabelas_sql_consumidas_pelo_codigo_qtd": 11,
       "tabelas_ciclo_completo_qtd": 0,
       "entidades_tema_sem_tabela_banco": [],
       "inviabiliza_finalizacao_persistencia": true,
-      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIA NO ITEM 2.4 (Deploy / BD Online): Auditoria das 11 tabelas do .sql no banco online (Não identificado no código): 0/11 existem online, 0/11 possuem gravação (INSERT/UPDATE) no código e 0/11 são consumidas via leitura (SELECT) pelo programa (0/11 com ciclo completo). Penalidade aplicada em 2.4: Deploy online não responde ou URL indisponível; Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/11 tabelas online). (Item 2.3 Banco Físico e Dados: Conforme)."
+      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIA NO ITEM 2.4 (Deploy / BD Online): Auditoria das 11 tabelas do .sql no banco online (MySQL / MariaDB Relacional): 0/11 existem online, 11/11 possuem gravação (INSERT/UPDATE) no código e 11/11 são consumidas via leitura (SELECT) pelo programa (0/11 com ciclo completo). Penalidade aplicada em 2.4: Deploy online não responde ou URL indisponível; Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/11 tabelas online). (Item 2.3 Banco Físico e Dados: Conforme)."
     },
     "rubricas": [
       {
@@ -2170,16 +2650,16 @@
         "pilar": 2,
         "titulo": "2.3 Banco de Dados Físico",
         "peso_max": 10.0,
-        "nivel": "Insuficiente",
-        "nota": 4.0,
-        "nota_sugerida_ia": 4.0,
-        "nivel_sugerido_ia": "Insuficiente",
-        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). Estrutura do .sql e uso pelo código plenamente validados sem persistência indevida de dados do tema fora do banco.",
+        "nivel": "Pleno",
+        "nota": 7.0,
+        "nota_sugerida_ia": 7.0,
+        "nivel_sugerido_ia": "Pleno",
+        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). Estrutura do banco de dados e uso pelo código plenamente validados sem persistência indevida de dados do tema fora do banco.",
         "evidencias": [
-          "Estrutura DDL (.sql) vs DER: 11 tabelas (PK: Sim, FK: Sim)",
-          "Tabelas gravadas (INSERT/UPDATE) pelo código: 0/11",
-          "Tabelas consumidas (SELECT) pelo código: 0/11",
-          "Registros no script .sql: 403 registros (Todas as tabelas com registros: NÃO - 1 sem registro)",
+          "Estrutura DDL (.sql / VM Oracle) vs DER: 11 tabelas (PK: Sim, FK: Sim)",
+          "Tabelas gravadas (INSERT/UPDATE) pelo código: 11/11",
+          "Tabelas consumidas (SELECT) pelo código: 11/11",
+          "Registros no script / banco: 403 registros (Todas as tabelas com registros: NÃO - 1 sem registro)",
           "Chaves localStorage permitidas (UI/Sessão): Nenhuma",
           "Persistência fora do BD (localStorage/JSON indevido): Nenhuma (Conforme)"
         ],
@@ -2197,7 +2677,7 @@
         "justificativa_ia": "Link de Deploy ausente no arquivo links.txt! Deploy inacessível ou não publicado.",
         "evidencias": [
           "Deploy do Sistema: Não publicado / URL ausente (Ausente) — HTTP 0 (0 ms)",
-          "Banco de Dados Online Ativo: Não identificado no código (Configurado via variáveis de ambiente / não exposto)",
+          "Banco de Dados Online Ativo: MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto)",
           "Tabelas presentes no BD Online: 0/11",
           "Sistema apontando para o BD Online: NÃO / AUSENTE (Abatimento de pontos aplicado em 2.4)"
         ],
@@ -2323,10 +2803,10 @@
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
         "p1_nota": 12.06,
-        "p2_nota": 25.7,
+        "p2_nota": 28.7,
         "p3_nota": 3.85,
         "p4_nota": 15.0,
-        "nota_final": 56.61,
+        "nota_final": 59.61,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
           "1.1 Monografia ABNT (1.0/8.0)",
@@ -2334,9 +2814,9 @@
           "1.3 Modelagem de BD (1.2/3.0)",
           "1.6 Plano de Negócio (1.4/3.0)",
           "1.7 Testes & Relatório (1.4/3.0)",
-          "2.3 Banco de Dados Físico (4.0/10.0)",
           "2.4 Deploy Online (1.0/5.0)",
-          "2.5 GitHub & README (1.8/5.0)"
+          "2.5 GitHub & README (1.8/5.0)",
+          "Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 0.0cm, Esq 0.0cm, Inf 0.0cm, Dir 0.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -2364,10 +2844,10 @@
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
         "p1_nota": 12.06,
-        "p2_nota": 25.7,
+        "p2_nota": 28.7,
         "p3_nota": 3.85,
         "p4_nota": 15.0,
-        "nota_final": 56.61,
+        "nota_final": 59.61,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
           "1.1 Monografia ABNT (1.0/8.0)",
@@ -2375,9 +2855,9 @@
           "1.3 Modelagem de BD (1.2/3.0)",
           "1.6 Plano de Negócio (1.4/3.0)",
           "1.7 Testes & Relatório (1.4/3.0)",
-          "2.3 Banco de Dados Físico (4.0/10.0)",
           "2.4 Deploy Online (1.0/5.0)",
-          "2.5 GitHub & README (1.8/5.0)"
+          "2.5 GitHub & README (1.8/5.0)",
+          "Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 0.0cm, Esq 0.0cm, Inf 0.0cm, Dir 0.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -2388,23 +2868,23 @@
         "integrante_sugerido": "Cassiano",
         "categoria": "Arquitetura & Comunicação Cliente-Servidor",
         "arquivo_referencia": "Stack: PHP, PostgreSQL / SQL",
-        "trecho_codigo": "Tecnologias adotadas: PHP, PostgreSQL / SQL\nProvedor de Deploy: Não publicado / URL ausente (N/A)\nProvedor de Dados: Não identificado no código",
-        "pergunta": "Por que a equipe escolheu a stack (PHP, PostgreSQL / SQL) e como a interface (Frontend) se comunica com o banco/serviço (Não identificado no código) para enviar e buscar dados?",
+        "trecho_codigo": "Tecnologias adotadas: PHP, PostgreSQL / SQL\nProvedor de Deploy: Não publicado / URL ausente (N/A)\nProvedor de Dados: MySQL / MariaDB Relacional",
+        "pergunta": "Por que a equipe escolheu a stack (PHP, PostgreSQL / SQL) e como a interface (Frontend) se comunica com o banco/serviço (MySQL / MariaDB Relacional) para enviar e buscar dados?",
         "resposta_esperada": "Explicar a separação entre tela e servidor/dados, o uso de requisições HTTP (GET/POST) com JSON e por que essa stack foi a mais adequada para o projeto."
       },
       {
         "integrante_sugerido": "Gabriel",
         "categoria": "Persistência em Nuvem vs LocalStorage & Banco de Dados",
-        "arquivo_referencia": "Não identificado no código • CTDS-2026-02-BD-Fitlink-Cassiano-Gabriel.sql",
-        "trecho_codigo": "Banco em Nuvem: Não identificado no código (Configurado via variáveis de ambiente / não exposto)\nTabelas presentes online: 0/11\nChaves UI permitidas: Nenhuma",
-        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (Não identificado no código)?",
+        "arquivo_referencia": "MySQL / MariaDB Relacional • CTDS-2026-02-BD-Fitlink-Cassiano-Gabriel.sql",
+        "trecho_codigo": "Banco em Nuvem: MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto)\nTabelas presentes online: 0/11\nChaves UI permitidas: Nenhuma",
+        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (MySQL / MariaDB Relacional)?",
         "resposta_esperada": "Explicar que o localStorage serve apenas para preferências locais simples do navegador (como tema claro/escuro), enquanto os dados de negócio devem ser persistidos centralizadamente no banco online para estarem seguros e disponíveis para todos os usuários."
       },
       {
         "integrante_sugerido": "Cassiano",
         "categoria": "Segurança, Autenticação & Controle de Acesso",
-        "arquivo_referencia": "Segurança em Não identificado no código",
-        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: Não identificado no código",
+        "arquivo_referencia": "Segurança em MySQL / MariaDB Relacional",
+        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: MySQL / MariaDB Relacional",
         "pergunta": "Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?",
         "resposta_esperada": "Explicar o fluxo de login com senha/token de sessão e as regras de segurança/permissão que amarram os registros ao ID do usuário autenticado."
       },
@@ -2412,15 +2892,15 @@
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
         "arquivo_referencia": "Não publicado / URL ausente (Ambiente de Produção)",
-        "trecho_codigo": "Hospedagem da Aplicação: Não publicado / URL ausente (URL ausente)\nHospedagem do Banco: Não identificado no código\nStatus HTTP: 0 (0 ms)",
+        "trecho_codigo": "Hospedagem da Aplicação: Não publicado / URL ausente (URL ausente)\nHospedagem do Banco: MySQL / MariaDB Relacional\nStatus HTTP: 0 (0 ms)",
         "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Não publicado / URL ausente)?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
     ],
     "p1_total": 12.06,
-    "p2_total": 25.7,
+    "p2_total": 28.7,
     "p3_grupo_base": 3.85,
-    "media_nota_final_grupo": 56.61,
+    "media_nota_final_grupo": 59.61,
     "possui_item_insuficiente_grupo": true,
     "itens_insuficientes_grupo": [
       "1.1 Monografia ABNT (1.0/8.0)",
@@ -2428,13 +2908,13 @@
       "1.3 Modelagem de BD (1.2/3.0)",
       "1.6 Plano de Negócio (1.4/3.0)",
       "1.7 Testes & Relatório (1.4/3.0)",
-      "2.3 Banco de Dados Físico (4.0/10.0)",
       "2.4 Deploy Online (1.0/5.0)",
-      "2.5 GitHub & README (1.8/5.0)"
+      "2.5 GitHub & README (1.8/5.0)",
+      "Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 0.0cm, Esq 0.0cm, Inf 0.0cm, Dir 0.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Fitlink — I2DEV-A / Grupo 03):\n1. DOCUMENTAÇÃO (Pilar 1 = 12.06/30,00 pts): Monografia com 0 palavras (~1 págs.), 0 RFs e 0 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 25.70/40,00 pts): Stack [PHP, PostgreSQL / SQL] publicada em Não publicado / URL ausente (N/A) e banco vinculado a Não identificado no código. PENDÊNCIA NO ITEM 2.4 (Deploy / BD Online): Auditoria das 11 tabelas do .sql no banco online (Não identificado no código): 0/11 existem online, 0/11 possuem gravação (INSERT/UPDATE) no código e 0/11 são consumidas via leitura (SELECT) pelo programa (0/11 com ciclo completo). Penalidade aplicada em 2.4: Deploy online não responde ou URL indisponível; Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/11 tabelas online). (Item 2.3 Banco Físico e Dados: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 10 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Fitlink — I2DEV-A / Grupo 03):\n1. DOCUMENTAÇÃO (Pilar 1 = 12.06/30,00 pts): Monografia com 0 palavras (~1 págs.), 0 RFs e 0 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.70/40,00 pts): Stack [PHP, PostgreSQL / SQL] publicada em Não publicado / URL ausente (N/A) e banco vinculado a MySQL / MariaDB Relacional. PENDÊNCIA NO ITEM 2.4 (Deploy / BD Online): Auditoria das 11 tabelas do .sql no banco online (MySQL / MariaDB Relacional): 0/11 existem online, 11/11 possuem gravação (INSERT/UPDATE) no código e 11/11 são consumidas via leitura (SELECT) pelo programa (0/11 com ciclo completo). Penalidade aplicada em 2.4: Deploy online não responde ou URL indisponível; Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/11 tabelas online). (Item 2.3 Banco Físico e Dados: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 10 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
@@ -2444,32 +2924,35 @@
         "itens": [
           "Arquivos obrigatórios localizados na pasta do grupo: 7 de 7.",
           "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 100.0%.",
-          "Todos os 7 arquivos seguem rigorosamente a nomenclatura oficial exigida pelo SENAI."
+          "Todos os 7 arquivos seguem a nomenclatura oficial exigida pelo SENAI."
         ]
       },
       {
         "categoria": "Pilar 1 (30,0 pts)",
         "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
-        "status": "alerta",
-        "resumo": "Nota Pilar 1: 12.06 / 30,00 pts • 0 palavras (~1 págs.)",
+        "status": "critico",
+        "resumo": "Nota Pilar 1: 12.06 / 30,00 pts • 0 palavras (~1 págs.) • ⚠️ Pendência ABNT",
         "itens": [
-          "Extensão textual: 0 palavras (~1 páginas estimadas) cobrindo 0/14 seções ABNT.",
+          "Extensão textual: 0 palavras (~1 páginas estimadas).",
+          "Estrutura de Seções ABNT: 0/14 identificadas. ⚠️ SEÇÕES FALTANTES (14): [Capa & Folha de Rosto, Resumo & Abstract, Sumário, Introdução & Justificativa, Fundamentação Teórica, Metodologia, Requisitos (RF / RNF), Modelagem de BD (MER/DER & Dicionário), Prototipação & Wireframes (Figma), Arquitetura & Stack, Plano de Negócios & Viabilidade, Rotinas e Relatório de Testes, Backlog & Cronograma Ágil, Conclusão & Referências ABNT].",
+          "Auditoria de Formatação (NBR 14724): Papel: 21.0 x 29.7 cm (A4) • Margens: Sup: 0.0cm | Esq: 0.0cm | Inf: 0.0cm | Dir: 0.0cm • Tipografia: Arial / Times New Roman (Herdado) • Espaçamento: 1,5 linhas (Padrão modelo ABNT) • Alinhamento: Justificado (Padrão modelo ABNT).",
           "Engenharia de Requisitos: 0 Requisitos Funcionais (RF) e 0 Requisitos Não Funcionais (RNF) mapeados.",
           "Modelagem de Dados e Prototipação: MER/DER=Não, Dicionário de Dados=Não, Protótipo/Figma=Não.",
-          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Não, Casos de Teste=Não, Backlog/Cronograma=Não."
+          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Não, Casos de Teste=Não, Backlog/Cronograma=Não.",
+          "⚠️ PENDÊNCIA DE FORMATAÇÃO (Nota Retida até envio corrigido): Margens fora do padrão ABNT: detectado Sup 0.0cm, Esq 0.0cm, Inf 0.0cm, Dir 0.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita)"
         ]
       },
       {
         "categoria": "Itens 2.3 e 2.4 (Crítico)",
         "titulo": "3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy",
         "status": "critico",
-        "resumo": "Online: 0/11 • Grava: 0/11 • Consome (SELECT): 0/11",
+        "resumo": "Online: 0/11 • Grava: 11/11 • Consome (SELECT): 11/11",
         "itens": [
           "Hospedagem da Aplicação (Item 2.4): Não publicado / URL ausente (URL ausente) — Status HTTP 0 (0 ms).",
-          "Publicação do Banco de Dados (Item 2.3): Não identificado no código (Configurado via variáveis de ambiente / não exposto).",
+          "Publicação do Banco de Dados (Item 2.3): MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto).",
           "Script SQL Entregue ('CTDS-2026-02-BD-Fitlink-Cassiano-Gabriel.sql'): 11 tabelas DDL (tb_academia, tb_agenda, tb_aulamarcada, tb_cadastroaluno, tb_cadastropersonal, tb_contrato) e 403 registros INSERT INTO.",
-          "Rastreabilidade das Tabelas do .sql no Banco Online (Não identificado no código): 0/11 existem online • 0/11 possuem gravação (INSERT/UPDATE) • 0/11 são consumidas via leitura (SELECT) • 0/11 com ciclo completo.",
-          "❌ TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Não identificado no código): A(s) tabela(s) [tb_academia, tb_agenda, tb_aulamarcada, tb_cadastroaluno, tb_cadastropersonal, tb_contrato, tb_disponibilidade, tb_feedbacks, tb_mensagens, tb_personalacademia, tb_planos] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
+          "Rastreabilidade das Tabelas do .sql no Banco Online (MySQL / MariaDB Relacional): 0/11 existem online • 11/11 possuem gravação (INSERT/UPDATE) • 11/11 são consumidas via leitura (SELECT) • 0/11 com ciclo completo.",
+          "❌ TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (MySQL / MariaDB Relacional): A(s) tabela(s) [tb_academia, tb_agenda, tb_aulamarcada, tb_cadastroaluno, tb_cadastropersonal, tb_contrato, tb_disponibilidade, tb_feedbacks, tb_mensagens, tb_personalacademia, tb_planos] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
           "❌ Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-Fitlink-Cassiano-Gabriel.sql' contém 11 tabelas DDL, mas possui 403 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
         ]
       },
@@ -2477,7 +2960,7 @@
         "categoria": "Pilar 2 (40,0 pts)",
         "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
         "status": "critico",
-        "resumo": "Nota Pilar 2: 25.70 / 40,00 pts • Stack: PHP, PostgreSQL / SQL",
+        "resumo": "Nota Pilar 2: 28.70 / 40,00 pts • Stack: PHP, PostgreSQL / SQL",
         "itens": [
           "Stack Tecnológica Detectada no Pacote ZIP (70 arquivos úteis): PHP, PostgreSQL / SQL.",
           "Estrutura de Código: 25 arquivos de interface (Frontend) e 17 arquivos de serviços/regras/integração (Backend).",
@@ -2502,15 +2985,15 @@
         "itens": [
           "Status Geral do Grupo: Nota Retida (Pendências).",
           "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
-          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 56.61 pts (>= 50,0 pts), existem 8 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 59.61 pts (>= 50,0 pts), existem 8 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
           "   • Pendência bloqueante: 1.1 Monografia ABNT (1.0/8.0)",
           "   • Pendência bloqueante: 1.2 Requisitos RF/RNF (1.2/3.0)",
           "   • Pendência bloqueante: 1.3 Modelagem de BD (1.2/3.0)",
           "   • Pendência bloqueante: 1.6 Plano de Negócio (1.4/3.0)",
           "   • Pendência bloqueante: 1.7 Testes & Relatório (1.4/3.0)",
-          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (4.0/10.0)",
           "   • Pendência bloqueante: 2.4 Deploy Online (1.0/5.0)",
-          "   • Pendência bloqueante: 2.5 GitHub & README (1.8/5.0)"
+          "   • Pendência bloqueante: 2.5 GitHub & README (1.8/5.0)",
+          "   • Pendência bloqueante: Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 0.0cm, Esq 0.0cm, Inf 0.0cm, Dir 0.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
         ]
       }
     ],
@@ -2518,8 +3001,10 @@
       "Padronização de nomenclatura digital (CTDS-2026-02-...) 100% em conformidade com o edital."
     ],
     "pontos_atencao": [
+      "Monografia incompleta na norma ABNT: faltam 14 seções [Capa & Folha de Rosto, Resumo & Abstract, Sumário, Introdução & Justificativa, Fundamentação Teórica, Metodologia, Requisitos (RF / RNF), Modelagem de BD (MER/DER & Dicionário), Prototipação & Wireframes (Figma), Arquitetura & Stack, Plano de Negócios & Viabilidade, Rotinas e Relatório de Testes, Backlog & Cronograma Ágil, Conclusão & Referências ABNT].",
+      "Formatação ABNT não conforme: Margens fora do padrão ABNT: detectado Sup 0.0cm, Esq 0.0cm, Inf 0.0cm, Dir 0.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita)",
       "Monografia com extensão enxuta (0 palavras); verificar aprofundamento teórico.",
-      "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Não identificado no código): A(s) tabela(s) [tb_academia, tb_agenda, tb_aulamarcada, tb_cadastroaluno, tb_cadastropersonal, tb_contrato, tb_disponibilidade, tb_feedbacks, tb_mensagens, tb_personalacademia, tb_planos] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
+      "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (MySQL / MariaDB Relacional): A(s) tabela(s) [tb_academia, tb_agenda, tb_aulamarcada, tb_cadastroaluno, tb_cadastropersonal, tb_contrato, tb_disponibilidade, tb_feedbacks, tb_mensagens, tb_personalacademia, tb_planos] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
       "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-Fitlink-Cassiano-Gabriel.sql' contém 11 tabelas DDL, mas possui 403 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela).",
       "Problema no Deploy Online (URL ausente): Link de Deploy ausente no arquivo links.txt!",
       "Link do repositório GitHub foi deixado EM BRANCO no arquivo links.txt (Item 2.5 classificado como Insuficiente até entrega do link)."
@@ -2546,10 +3031,10 @@
     ],
     "entregue_na_pasta": true,
     "nome_pasta_entregue": "Banca01-Grupo08-OrganizAI-(João Sergio, Leonardo, Ramon)",
-    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca01-Grupo08-OrganizAI-(João Sergio, Leonardo, Ramon)",
+    "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca01-Grupo08-OrganizAI-(João Sergio, Leonardo, Ramon)",
     "status_avaliacao": "auditado_ia",
-    "auditado_em": "2026-11-16T22:56:50",
-    "atualizado_em": "2026-11-16T22:56:50",
+    "auditado_em": "2026-11-17T08:24:51",
+    "atualizado_em": "2026-11-17T08:24:51",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -2562,6 +3047,7 @@
         "tamanho_bytes": 785050,
         "padrao_esperado": "CTDS-2026-02-TCC-OrganizAI-Leonardo-Joao-Ramon.pdf",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -2572,6 +3058,7 @@
         "tamanho_bytes": 4324824,
         "padrao_esperado": "CTDS-2026-02-TCC-OrganizAI-Leonardo-Joao-Ramon.docx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -2582,6 +3069,7 @@
         "tamanho_bytes": 8051933,
         "padrao_esperado": "CTDS-2026-02-Sistema-OrganizAI-Leonardo-Joao-Ramon.zip",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -2592,6 +3080,7 @@
         "tamanho_bytes": 6239,
         "padrao_esperado": "CTDS-2026-02-BD-OrganizAI-Leonardo-Joao-Ramon.sql",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -2602,6 +3091,7 @@
         "tamanho_bytes": 1903211,
         "padrao_esperado": "CTDS-2026-02-Apresentação-OrganizAI-Leonardo-Joao-Ramon.pdf",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -2612,6 +3102,7 @@
         "tamanho_bytes": 1715445,
         "padrao_esperado": "CTDS-2026-02-Apresentação-OrganizAI-Leonardo-Joao-Ramon.pptx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -2622,14 +3113,15 @@
         "tamanho_bytes": 84,
         "padrao_esperado": "links.txt",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       }
     ],
     "conformidade_nomenclatura_pct": 100.0,
     "auditoria_tecnica": {
-      "monografia_paginas_estimadas": 36,
-      "monografia_palavras": 4996,
-      "monografia_caracteres": 40679,
+      "monografia_paginas_estimadas": 17,
+      "monografia_palavras": 4828,
+      "monografia_caracteres": 35193,
       "secoes_abnt_detectadas": {
         "Capa & Folha de Rosto": true,
         "Resumo & Abstract": true,
@@ -2646,18 +3138,34 @@
         "Backlog & Cronograma Ágil": false,
         "Conclusão & Referências ABNT": true
       },
+      "secoes_abnt_faltantes": [
+        "Introdução & Justificativa",
+        "Fundamentação Teórica",
+        "Metodologia",
+        "Backlog & Cronograma Ágil"
+      ],
+      "pendencias_formatacao_abnt": [
+        "Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm)"
+      ],
+      "detalhes_formatacao_abnt": {
+        "papel": "21.6 x 27.9 cm (Divergente)",
+        "margens": "Sup: 3.0cm | Esq: 3.0cm | Inf: 2.0cm | Dir: 2.0cm",
+        "tipografia": "Arial",
+        "espacamento": "1,5 linhas (Padrão modelo ABNT)",
+        "alinhamento": "91% justificado"
+      },
       "rfs_detectados_qtd": 8,
       "rnfs_detectados_qtd": 8,
       "possui_mer_der": true,
       "possui_dicionario_dados": true,
       "possui_link_figma": true,
       "links_figma_encontrados": [
-        "https://www.figma.com/design/9nG9RIvSCoxmJzuEURWjRr/OrganizA%C3%AD?node-"
+        "https://www.figma.com/design/9nG9RIvSCoxmJzuEURWjRr/OrganizA%C3%AD?node-id=0-1&t=5omOuHcUGHnWUT5g-1"
       ],
       "possui_plano_negocios": true,
       "possui_casos_teste": true,
       "possui_backlog_cronograma": false,
-      "resumo_monografia": "O presente projeto visa ao desenvolvimento do OrganizAí, um aplicativo móvel destinado à organização financeira pessoal e à prevenção do endividamento. A plataforma foi planejada para reunir, em um único ambiente, recursos que auxiliem o usuário a visualizar sua situação financeira, registrar rendas, organizar pagamentos,",
+      "resumo_monografia": "Trabalho de Conclusão de Curso apresentado ao Serviço Nacional de Aprendizagem Industrial de Ourinhos para conclusão do Curso Técnico em Desenvolvimento de Sistemas.Orientadores: William D. Komel Trabalho de Conclusão de Curso apresentado ao Serviço Nacional de Aprendizagem Industrial de Ourinhos para conclusão do Curso Técnico de Desenvolvimento de Sistemas. ____________________________________Prof. Convidado - SENAI - Ourinhos ____________________________________Prof. Convidado - SENAI – Ourinhos",
       "sql_arquivo": "CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql",
       "sql_linhas": 159,
       "sql_tabelas": [
@@ -2843,9 +3351,11 @@
       "deploy_url": "https://organizai-theta.vercel.app",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 376,
+      "deploy_tempo_ms": 819,
       "deploy_titulo_pagina": "OrganizAí - Gestão Financeira Inteligente",
-      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 376 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'.",
+      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 819 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'.",
+      "hospedado_vm_oracle": false,
+      "banco_online_ativo_e_apontado": false,
       "deploy_provedor": "Vercel Cloud",
       "deploy_rodando_inteiramente_nuvem": false,
       "banco_provedor_nuvem": "Supabase (PostgreSQL Cloud)",
@@ -3004,9 +3514,9 @@
         "nota": 6.29,
         "nota_sugerida_ia": 6.29,
         "nivel_sugerido_ia": "Pleno",
-        "justificativa_ia": "Monografia com 4996 palavras (~36 págs) e 10/14 elementos obrigatórios ABNT identificados.",
+        "justificativa_ia": "Monografia com 4828 palavras (~17 págs) e 10/14 elementos obrigatórios ABNT identificados.",
         "evidencias": [
-          "4996 palavras (~36 páginas)",
+          "4828 palavras (~17 páginas)",
           "10/14 seções estruturais ABNT identificadas",
           "Conformidade de nomenclatura digital: 100.0%"
         ],
@@ -3166,10 +3676,10 @@
         "nivel_sugerido_ia": "Insuficiente",
         "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (renda_mensal, boletos, contas_fixas, assinaturas), abatendo a nota da rubrica 2.3.",
         "evidencias": [
-          "Estrutura DDL (.sql) vs DER: 3 tabelas (PK: Sim, FK: Sim)",
+          "Estrutura DDL (.sql / VM Oracle) vs DER: 3 tabelas (PK: Sim, FK: Sim)",
           "Tabelas gravadas (INSERT/UPDATE) pelo código: 3/3",
           "Tabelas consumidas (SELECT) pelo código: 3/3",
-          "Registros no script .sql: 0 registros (Todas as tabelas com registros: NÃO - 3 sem registro)",
+          "Registros no script / banco: 0 registros (Todas as tabelas com registros: NÃO - 3 sem registro)",
           "Chaves localStorage permitidas (UI/Sessão): temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts",
           "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
         ],
@@ -3184,9 +3694,9 @@
         "nota": 4.8,
         "nota_sugerida_ia": 4.8,
         "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 376 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'. Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 819 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'. Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: Vercel Cloud (https://organizai-theta.vercel.app) — HTTP 200 (376 ms)",
+          "Deploy do Sistema: Vercel Cloud (https://organizai-theta.vercel.app) — HTTP 200 (819 ms)",
           "Banco de Dados Online Ativo: Supabase (PostgreSQL Cloud) (https://dkftcjsofgpllrmswpmw.supabase.co)",
           "Tabelas presentes no BD Online: 3/3",
           "Sistema apontando para o BD Online: SIM (Integrado)"
@@ -3319,7 +3829,8 @@
         "nota_final": 70.54,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)"
+          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -3353,7 +3864,8 @@
         "nota_final": 64.84,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)"
+          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -3387,7 +3899,8 @@
         "nota_final": 70.04,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)"
+          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -3422,7 +3935,7 @@
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
         "arquivo_referencia": "Vercel Cloud (https://organizai-theta.vercel.app)",
-        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://organizai-theta.vercel.app)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (376 ms)",
+        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://organizai-theta.vercel.app)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (819 ms)",
         "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Vercel Cloud)?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
@@ -3433,11 +3946,12 @@
     "media_nota_final_grupo": 68.47,
     "possui_item_insuficiente_grupo": true,
     "itens_insuficientes_grupo": [
-      "2.3 Banco de Dados Físico (2.0/10.0)"
+      "2.3 Banco de Dados Físico (2.0/10.0)",
+      "Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (OrganizAI — I2DEV-B / Grupo 08):\n1. DOCUMENTAÇÃO (Pilar 1 = 25.49/30,00 pts): Monografia com 4996 palavras (~36 págs.), 8 RFs e 8 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.20/40,00 pts): Stack [Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript] publicada em Vercel Cloud (https://organizai-theta.vercel.app) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts]. Auditoria das 3 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 3/3 existem online, 3/3 possuem gravação (INSERT/UPDATE) no código e 3/3 são consumidas via leitura (SELECT) pelo programa (3/3 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}]. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (OrganizAI — I2DEV-B / Grupo 08):\n1. DOCUMENTAÇÃO (Pilar 1 = 25.49/30,00 pts): Monografia com 4828 palavras (~17 págs.), 8 RFs e 8 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.20/40,00 pts): Stack [Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript] publicada em Vercel Cloud (https://organizai-theta.vercel.app) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts]. Auditoria das 3 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 3/3 existem online, 3/3 possuem gravação (INSERT/UPDATE) no código e 3/3 são consumidas via leitura (SELECT) pelo programa (3/3 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}]. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
@@ -3447,19 +3961,22 @@
         "itens": [
           "Arquivos obrigatórios localizados na pasta do grupo: 7 de 7.",
           "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 100.0%.",
-          "Todos os 7 arquivos seguem rigorosamente a nomenclatura oficial exigida pelo SENAI."
+          "Todos os 7 arquivos seguem a nomenclatura oficial exigida pelo SENAI."
         ]
       },
       {
         "categoria": "Pilar 1 (30,0 pts)",
         "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
-        "status": "conforme",
-        "resumo": "Nota Pilar 1: 25.49 / 30,00 pts • 4996 palavras (~36 págs.)",
+        "status": "critico",
+        "resumo": "Nota Pilar 1: 25.49 / 30,00 pts • 4828 palavras (~17 págs.) • ⚠️ Pendência ABNT",
         "itens": [
-          "Extensão textual: 4996 palavras (~36 páginas estimadas) cobrindo 10/14 seções ABNT.",
+          "Extensão textual: 4828 palavras (~17 páginas estimadas).",
+          "Estrutura de Seções ABNT: 10/14 identificadas. ⚠️ SEÇÕES FALTANTES (4): [Introdução & Justificativa, Fundamentação Teórica, Metodologia, Backlog & Cronograma Ágil].",
+          "Auditoria de Formatação (NBR 14724): Papel: 21.6 x 27.9 cm (Divergente) • Margens: Sup: 3.0cm | Esq: 3.0cm | Inf: 2.0cm | Dir: 2.0cm • Tipografia: Arial • Espaçamento: 1,5 linhas (Padrão modelo ABNT) • Alinhamento: 91% justificado.",
           "Engenharia de Requisitos: 8 Requisitos Funcionais (RF) e 8 Requisitos Não Funcionais (RNF) mapeados.",
           "Modelagem de Dados e Prototipação: MER/DER=Sim, Dicionário de Dados=Sim, Protótipo/Figma=Sim.",
-          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Não."
+          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Não.",
+          "⚠️ PENDÊNCIA DE FORMATAÇÃO (Nota Retida até envio corrigido): Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm)"
         ]
       },
       {
@@ -3468,7 +3985,7 @@
         "status": "critico",
         "resumo": "Online: 3/3 • Grava: 3/3 • Consome (SELECT): 3/3",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://organizai-theta.vercel.app) — Status HTTP 200 (376 ms).",
+          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://organizai-theta.vercel.app) — Status HTTP 200 (819 ms).",
           "Publicação do Banco de Dados (Item 2.3): Supabase (PostgreSQL Cloud) (https://dkftcjsofgpllrmswpmw.supabase.co).",
           "Script SQL Entregue ('CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql'): 3 tabelas DDL (profiles, metas, metas_pagamentos) e 0 registros INSERT INTO.",
           "Rastreabilidade das Tabelas do .sql no Banco Online (Supabase (PostgreSQL Cloud)): 3/3 existem online • 3/3 possuem gravação (INSERT/UPDATE) • 3/3 são consumidas via leitura (SELECT) • 3/3 com ciclo completo.",
@@ -3507,18 +4024,21 @@
         "itens": [
           "Status Geral do Grupo: Nota Retida (Pendências).",
           "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
-          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 68.47 pts (>= 50,0 pts), existem 1 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
-          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)"
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 68.47 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)",
+          "   • Pendência bloqueante: Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
         ]
       }
     ],
     "pontos_fortes": [
       "Padronização de nomenclatura digital (CTDS-2026-02-...) 100% em conformidade com o edital.",
-      "Monografia densa e bem desenvolvida (4996 palavras, ~36 páginas, 8 RFs e 8 RNFs).",
-      "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 376 ms).",
+      "Monografia densa e bem desenvolvida (4828 palavras, ~17 páginas, 8 RFs e 8 RNFs).",
+      "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 819 ms).",
       "Repositório GitHub público e ativo (11 commits analisados via API)."
     ],
     "pontos_atencao": [
+      "Monografia incompleta na norma ABNT: faltam 4 seções [Introdução & Justificativa, Fundamentação Teórica, Metodologia, Backlog & Cronograma Ágil].",
+      "Formatação ABNT não conforme: Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm)",
       "PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (profiles, metas, metas_pagamentos) possuem 3/3 ciclos completos no banco online, entidades centrais do tema [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}).",
       "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql' contém 3 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela).",
       "Integrante João Sergio possui nível Insuficiente no item 4.1 Relatórios de Sprint (2/10 relatórios = 1.60/8,00 pts)."
@@ -3545,10 +4065,10 @@
     ],
     "entregue_na_pasta": true,
     "nome_pasta_entregue": "Banca02-Grupo03-Guardião Animal-(Arthur, Davi K, Vinicius)",
-    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca02-Grupo03-Guardião Animal-(Arthur, Davi K, Vinicius)",
+    "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca02-Grupo03-Guardião Animal-(Arthur, Davi K, Vinicius)",
     "status_avaliacao": "auditado_ia",
-    "auditado_em": "2026-11-16T22:57:03",
-    "atualizado_em": "2026-11-16T22:57:03",
+    "auditado_em": "2026-11-17T08:25:10",
+    "atualizado_em": "2026-11-17T08:25:10",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -3561,6 +4081,7 @@
         "tamanho_bytes": 1563832,
         "padrao_esperado": "CTDS-2026-02-TCC-GuardiãoAnimal-Arthur-Davi-Vinicius.pdf",
         "nomenclatura_conforme": false,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": [
           "Extensão duplicada no nome do arquivo ('CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf')."
         ]
@@ -3573,6 +4094,7 @@
         "tamanho_bytes": 10429447,
         "padrao_esperado": "CTDS-2026-02-TCC-GuardiãoAnimal-Arthur-Davi-Vinicius.docx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -3583,6 +4105,7 @@
         "tamanho_bytes": 787153,
         "padrao_esperado": "CTDS-2026-02-Sistema-GuardiãoAnimal-Arthur-Davi-Vinicius.zip",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -3593,6 +4116,7 @@
         "tamanho_bytes": 13527,
         "padrao_esperado": "CTDS-2026-02-BD-GuardiãoAnimal-Arthur-Davi-Vinicius.sql",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -3603,6 +4127,7 @@
         "tamanho_bytes": 523744,
         "padrao_esperado": "CTDS-2026-02-Apresentação-GuardiãoAnimal-Arthur-Davi-Vinicius.pdf",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -3613,6 +4138,7 @@
         "tamanho_bytes": 2294471,
         "padrao_esperado": "CTDS-2026-02-Apresentação-GuardiãoAnimal-Arthur-Davi-Vinicius.pptx",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -3623,14 +4149,15 @@
         "tamanho_bytes": 105,
         "padrao_esperado": "links.txt",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       }
     ],
     "conformidade_nomenclatura_pct": 95.0,
     "auditoria_tecnica": {
-      "monografia_paginas_estimadas": 63,
-      "monografia_palavras": 11166,
-      "monografia_caracteres": 85649,
+      "monografia_paginas_estimadas": 39,
+      "monografia_palavras": 11038,
+      "monografia_caracteres": 77545,
       "secoes_abnt_detectadas": {
         "Capa & Folha de Rosto": true,
         "Resumo & Abstract": true,
@@ -3647,19 +4174,31 @@
         "Backlog & Cronograma Ágil": true,
         "Conclusão & Referências ABNT": true
       },
+      "secoes_abnt_faltantes": [
+        "Introdução & Justificativa",
+        "Fundamentação Teórica"
+      ],
+      "pendencias_formatacao_abnt": [],
+      "detalhes_formatacao_abnt": {
+        "papel": "21.0 x 29.7 cm (A4)",
+        "margens": "Sup: 3.0cm | Esq: 3.0cm | Inf: 2.0cm | Dir: 2.0cm",
+        "tipografia": "Arial",
+        "espacamento": "93% em 1,5 linhas",
+        "alinhamento": "79% justificado"
+      },
       "rfs_detectados_qtd": 22,
       "rnfs_detectados_qtd": 15,
       "possui_mer_der": true,
       "possui_dicionario_dados": true,
       "possui_link_figma": true,
       "links_figma_encontrados": [
-        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET-Community-?",
-        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET--Community-?"
+        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET-Community-?node-id=2005-178&starting-point-node-id=141%3A505",
+        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET--Community-?node-id=2005-178&starting-point-node-id=141%3A505."
       ],
       "possui_plano_negocios": true,
       "possui_casos_teste": true,
       "possui_backlog_cronograma": true,
-      "resumo_monografia": "O  presente  trabalho  apresenta  o  desenvolvimento  do  Guardião  Animal,  uma plataforma web demonstrativa voltada à organização de denúncias de maus-tratos e ao apoio a iniciativas de proteção animal. A proposta responde à dificuldade de centralizar solicitações encaminhadas por redes sociais e aplicativos de mensagens,",
+      "resumo_monografia": "Trabalho de Conclusão de Curso apresentado ao Serviço Nacional de Aprendizagem Industrial de Ourinhos para conclusão do Curso Técnico de Desenvolvimento de Sistemas. ____________________________________________________ConvidadoProf. - SENAI - OurinhosProf. Convidado ____________________________________________________ConvidadoProf. - SENAI - OurinhosProf. Convidado ____________________________________________________ConvidadoProf. - SENAI - OurinhosProf. Convidado",
       "sql_arquivo": "CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql",
       "sql_linhas": 292,
       "sql_tabelas": [
@@ -3796,9 +4335,11 @@
       "deploy_url": "https://guardiaoanimal.fwh.is/",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 1194,
+      "deploy_tempo_ms": 1216,
       "deploy_titulo_pagina": "",
-      "deploy_diagnostico": "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1194 ms).",
+      "deploy_diagnostico": "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1216 ms).",
+      "hospedado_vm_oracle": false,
+      "banco_online_ativo_e_apontado": false,
       "deploy_provedor": "InfinityFree / fwh.is Cloud (PHP)",
       "deploy_rodando_inteiramente_nuvem": false,
       "banco_provedor_nuvem": "Supabase (PostgreSQL Cloud)",
@@ -3964,9 +4505,9 @@
         "nota": 6.82,
         "nota_sugerida_ia": 6.82,
         "nivel_sugerido_ia": "Pleno",
-        "justificativa_ia": "Monografia com 11166 palavras (~63 págs) e 12/14 elementos obrigatórios ABNT identificados.",
+        "justificativa_ia": "Monografia com 11038 palavras (~39 págs) e 12/14 elementos obrigatórios ABNT identificados.",
         "evidencias": [
-          "11166 palavras (~63 páginas)",
+          "11038 palavras (~39 páginas)",
           "12/14 seções estruturais ABNT identificadas",
           "Conformidade de nomenclatura digital: 95.0%"
         ],
@@ -4126,10 +4667,10 @@
         "nivel_sugerido_ia": "Insuficiente",
         "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (JSON local no servidor), abatendo a nota da rubrica 2.3.",
         "evidencias": [
-          "Estrutura DDL (.sql) vs DER: 12 tabelas (PK: Sim, FK: Sim)",
+          "Estrutura DDL (.sql / VM Oracle) vs DER: 12 tabelas (PK: Sim, FK: Sim)",
           "Tabelas gravadas (INSERT/UPDATE) pelo código: 5/12",
           "Tabelas consumidas (SELECT) pelo código: 0/12",
-          "Registros no script .sql: 0 registros (Todas as tabelas com registros: NÃO - 12 sem registro)",
+          "Registros no script / banco: 0 registros (Todas as tabelas com registros: NÃO - 12 sem registro)",
           "Chaves localStorage permitidas (UI/Sessão): Nenhuma",
           "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
         ],
@@ -4144,9 +4685,9 @@
         "nota": 4.8,
         "nota_sugerida_ia": 4.8,
         "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1194 ms). Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "justificativa_ia": "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1216 ms). Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) — HTTP 200 (1194 ms)",
+          "Deploy do Sistema: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) — HTTP 200 (1216 ms)",
           "Banco de Dados Online Ativo: Supabase (PostgreSQL Cloud) (https://znuwnuktnqogevwisqbj.supabase.co)",
           "Tabelas presentes no BD Online: 11/12",
           "Sistema apontando para o BD Online: SIM (Integrado)"
@@ -4382,7 +4923,7 @@
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
         "arquivo_referencia": "InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)",
-        "trecho_codigo": "Hospedagem da Aplicação: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (1194 ms)",
+        "trecho_codigo": "Hospedagem da Aplicação: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (1216 ms)",
         "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em InfinityFree / fwh.is Cloud (PHP))?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
@@ -4397,7 +4938,7 @@
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Guardião Animal — I2DEV-B / Grupo 03):\n1. DOCUMENTAÇÃO (Pilar 1 = 27.72/30,00 pts): Monografia com 11166 palavras (~63 págs.), 22 RFs e 15 RNFs, e 95.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.20/40,00 pts): Stack [PHP] publicada em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Auditoria das 12 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 11/12 existem online, 5/12 possuem gravação (INSERT/UPDATE) no código e 0/12 são consumidas via leitura (SELECT) pelo programa (0/12 com ciclo completo). Penalidade aplicada em 2.3: O sistema lê/grava entidades do tema em arquivos JSON locais (includes/bootstrap.php (lê/grava em storage/*.json local)) em vez de usar o banco. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 14 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Guardião Animal — I2DEV-B / Grupo 03):\n1. DOCUMENTAÇÃO (Pilar 1 = 27.72/30,00 pts): Monografia com 11038 palavras (~39 págs.), 22 RFs e 15 RNFs, e 95.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.20/40,00 pts): Stack [PHP] publicada em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Auditoria das 12 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 11/12 existem online, 5/12 possuem gravação (INSERT/UPDATE) no código e 0/12 são consumidas via leitura (SELECT) pelo programa (0/12 com ciclo completo). Penalidade aplicada em 2.3: O sistema lê/grava entidades do tema em arquivos JSON locais (includes/bootstrap.php (lê/grava em storage/*.json local)) em vez de usar o banco. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 14 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
@@ -4413,10 +4954,12 @@
       {
         "categoria": "Pilar 1 (30,0 pts)",
         "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
-        "status": "conforme",
-        "resumo": "Nota Pilar 1: 27.72 / 30,00 pts • 11166 palavras (~63 págs.)",
+        "status": "alerta",
+        "resumo": "Nota Pilar 1: 27.72 / 30,00 pts • 11038 palavras (~39 págs.)",
         "itens": [
-          "Extensão textual: 11166 palavras (~63 páginas estimadas) cobrindo 12/14 seções ABNT.",
+          "Extensão textual: 11038 palavras (~39 páginas estimadas).",
+          "Estrutura de Seções ABNT: 12/14 identificadas. ⚠️ SEÇÕES FALTANTES (2): [Introdução & Justificativa, Fundamentação Teórica].",
+          "Auditoria de Formatação (NBR 14724): Papel: 21.0 x 29.7 cm (A4) • Margens: Sup: 3.0cm | Esq: 3.0cm | Inf: 2.0cm | Dir: 2.0cm • Tipografia: Arial • Espaçamento: 93% em 1,5 linhas • Alinhamento: 79% justificado.",
           "Engenharia de Requisitos: 22 Requisitos Funcionais (RF) e 15 Requisitos Não Funcionais (RNF) mapeados.",
           "Modelagem de Dados e Prototipação: MER/DER=Sim, Dicionário de Dados=Sim, Protótipo/Figma=Sim.",
           "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Sim."
@@ -4428,7 +4971,7 @@
         "status": "critico",
         "resumo": "Online: 11/12 • Grava: 5/12 • Consome (SELECT): 0/12",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) — Status HTTP 200 (1194 ms).",
+          "Hospedagem da Aplicação (Item 2.4): InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) — Status HTTP 200 (1216 ms).",
           "Publicação do Banco de Dados (Item 2.3): Supabase (PostgreSQL Cloud) (https://znuwnuktnqogevwisqbj.supabase.co).",
           "Script SQL Entregue ('CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql'): 12 tabelas DDL (denuncias, ongs, animais, solicitacoes_adocao, doacoes, apadrinhamentos) e 0 registros INSERT INTO.",
           "Rastreabilidade das Tabelas do .sql no Banco Online (Supabase (PostgreSQL Cloud)): 11/12 existem online • 5/12 possuem gravação (INSERT/UPDATE) • 0/12 são consumidas via leitura (SELECT) • 0/12 com ciclo completo.",
@@ -4473,12 +5016,13 @@
       }
     ],
     "pontos_fortes": [
-      "Monografia densa e bem desenvolvida (11166 palavras, ~63 páginas, 22 RFs e 15 RNFs).",
-      "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1194 ms).",
+      "Monografia densa e bem desenvolvida (11038 palavras, ~39 páginas, 22 RFs e 15 RNFs).",
+      "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1216 ms).",
       "Repositório GitHub público e ativo (1 commits analisados via API)."
     ],
     "pontos_atencao": [
       "Arquivo 'CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf': Extensão duplicada no nome do arquivo ('CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf').",
+      "Monografia incompleta na norma ABNT: faltam 2 seções [Introdução & Justificativa, Fundamentação Teórica].",
       "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Supabase (PostgreSQL Cloud)): A(s) tabela(s) [solicitacoes_adocao] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
       "PERSISTÊNCIA E CONSUMO EM ARQUIVOS JSON LOCAIS: O sistema realiza apenas INSERT unidirecional em 5/12 tabelas e consome via SELECT 0/12 tabelas do banco online, lendo e gravando os dados do tema em [includes/bootstrap.php (lê/grava em storage/*.json local)].",
       "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql' contém 12 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
@@ -4505,10 +5049,10 @@
     ],
     "entregue_na_pasta": true,
     "nome_pasta_entregue": "Banca03-Grupo05-Risk Zero-(Felipe, Miguel, Nikolas)",
-    "caminho_pasta": "G:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca03-Grupo05-Risk Zero-(Felipe, Miguel, Nikolas)",
+    "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca03-Grupo05-Risk Zero-(Felipe, Miguel, Nikolas)",
     "status_avaliacao": "auditado_ia",
-    "auditado_em": "2026-11-16T22:57:09",
-    "atualizado_em": "2026-11-16T22:57:09",
+    "auditado_em": "2026-11-17T08:25:14",
+    "atualizado_em": "2026-11-17T08:25:14",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -4520,9 +5064,10 @@
         "nome_arquivo": "CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf",
         "tamanho_bytes": 1907737,
         "padrao_esperado": "CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf",
-        "nomenclatura_conforme": false,
+        "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": true,
         "alertas_nomenclatura": [
-          "Sufixo de cópia de download '(1)' presente no nome."
+          "Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome."
         ]
       },
       {
@@ -4532,9 +5077,10 @@
         "nome_arquivo": "CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx",
         "tamanho_bytes": 6662207,
         "padrao_esperado": "CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.docx",
-        "nomenclatura_conforme": false,
+        "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": true,
         "alertas_nomenclatura": [
-          "Sufixo de cópia de download '(1)' presente no nome."
+          "Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome."
         ]
       },
       {
@@ -4545,6 +5091,7 @@
         "tamanho_bytes": 2971368,
         "padrao_esperado": "CTDS-2026-02-Sistema-RiskZero-Felipe-Nikolas-Miguel.zip",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -4555,6 +5102,7 @@
         "tamanho_bytes": 41568,
         "padrao_esperado": "CTDS-2026-02-BD-RiskZero-Felipe-Nikolas-Miguel.sql",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       },
       {
@@ -4565,9 +5113,10 @@
         "tamanho_bytes": 7939289,
         "padrao_esperado": "CTDS-2026-02-Apresentação-RiskZero-Felipe-Nikolas-Miguel.pdf",
         "nomenclatura_conforme": false,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": [
           "Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf').",
-          "Hífen sobrando antes da extensão ('-.')."
+          "Ponto de Atenção: Hífen antes da extensão ('-.')."
         ]
       },
       {
@@ -4578,9 +5127,10 @@
         "tamanho_bytes": 6027229,
         "padrao_esperado": "CTDS-2026-02-Apresentação-RiskZero-Felipe-Nikolas-Miguel.pptx",
         "nomenclatura_conforme": false,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": [
           "Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx').",
-          "Hífen sobrando antes da extensão ('-.')."
+          "Ponto de Atenção: Hífen antes da extensão ('-.')."
         ]
       },
       {
@@ -4591,14 +5141,15 @@
         "tamanho_bytes": 92,
         "padrao_esperado": "links.txt",
         "nomenclatura_conforme": true,
+        "possui_apenas_aviso_leve": false,
         "alertas_nomenclatura": []
       }
     ],
-    "conformidade_nomenclatura_pct": 80.0,
+    "conformidade_nomenclatura_pct": 90.0,
     "auditoria_tecnica": {
-      "monografia_paginas_estimadas": 69,
-      "monografia_palavras": 13840,
-      "monografia_caracteres": 100629,
+      "monografia_paginas_estimadas": 48,
+      "monografia_palavras": 13305,
+      "monografia_caracteres": 92864,
       "secoes_abnt_detectadas": {
         "Capa & Folha de Rosto": true,
         "Resumo & Abstract": true,
@@ -4615,6 +5166,17 @@
         "Backlog & Cronograma Ágil": true,
         "Conclusão & Referências ABNT": true
       },
+      "secoes_abnt_faltantes": [],
+      "pendencias_formatacao_abnt": [
+        "Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita)"
+      ],
+      "detalhes_formatacao_abnt": {
+        "papel": "21.0 x 29.7 cm (A4)",
+        "margens": "Sup: 2.5cm | Esq: 3.0cm | Inf: 2.5cm | Dir: 3.0cm",
+        "tipografia": "Arial",
+        "espacamento": "49% em 1,5 linhas",
+        "alinhamento": "100% justificado"
+      },
       "rfs_detectados_qtd": 25,
       "rnfs_detectados_qtd": 15,
       "possui_mer_der": true,
@@ -4624,7 +5186,7 @@
       "possui_plano_negocios": true,
       "possui_casos_teste": true,
       "possui_backlog_cronograma": true,
-      "resumo_monografia": "Dedico este trabalho a todas as pessoas que estiveram ao meu lado ao longo dessa caminhada, oferecendo incentivo, apoio e motivação para que pudesse Com muito carinho, dedico também aos meus amigos, que permaneceram comigo com lealdade e afeto, presentes tanto nos momentos de alegria quanto",
+      "resumo_monografia": "Dedico este trabalho a todas as pessoas que estiveram ao meu lado ao longo dessa caminhada, oferecendo incentivo, apoio e motivação para que pudesse alcançar mais essa conquista. Com muito carinho, dedico também aos meus amigos, que permaneceram comigo com lealdade e afeto, presentes tanto nos momentos de alegria quanto nos desafios enfrentados, sempre me apoiando e demonstrando compreensão. (Miguel Rodrigues e Nikolas melo). Aos meus orientadores, expresso minha sincera gratidão pela paciência, dedicação e confiança, conduzindo cada etapa deste trabalho e contribuindo significativamente para o meu crescimento acadêmico e pessoal. Agradeço, d",
       "sql_arquivo": "CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql",
       "sql_linhas": 361,
       "sql_tabelas": [
@@ -4851,9 +5413,11 @@
       "deploy_url": "https://riskzero-vault.vercel.app/",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 188,
+      "deploy_tempo_ms": 661,
       "deploy_titulo_pagina": "RiskZero - Zero Knowledge Vault & Cyber Defense",
-      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 188 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.",
+      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 661 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.",
+      "hospedado_vm_oracle": false,
+      "banco_online_ativo_e_apontado": false,
       "deploy_provedor": "Vercel Cloud",
       "deploy_rodando_inteiramente_nuvem": false,
       "banco_provedor_nuvem": "Google Firebase Cloud Firestore",
@@ -5043,11 +5607,11 @@
         "nota": 7.68,
         "nota_sugerida_ia": 7.68,
         "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Monografia com 13840 palavras (~69 págs) e 14/14 elementos obrigatórios ABNT identificados.",
+        "justificativa_ia": "Monografia com 13305 palavras (~48 págs) e 14/14 elementos obrigatórios ABNT identificados.",
         "evidencias": [
-          "13840 palavras (~69 páginas)",
+          "13305 palavras (~48 páginas)",
           "14/14 seções estruturais ABNT identificadas",
-          "Conformidade de nomenclatura digital: 80.0%"
+          "Conformidade de nomenclatura digital: 90.0%"
         ],
         "editado_manualmente": false
       },
@@ -5205,10 +5769,10 @@
         "nivel_sugerido_ia": "Insuficiente",
         "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers), abatendo a nota da rubrica 2.3.",
         "evidencias": [
-          "Estrutura DDL (.sql) vs DER: 8 tabelas (PK: Sim, FK: Sim)",
+          "Estrutura DDL (.sql / VM Oracle) vs DER: 8 tabelas (PK: Sim, FK: Sim)",
           "Tabelas gravadas (INSERT/UPDATE) pelo código: 6/8",
           "Tabelas consumidas (SELECT) pelo código: 6/8",
-          "Registros no script .sql: 176 registros (Todas as tabelas com registros: SIM)",
+          "Registros no script / banco: 176 registros (Todas as tabelas com registros: SIM)",
           "Chaves localStorage permitidas (UI/Sessão): rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}",
           "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
         ],
@@ -5223,9 +5787,9 @@
         "nota": 4.8,
         "nota_sugerida_ia": 4.8,
         "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 188 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 661 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (188 ms)",
+          "Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (661 ms)",
           "Banco de Dados Online Ativo: Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com)",
           "Tabelas presentes no BD Online: 6/8",
           "Sistema apontando para o BD Online: SIM (Integrado)"
@@ -5358,7 +5922,8 @@
         "nota_final": 78.88,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (3.8/10.0)"
+          "2.3 Banco de Dados Físico (3.8/10.0)",
+          "Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -5392,7 +5957,8 @@
         "nota_final": 79.38,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (3.8/10.0)"
+          "2.3 Banco de Dados Físico (3.8/10.0)",
+          "Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -5426,7 +5992,8 @@
         "nota_final": 76.48,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (3.8/10.0)"
+          "2.3 Banco de Dados Físico (3.8/10.0)",
+          "Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -5461,7 +6028,7 @@
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
         "arquivo_referencia": "Vercel Cloud (https://riskzero-vault.vercel.app/)",
-        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://riskzero-vault.vercel.app/)\nHospedagem do Banco: Google Firebase Cloud Firestore\nStatus HTTP: 200 (188 ms)",
+        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://riskzero-vault.vercel.app/)\nHospedagem do Banco: Google Firebase Cloud Firestore\nStatus HTTP: 200 (661 ms)",
         "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Vercel Cloud)?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
@@ -5472,38 +6039,42 @@
     "media_nota_final_grupo": 78.25,
     "possui_item_insuficiente_grupo": true,
     "itens_insuficientes_grupo": [
-      "2.3 Banco de Dados Físico (3.8/10.0)"
+      "2.3 Banco de Dados Físico (3.8/10.0)",
+      "Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Risk Zero / CyberSecurity — I2DEV-B / Grupo 05):\n1. DOCUMENTAÇÃO (Pilar 1 = 28.63/30,00 pts): Monografia com 13840 palavras (~69 págs.), 25 RFs e 15 RNFs, e 80.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 32.30/40,00 pts): Stack [Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite] publicada em Vercel Cloud (https://riskzero-vault.vercel.app/) e banco vinculado a Google Firebase Cloud Firestore. PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}]. Auditoria das 8 tabelas do .sql no banco online (Google Firebase Cloud Firestore): 6/8 existem online, 6/8 possuem gravação (INSERT/UPDATE) no código e 6/8 são consumidas via leitura (SELECT) pelo programa (6/8 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers]. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Risk Zero / CyberSecurity — I2DEV-B / Grupo 05):\n1. DOCUMENTAÇÃO (Pilar 1 = 28.63/30,00 pts): Monografia com 13305 palavras (~48 págs.), 25 RFs e 15 RNFs, e 90.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 32.30/40,00 pts): Stack [Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite] publicada em Vercel Cloud (https://riskzero-vault.vercel.app/) e banco vinculado a Google Firebase Cloud Firestore. PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}]. Auditoria das 8 tabelas do .sql no banco online (Google Firebase Cloud Firestore): 6/8 existem online, 6/8 possuem gravação (INSERT/UPDATE) no código e 6/8 são consumidas via leitura (SELECT) pelo programa (6/8 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers]. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
         "titulo": "1. Pacote Digital e Padronização (CTDS-2026-02)",
         "status": "alerta",
-        "resumo": "7/7 entregáveis • 80.0% conforme",
+        "resumo": "7/7 entregáveis • 90.0% conforme",
         "itens": [
           "Arquivos obrigatórios localizados na pasta do grupo: 7 de 7.",
-          "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 80.0%.",
-          "⚠️ Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf': Sufixo de cópia de download '(1)' presente no nome.",
-          "⚠️ Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx': Sufixo de cópia de download '(1)' presente no nome.",
+          "Índice de conformidade com o padrão 'CTDS-2026-02-[Tipo]-[Projeto]-[Integrantes]': 90.0%.",
+          "⚠️ Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome.",
+          "⚠️ Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome.",
           "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf').",
-          "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Hífen sobrando antes da extensão ('-.').",
+          "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Ponto de Atenção: Hífen antes da extensão ('-.').",
           "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx').",
-          "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Hífen sobrando antes da extensão ('-.')."
+          "⚠️ Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Ponto de Atenção: Hífen antes da extensão ('-.')."
         ]
       },
       {
         "categoria": "Pilar 1 (30,0 pts)",
         "titulo": "2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
-        "status": "conforme",
-        "resumo": "Nota Pilar 1: 28.63 / 30,00 pts • 13840 palavras (~69 págs.)",
+        "status": "critico",
+        "resumo": "Nota Pilar 1: 28.63 / 30,00 pts • 13305 palavras (~48 págs.) • ⚠️ Pendência ABNT",
         "itens": [
-          "Extensão textual: 13840 palavras (~69 páginas estimadas) cobrindo 14/14 seções ABNT.",
+          "Extensão textual: 13305 palavras (~48 páginas estimadas).",
+          "Estrutura de Seções ABNT: 14/14 identificadas. ✅ Todas as 14 seções presentes.",
+          "Auditoria de Formatação (NBR 14724): Papel: 21.0 x 29.7 cm (A4) • Margens: Sup: 2.5cm | Esq: 3.0cm | Inf: 2.5cm | Dir: 3.0cm • Tipografia: Arial • Espaçamento: 49% em 1,5 linhas • Alinhamento: 100% justificado.",
           "Engenharia de Requisitos: 25 Requisitos Funcionais (RF) e 15 Requisitos Não Funcionais (RNF) mapeados.",
           "Modelagem de Dados e Prototipação: MER/DER=Sim, Dicionário de Dados=Sim, Protótipo/Figma=Sim.",
-          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Sim."
+          "Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio=Sim, Casos de Teste=Sim, Backlog/Cronograma=Sim.",
+          "⚠️ PENDÊNCIA DE FORMATAÇÃO (Nota Retida até envio corrigido): Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita)"
         ]
       },
       {
@@ -5512,7 +6083,7 @@
         "status": "critico",
         "resumo": "Online: 6/8 • Grava: 6/8 • Consome (SELECT): 6/8",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (188 ms).",
+          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (661 ms).",
           "Publicação do Banco de Dados (Item 2.3): Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com).",
           "Script SQL Entregue ('CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql'): 8 tabelas DDL (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas, logs_auditoria, servidores_vpn) e 176 registros INSERT INTO.",
           "Rastreabilidade das Tabelas do .sql no Banco Online (Google Firebase Cloud Firestore): 6/8 existem online • 6/8 possuem gravação (INSERT/UPDATE) • 6/8 são consumidas via leitura (SELECT) • 6/8 com ciclo completo.",
@@ -5552,24 +6123,26 @@
         "itens": [
           "Status Geral do Grupo: Nota Retida (Pendências).",
           "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
-          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 78.25 pts (>= 50,0 pts), existem 1 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
-          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (3.8/10.0)"
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 78.25 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (3.8/10.0)",
+          "   • Pendência bloqueante: Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))"
         ]
       }
     ],
     "pontos_fortes": [
-      "Monografia densa e bem desenvolvida (13840 palavras, ~69 páginas, 25 RFs e 15 RNFs).",
+      "Monografia densa e bem desenvolvida (13305 palavras, ~48 páginas, 25 RFs e 15 RNFs).",
       "Script SQL exemplar: 8 tabelas normalizadas com 176 registros válidos (>= 20 por entidade).",
-      "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 188 ms).",
+      "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 661 ms).",
       "Repositório GitHub público e ativo (19 commits analisados via API)."
     ],
     "pontos_atencao": [
-      "Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf': Sufixo de cópia de download '(1)' presente no nome.",
-      "Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx': Sufixo de cópia de download '(1)' presente no nome.",
+      "Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome.",
+      "Arquivo 'CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(1)' ao final do nome.",
       "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf').",
-      "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Hífen sobrando antes da extensão ('-.').",
+      "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf': Ponto de Atenção: Hífen antes da extensão ('-.').",
       "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Extensão duplicada no nome do arquivo ('CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx').",
-      "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Hífen sobrando antes da extensão ('-.').",
+      "Arquivo 'CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx': Ponto de Atenção: Hífen antes da extensão ('-.').",
+      "Formatação ABNT não conforme: Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita)",
       "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Google Firebase Cloud Firestore): A(s) tabela(s) [logs_auditoria, servidores_vpn] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
       "PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas) possuem 6/8 ciclos completos no banco online, entidades centrais do tema [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers)."
     ],

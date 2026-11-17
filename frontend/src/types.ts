@@ -91,6 +91,7 @@ export interface AuditoriaArquivoItem {
   tamanho_bytes: number;
   padrao_esperado: string;
   nomenclatura_conforme: boolean;
+  possui_apenas_aviso_leve?: boolean;
   alertas_nomenclatura: string[];
 }
 
@@ -111,6 +112,9 @@ export interface AuditoriaTecnicaDetalhada {
   monografia_palavras: number;
   monografia_caracteres: number;
   secoes_abnt_detectadas: Record<string, boolean>;
+  secoes_abnt_faltantes?: string[];
+  pendencias_formatacao_abnt?: string[];
+  detalhes_formatacao_abnt?: Record<string, string>;
   rfs_detectados_qtd: number;
   rnfs_detectados_qtd: number;
   possui_mer_der: boolean;
@@ -171,6 +175,8 @@ export interface AuditoriaTecnicaDetalhada {
   deploy_tempo_ms: number;
   deploy_titulo_pagina: string;
   deploy_provedor: string;
+  hospedado_vm_oracle?: boolean;
+  banco_online_ativo_e_apontado?: boolean;
   deploy_rodando_inteiramente_nuvem: boolean;
   deploy_diagnostico: string;
 
