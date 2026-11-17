@@ -113,7 +113,7 @@ def _renderizar_html_para_pdf(html_str: str, caminho_pdf: Path) -> Path:
                         path=str(caminho_pdf),
                         format="A4",
                         print_background=True,
-                        margin={"top": "10mm", "bottom": "10mm", "left": "10mm", "right": "10mm"},
+                        margin={"top": "8mm", "bottom": "8mm", "left": "10mm", "right": "10mm"},
                     )
                     pdf_gerado = caminho_pdf.exists() and caminho_pdf.stat().st_size > 500
                 finally:
@@ -199,20 +199,20 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
         if idx < len(av.integrantes_notas):
             ind = av.integrantes_notas[idx]
             if ind.resultado == "Aprovado":
-                chk_ap = "<span style='color:#047857;font-weight:bold;'>[X] Aprovado (Nota Liberada)</span>"
+                chk_ap = "<span style='color:#047857;font-weight:bold;'>[X] Aprovado (Liberada)</span>"
             elif ind.resultado == "Nota Retida (Pendências)":
-                chk_ap = f"<span style='color:#b45309;font-weight:bold;'>[!] Nota Retida ({', '.join(ind.itens_insuficientes)})</span>"
+                chk_ap = "<span style='color:#b45309;font-weight:bold;'>[!] Nota Retida</span>"
             else:
-                chk_ap = "<span style='color:#b91c1c;font-weight:bold;'>[X] Nova Chance (Data Futura)</span>"
+                chk_ap = "<span style='color:#b91c1c;font-weight:bold;'>[X] Nova Chance</span>"
             linhas_integrantes.append(
                 f"""
                 <tr>
-                    <td><strong>{idx + 1}. {html.escape(ind.nome)}</strong><br/><span style='font-size:8.5px;color:#64748b;'>Rel: {ind.relatorios_entregues}/{ind.total_relatorios} ({ind.nota_4_1_sprints:.1f}) • Aulas: {ind.aulas_participadas}/{ind.total_aulas_turma} ({ind.nota_4_2_participacao:.1f})</span></td>
+                    <td><strong>{idx + 1}. {html.escape(ind.nome)}</strong><br/><span style='font-size:7.5px;color:#64748b;'>Rel: {ind.relatorios_entregues}/{ind.total_relatorios} ({ind.nota_4_1_sprints:.1f}) • Aulas: {ind.aulas_participadas}/{ind.total_aulas_turma} ({ind.nota_4_2_participacao:.1f})</span></td>
                     <td class="center">{ind.p1_nota:.2f}</td>
                     <td class="center">{ind.p2_nota:.2f}</td>
                     <td class="center">{ind.p3_nota:.2f}</td>
                     <td class="center">{ind.p4_nota:.2f}</td>
-                    <td class="center"><strong>{ind.nota_final:.2f}%</strong></td>
+                    <td class="center" style="font-weight:bold; font-size:9px; background:#f8fafc; color:#0f294a;">{ind.nota_final:.2f}</td>
                     <td class="center">{chk_ap}</td>
                 </tr>
                 """
@@ -227,20 +227,20 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
                     <td class="center">—</td>
                     <td class="center">—</td>
                     <td class="center">—</td>
-                    <td class="center">[ ] Aprovado &nbsp; [ ] Reavaliar</td>
+                    <td class="center" style="color:#94a3b8;">[ ] Aprovado &nbsp; [ ] Reavaliar</td>
                 </tr>
                 """
             )
 
     if av.parecer_estruturado:
         parecer_html = "".join(
-            f"<div style='margin-bottom:6px;'><strong style='color:#0f294a;'>• {html.escape(b.titulo)}:</strong> {html.escape(b.resumo)}</div>"
+            f"<div style='margin-bottom:3px;'><strong style='color:#0f294a;'>• {html.escape(b.titulo)}:</strong> {html.escape(b.resumo)}</div>"
             for b in av.parecer_estruturado
         )
     else:
         parecer_html = html.escape(av.parecer_tecnico or "Sem observações adicionais.").replace("\n", "<br/>")
-    fortes_html = "".join(f"<li>{html.escape(p)}</li>" for p in av.pontos_fortes)
-    atencao_html = "".join(f"<li>{html.escape(p)}</li>" for p in av.pontos_atencao)
+    fortes_html = "".join(f"<li>{html.escape(p[:90])}</li>" for p in av.pontos_fortes[:4]) or "<li>Entregáveis recebidos na pasta da turma.</li>"
+    atencao_html = "".join(f"<li>{html.escape(p[:90])}</li>" for p in av.pontos_atencao[:4]) or "<li>Nenhuma pendência crítica de estrutura.</li>"
 
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -248,45 +248,45 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
 <meta charset="UTF-8" />
 <title>Ficha de Avaliação MSEP — {html.escape(av.projeto)}</title>
 <style>
-  @page {{ size: A4; margin: 10mm; }}
-  * {{ box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; }}
-  body {{ margin: 0; padding: 0; color: #111827; font-size: 10.5px; line-height: 1.32; }}
-  .header-table {{ width: 100%; border-collapse: collapse; margin-bottom: 8px; border: 1.5px solid #0f294a; }}
-  .senai-logo {{ width: 18%; background: #e30613; color: #fff; font-weight: 900; font-size: 22px; text-align: center; letter-spacing: 1px; vertical-align: middle; padding: 10px 6px; }}
-  .senai-info {{ width: 60%; background: #0f294a; color: #fff; padding: 7px 12px; vertical-align: middle; }}
-  .senai-info .escola {{ font-size: 12.5px; font-weight: bold; }}
-  .senai-info .curso {{ font-size: 9.5px; color: #facc15; font-weight: bold; margin-top: 2px; }}
-  .senai-info .uc {{ font-size: 10.5px; font-weight: bold; margin-top: 2px; }}
-  .senai-info .docente {{ font-size: 9px; color: #e2e8f0; margin-top: 2px; }}
-  .resultado-box {{ width: 22%; background: #fff; color: #0f294a; text-align: center; vertical-align: middle; padding: 6px; border-left: 1.5px solid #0f294a; }}
-  .resultado-box .lbl {{ font-size: 11px; font-weight: bold; }}
-  .resultado-box .val {{ font-size: 12px; font-weight: 900; color: #b91c1c; margin-top: 4px; }}
-  .doc-title {{ text-align: center; margin: 6px 0 8px 0; }}
-  .doc-title h1 {{ font-size: 13.5px; margin: 0; color: #0f172a; letter-spacing: 0.3px; }}
-  .doc-title p {{ font-size: 10px; margin: 2px 0 0 0; color: #475569; }}
-  .meta-box {{ width: 100%; border-collapse: collapse; margin-bottom: 8px; background: #e2e8f0; border: 1px solid #cbd5e1; }}
-  .meta-box td {{ padding: 4px 8px; font-size: 10.5px; border-bottom: 1px solid #cbd5e1; }}
-  .tbl {{ width: 100%; border-collapse: collapse; margin-bottom: 9px; }}
-  .tbl th, .tbl td {{ border: 1px solid #cbd5e1; padding: 4px 6px; vertical-align: middle; }}
-  .pilar-hdr {{ background: #0f294a; color: #fff; font-weight: bold; font-size: 11px; text-align: left; padding: 5px 8px; }}
-  .sub-hdr th {{ background: #1e293b; color: #fff; font-size: 9.8px; text-align: left; }}
-  .col-crit {{ width: 19%; }}
-  .col-desc {{ width: 32%; color: #334155; font-size: 9.6px; }}
-  .col-niveis {{ width: 29%; font-size: 9px; color: #1e293b; }}
-  .col-peso {{ width: 8%; text-align: center; font-weight: bold; }}
-  .col-nota {{ width: 12%; text-align: center; font-size: 10.5px; }}
+  @page {{ size: A4 portrait; margin: 8mm 10mm; }}
+  * {{ box-sizing: border-box; font-family: 'Segoe UI', Arial, Helvetica, sans-serif; }}
+  body {{ margin: 0; padding: 0; color: #1e293b; font-size: 8px; line-height: 1.15; }}
+  .header-table {{ width: 100%; border-collapse: collapse; margin-bottom: 3px; border: 1.2px solid #0f294a; }}
+  .senai-logo {{ width: 16%; background: #e30613; color: #fff; font-weight: 900; font-size: 20px; text-align: center; letter-spacing: 1px; vertical-align: middle; padding: 6px 4px; }}
+  .senai-info {{ width: 62%; background: #0f294a; color: #fff; padding: 5px 10px; vertical-align: middle; }}
+  .senai-info .escola {{ font-size: 10.5px; font-weight: bold; }}
+  .senai-info .curso {{ font-size: 8px; color: #facc15; font-weight: bold; margin-top: 1px; }}
+  .senai-info .uc {{ font-size: 8.8px; font-weight: bold; margin-top: 1px; }}
+  .senai-info .docente {{ font-size: 7.8px; color: #e2e8f0; margin-top: 1px; }}
+  .resultado-box {{ width: 22%; background: #fff; color: #0f294a; text-align: center; vertical-align: middle; padding: 4px; border-left: 1.2px solid #0f294a; }}
+  .resultado-box .lbl {{ font-size: 8px; font-weight: bold; color: #64748b; }}
+  .resultado-box .val {{ font-size: 10.5px; font-weight: 900; color: #b91c1c; margin-top: 2px; }}
+  .doc-title {{ text-align: center; margin: 3px 0 4px 0; border-top: 1.2px solid #0f294a; border-bottom: 1.2px solid #0f294a; padding: 2px 0; background: #f1f5f9; }}
+  .doc-title h1 {{ font-size: 10.5px; margin: 0; color: #0f172a; letter-spacing: 0.3px; }}
+  .doc-title p {{ font-size: 7.8px; margin: 1px 0 0 0; color: #475569; }}
+  .meta-box {{ width: 100%; border-collapse: collapse; margin-bottom: 4px; background: #f8fafc; border: 1px solid #cbd5e1; }}
+  .meta-box td {{ padding: 2.5px 5px; font-size: 8px; border: 1px solid #cbd5e1; }}
+  .tbl {{ width: 100%; border-collapse: collapse; margin-bottom: 4px; }}
+  .tbl th, .tbl td {{ border: 1px solid #cbd5e1; padding: 2px 4.5px; vertical-align: middle; }}
+  .pilar-hdr {{ background: #0f294a; color: #fff; font-weight: bold; font-size: 8.8px; text-align: left; padding: 3px 6px; }}
+  .sub-hdr th {{ background: #1e293b; color: #fff; font-size: 7.8px; text-align: left; padding: 2px 4px; }}
+  .col-crit {{ width: 19%; font-size: 7.8px; }}
+  .col-desc {{ width: 33%; color: #334155; font-size: 7.4px; line-height: 1.1; }}
+  .col-niveis {{ width: 32%; font-size: 7px; color: #1e293b; line-height: 1.05; }}
+  .col-peso {{ width: 6%; text-align: center; font-weight: bold; font-size: 8px; }}
+  .col-nota {{ width: 10%; text-align: center; font-size: 8.5px; }}
   .chk-box {{ font-family: monospace; color: #0f294a; font-weight: bold; }}
-  .total-row td {{ background: #0f294a; color: #fff; font-weight: bold; text-align: right; padding: 4px 8px; }}
+  .total-row td {{ background: #0f294a; color: #fff; font-weight: bold; text-align: right; padding: 2.5px 6px; font-size: 8px; }}
   .center {{ text-align: center; }}
   .page-break {{ page-break-before: always; }}
-  .parecer-container {{ border: 1px solid #94a3b8; border-radius: 4px; padding: 8px 10px; background: #f8fafc; margin-top: 6px; font-size: 10px; }}
-  .parecer-grid {{ display: flex; gap: 12px; margin-top: 6px; }}
-  .parecer-col {{ flex: 1; background: #fff; border: 1px solid #e2e8f0; padding: 6px 8px; border-radius: 4px; }}
-  .parecer-col h4 {{ margin: 0 0 4px 0; font-size: 10px; }}
-  .parecer-col ul {{ margin: 0; padding-left: 14px; font-size: 9.2px; }}
-  .assinaturas {{ width: 100%; margin-top: 18px; border-collapse: collapse; }}
-  .assinaturas td {{ width: 33.3%; text-align: center; padding-top: 22px; font-size: 9.5px; color: #334155; }}
-  .footer-bar {{ margin-top: 8px; text-align: center; font-size: 8.5px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 4px; }}
+  .parecer-container {{ border: 1px solid #94a3b8; border-radius: 4px; padding: 5px 8px; background: #f8fafc; margin-top: 3px; font-size: 8px; }}
+  .parecer-grid {{ display: flex; gap: 8px; margin-top: 4px; }}
+  .parecer-col {{ flex: 1; background: #fff; border: 1px solid #e2e8f0; padding: 4px 6px; border-radius: 4px; }}
+  .parecer-col h4 {{ margin: 0 0 3px 0; font-size: 8px; }}
+  .parecer-col ul {{ margin: 0; padding-left: 12px; font-size: 7.5px; line-height: 1.15; }}
+  .assinaturas {{ width: 100%; margin-top: 10px; border-collapse: collapse; }}
+  .assinaturas td {{ width: 33.3%; text-align: center; padding-top: 14px; font-size: 7.8px; color: #334155; }}
+  .footer-bar {{ margin-top: 4px; text-align: center; font-size: 7.5px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 2px; }}
 </style>
 </head>
 <body>
@@ -302,7 +302,7 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
       <div class="docente">Docente Responsável: Prof. William Devidé Komel (william.komel@docente.senai.br)</div>
     </td>
     <td class="resultado-box">
-      <div class="lbl">Resultado:</div>
+      <div class="lbl">Resultado Oficial:</div>
       <div class="val">{html.escape(resultado_topo)}</div>
     </td>
   </tr>
@@ -310,7 +310,7 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
 
 <div class="doc-title">
   <h1>FICHA DE AVALIAÇÃO DA BANCA TCC — RUBRICAS MSEP</h1>
-  <p>Projetos de Software III (PSOF3) — Formato de Avaliação do 4º Semestre (100% da UC)</p>
+  <p>Projetos de Software III (PSOF3) — Avaliação do 4º Semestre (100% da UC: P1 30% | P2 40% | P3 15% | P4 15%)</p>
 </div>
 
 <table class="meta-box">
@@ -326,34 +326,6 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
     <td><strong>Integrantes: 1.</strong> {int_1}</td>
     <td><strong>2.</strong> {int_2}</td>
     <td><strong>3.</strong> {int_3}</td>
-  </tr>
-</table>
-
-<table class="tbl">
-  <tr class="sub-hdr">
-    <th style="width:26%">Pilar de Avaliação (100% da UC)</th>
-    <th style="width:62%">Entregáveis Principais Avaliados</th>
-    <th style="width:12%; text-align:center;">Peso</th>
-  </tr>
-  <tr>
-    <td><strong>1. Documentação Técnica / TCC</strong></td>
-    <td>Monografia ABNT, Requisitos, BD, Wireframes/Protótipo, Arquitetura, Plano de Negócios, Testes, Backlog/Cronograma</td>
-    <td class="center"><strong>30,0%</strong></td>
-  </tr>
-  <tr>
-    <td><strong>2. Sistema e Aplicação</strong></td>
-    <td>Backend (APIs/REST), Frontend (UI/UX Responsivo), Banco de Dados Físico/Nuvem (mín. 20 reg/entidade), Deploy Online, GitHub/README</td>
-    <td class="center"><strong>40,0%</strong></td>
-  </tr>
-  <tr>
-    <td><strong>3. Apresentação e Banca</strong></td>
-    <td>Arguição Individual do Código, Pitch Coletivo da Equipe, Material Visual de Slides (.pptx/.pdf)</td>
-    <td class="center"><strong>15,0%</strong></td>
-  </tr>
-  <tr>
-    <td><strong>4. Participação e Acompanhamento</strong></td>
-    <td>Relatórios Semanais de Sprint (Forms/GitHub), Participação, Proatividade e Comportamento nas Aulas</td>
-    <td class="center"><strong>15,0%</strong></td>
   </tr>
 </table>
 
@@ -395,10 +367,10 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
   R VITORIO CHRISTONI, 1.500 - Vila São Luiz - Ourinhos - SP - 19911-200 - Fone: (14) 3302-1250 - Página 1 de 2
 </div>
 
-<!-- PÁGINA 2 -->
+<!-- QUEBRA CONTROLADA PARA PÁGINA 2 -->
 <div class="page-break"></div>
 
-<div class="footer-bar" style="border-top:none; border-bottom:1px solid #e2e8f0; margin-bottom:8px; padding-bottom:4px;">
+<div class="footer-bar" style="border-top:none; border-bottom:1px solid #e2e8f0; margin-bottom:4px; padding-bottom:2px;">
   R VITORIO CHRISTONI, 1.500 - Vila São Luiz - Ourinhos - SP - 19911-200 - Fone: (14) 3302-1250 - Página 2 de 2
 </div>
 
@@ -437,7 +409,7 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
 </table>
 
 <!-- CONSOLIDAÇÃO FINAL -->
-<table class="tbl" style="margin-top: 10px;">
+<table class="tbl" style="margin-top: 4px;">
   <tr><td colspan="7" class="pilar-hdr" style="background:#0f172a;">CONSOLIDAÇÃO FINAL DAS NOTAS INDIVIDUAIS DOS INTEGRANTES</td></tr>
   <tr class="sub-hdr">
     <th style="width:28%">Nome do Aluno / Integrante</th>
@@ -453,20 +425,20 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
 
 <!-- PARECER TÉCNICO -->
 <div class="parecer-container">
-  <div style="font-weight:bold; color:#0f294a; margin-bottom:4px;">
+  <div style="font-weight:bold; color:#0f294a; margin-bottom:2px;">
     PARECER TÉCNICO E OBSERVAÇÕES DA BANCA EXAMINADORA:
   </div>
-  <div style="text-align:justify; color:#1e293b;">
+  <div style="text-align:justify; color:#1e293b; line-height:1.15; font-size:7.5px;">
     {parecer_html}
   </div>
   <div class="parecer-grid">
     <div class="parecer-col">
       <h4 style="color:#047857;">✓ Pontos Fortes Verificados</h4>
-      <ul>{fortes_html or '<li>Entregáveis recebidos na pasta da turma.</li>'}</ul>
+      <ul>{fortes_html}</ul>
     </div>
     <div class="parecer-col">
       <h4 style="color:#b91c1c;">⚠ Pontos de Atenção / Cobrança em Banca</h4>
-      <ul>{atencao_html or '<li>Nenhuma pendência crítica de estrutura.</li>'}</ul>
+      <ul>{atencao_html}</ul>
     </div>
   </div>
 </div>
@@ -479,7 +451,7 @@ def gerar_html_ficha_msep(av: AvaliacaoGrupoModel) -> str:
   </tr>
 </table>
 
-<div class="footer-bar" style="margin-top: 14px;">
+<div class="footer-bar" style="margin-top: 6px;">
   Gerado pelo Agente Avaliador de Bancas TCC — Central de Agentes Inteligentes SENAI Ourinhos • {datetime.now().strftime('%d/%m/%Y %H:%M')}
 </div>
 

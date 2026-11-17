@@ -124,6 +124,11 @@ def test_auditoria_grupos_i2dev_a():
     assert g_lab["auditoria_tecnica"]["sql_tabelas_qtd"] == 8
     assert g_lab["auditoria_tecnica"]["tabelas_sql_presentes_online_qtd"] == 8
     assert g_lab["auditoria_tecnica"]["tabelas_ciclo_completo_qtd"] == 8
+    # Validação da Introdução e seções ABNT
+    assert g_lab["auditoria_tecnica"]["secoes_abnt_detectadas"]["Introdução & Justificativa"] is True
+    assert "Introdução & Justificativa" not in g_lab["auditoria_tecnica"]["secoes_abnt_faltantes"]
+    assert len(g_lab["auditoria_tecnica"]["secoes_abnt_faltantes"]) == 0
+    assert sum(1 for v in g_lab["auditoria_tecnica"]["secoes_abnt_detectadas"].values() if v) == 14
     rub_lab = {r["codigo"]: r for r in g_lab["rubricas"]}
     assert rub_lab["2.3"]["nota"] >= 9.0
     assert rub_lab["2.4"]["nota"] >= 4.4
@@ -144,7 +149,9 @@ def test_auditoria_grupos_i2dev_a():
 
 
 def test_exportar_relatorios_endpoints():
-    r_ficha = client.post("/api/bancas/I2DEV-B_Grupo05/exportar/ficha-pdf")
+    import fitz  # PyMuPDF
+
+    r_ficha = client.post("/api/bancas/I2DEV-A_Grupo05/exportar/ficha-pdf")
     assert r_ficha.status_code == 200
     dados_ficha = r_ficha.json()
     assert dados_ficha["arquivo"].endswith(".pdf")
@@ -153,6 +160,11 @@ def test_exportar_relatorios_endpoints():
     assert p_ficha.stat().st_size > 5000
     conteudo_ficha = p_ficha.read_bytes()
     assert conteudo_ficha.startswith(b"%PDF-1.")
+
+    # Validar que a Ficha MSEP respeita rigorosamente o limite de 2 páginas
+    doc = fitz.open(str(p_ficha))
+    assert len(doc) == 2, f"Ficha MSEP deve ter exatamente 2 páginas, mas tem {len(doc)}"
+    doc.close()
 
     # Testar download do arquivo gerado via GET
     r_dl = client.get(dados_ficha["url_download"])

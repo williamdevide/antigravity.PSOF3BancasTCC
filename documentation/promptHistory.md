@@ -510,3 +510,32 @@ atualize nosso repositorio e o projeto na vmoracle
 
 ---
 
+## Sessão 20 — 17/11/2026 (09:40)
+
+### Prompt 20 (17/11/2026 - 09:40)
+```text
+/agente-orquestrador /grill-me /goal na nova analise do tcc, em um dos trabalhos "Labware" a rotina não encontrou o capitulo Introdução, mas ele esta lá. no ficha pdf está muito bom, mas a quebra de pagina na pagina 2 está deixando um grande espaço em branco.
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 20
+1. **Detecção do Capítulo de Introdução no Labware:**
+   - **Causa Raiz Identificada:** A monografia do LabWare (`CTDS-2026-02-TCC-LabWareNext-Antonio-Isabelle-Nicolle (1).docx`) possui sumário e seção com `1. INTRODUÇÃO` e abertura textual direta. A rotina em `backend/app/tcc_auditor.py` exigia a ocorrência simultânea da palavra `introducao` E da palavra exata `justificativa` (`"introducao" in txt_norm and "justificativa" in txt_norm`). Como a justificativa estava contextualizada e não continha a palavra literal "justificativa", a seção era marcada como ausente (13/14).
+   - **Solução Implementada:** Regra atualizada para `"introducao" in txt_norm or "justificativa" in txt_norm`, além de flexibilização de sinônimos para "Metodologia" e "Conclusão". O grupo Labware passou a atingir **14/14 seções da ABNT**, com zero seções faltantes.
+2. **Formatação e Quebra de Página da Ficha MSEP em PDF (Exatamente 2 Páginas):**
+   - **Causa Raiz Identificada:** Alinhado ao modelo oficial SENAI (`PSOF3_Formulario_Rubricas_MSEP_Banca.pdf`), a Ficha MSEP foi desenhada para caber em **exatamente 2 páginas**. Na versão anterior, o excesso de padding/fontes e a presença de uma tabela de resumo redundante no topo empurravam o Pilar 2 para a página 2, fazendo com que a quebra de página explícita jogasse os Pilares 3 e 4 para a página 3 e estourasse o parecer para a página 4, deixando um espaço vazio na página 2.
+   - **Solução Implementada em `backend/app/report_generator.py`:**
+     - Removida a tabela de resumo redundante de cabeçalho.
+     - Calibrados font-sizes (8px corpo, 7px-7.8px nas rubricas) e paddings (2px a 4px), idênticos aos do formulário de rubricas SENAI.
+     - Posicionamento rígido dos **Pilares 1 e 2 na Página 1**.
+     - Quebra de página explícita `<div class="page-break"></div>` entre a Página 1 e a Página 2.
+     - **Página 2** contendo **Pilares 3 e 4**, tabela de Consolidação dos Integrantes com badges de notas P1 a P4, Parecer Técnico Oficial e campo de Assinaturas da Banca.
+     - Margens Playwright configuradas em `8mm` vertical e `10mm` horizontal.
+   - **Validação Automatizada:** Todas as fichas geradas (Labware, BRIO, Fitlink, OrganizAI, Guardião Animal e Risk Zero) foram validadas via PyMuPDF (`fitz`), garantindo rigorosamente `len(pages) == 2` sem transbordos.
+
+### Testes Automatizados e Garantia de Qualidade:
+- `backend/tests/test_backend.py`:
+  - Adicionadas asserções para validar 14/14 seções ABNT e presença da Introdução no Labware.
+  - Adicionada asserção com `fitz` verificando que a Ficha MSEP em PDF possui exatamente 2 páginas.
+  - Execução via `pytest`: 5/5 testes aprovados com 100% de sucesso.
+
+

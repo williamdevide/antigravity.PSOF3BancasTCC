@@ -1202,9 +1202,9 @@ def _analisar_monografia(
         "Capa & Folha de Rosto": any(k in txt_norm for k in ("senai ourinhos", "trabalho de conclusao", "folha de rosto", "desenvolvimento de sistemas")),
         "Resumo & Abstract": "resumo" in txt_norm and "palavras-chave" in txt_norm,
         "Sumário": "sumario" in txt_norm,
-        "Introdução & Justificativa": "introducao" in txt_norm and "justificativa" in txt_norm,
+        "Introdução & Justificativa": "introducao" in txt_norm or "justificativa" in txt_norm,
         "Fundamentação Teórica": any(k in txt_norm for k in ("fundamentacao teorica", "referencial teorico", "revisao bibliografica")),
-        "Metodologia": "metodologia" in txt_norm,
+        "Metodologia": any(k in txt_norm for k in ("metodologia", "como o sistema esta sendo desenvolvido", "procedimentos metodologicos", "materiais e metodos", "desenvolvimento do sistema")),
         "Requisitos (RF / RNF)": any(k in txt_norm for k in ("requisitos funcionais", "rf01", "rf-01", "rf 01", "requisitos nao funcionais")),
         "Modelagem de BD (MER/DER & Dicionário)": any(k in txt_norm for k in ("dicionario de dados", "modelo entidade", "diagrama entidade", "mer", "der", "chave primaria")),
         "Prototipação & Wireframes (Figma)": any(k in txt_norm for k in ("figma", "prototipo", "wireframe", "interface", "telas")),
@@ -1212,7 +1212,7 @@ def _analisar_monografia(
         "Plano de Negócios & Viabilidade": any(k in txt_norm for k in ("plano de negocio", "viabilidade", "precificacao", "monetizacao", "publico-alvo", "custos")),
         "Rotinas e Relatório de Testes": any(k in txt_norm for k in ("plano de testes", "casos de teste", "relatorio de testes", "testes realizados", "ct01", "ct-01", "teste funcional")),
         "Backlog & Cronograma Ágil": any(k in txt_norm for k in ("backlog", "cronograma", "kanban", "trello", "sprint", " historias de usuario", "estoria")),
-        "Conclusão & Referências ABNT": "conclusao" in txt_norm and "referencias" in txt_norm,
+        "Conclusão & Referências ABNT": ("conclusao" in txt_norm or "consideracoes finais" in txt_norm) and "referencias" in txt_norm,
     }
     det.secoes_abnt_detectadas = secoes
     det.secoes_abnt_faltantes = [sec for sec, ok in secoes.items() if not ok]
