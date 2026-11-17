@@ -232,7 +232,8 @@ class AvaliacaoGrupoModel(BaseModel):
     entregue_na_pasta: bool = False
     nome_pasta_entregue: str = ""
     caminho_pasta: str = ""
-    status_avaliacao: Literal["pendente_entrega", "entregue_nao_auditado", "auditado_ia", "avaliado_banca"] = "pendente_entrega"
+    status_avaliacao: Literal["pendente_entrega", "entregue_nao_auditado", "auditado_ia", "avaliado_banca", "concluida"] = "pendente_entrega"
+    banca_realizada: bool = False
     auditado_em: str | None = None
     atualizado_em: str | None = None
     avaliador: str = "Prof. William Devidé Komel"

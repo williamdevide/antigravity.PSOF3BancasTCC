@@ -45,6 +45,7 @@ import { AboutView } from './components/AboutView';
 import { AgentHub, type AbaAgente } from './components/AgentHub';
 import { AuthModal } from './components/AuthModal';
 import { BannerBancaAoVivo } from './components/BannerBancaAoVivo';
+import { ModalReauditoria } from './components/ModalReauditoria';
 import { PainelBancaConsolidada } from './components/PainelBancaConsolidada';
 import { APP_VERSION } from './config/version';
 import { api } from './services/api';
@@ -162,6 +163,7 @@ export function App() {
   // Estados de Autenticação Firebase & Avaliação Multi-Docente (2 Professores)
   const [usuarioAuth, setUsuarioAuth] = useState<User | null>(null);
   const [authModalAberto, setAuthModalAberto] = useState<boolean>(false);
+  const [modalReauditoriaAberto, setModalReauditoriaAberto] = useState<boolean>(false);
   const [authPronto, setAuthPronto] = useState<boolean>(false);
   const [bancaConsolidada, setBancaConsolidada] = useState<BancaConsolidada | null>(null);
   const [sessaoAoVivo, setSessaoAoVivo] = useState<SessaoBancaAoVivo | null>(null);
@@ -1347,7 +1349,7 @@ export function App() {
             onExecutarRapido={(id) => {
               setAgenteAtivo(id);
               setAbaAtiva('bancas');
-              void handleAuditarAgora(null, null);
+              setModalReauditoriaAberto(true);
             }}
           />
         ) : (
@@ -1407,7 +1409,7 @@ export function App() {
                     <div className="mt-2 flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => void handleAuditarAgora(null, turmaFiltro)}
+                        onClick={() => setModalReauditoriaAberto(true)}
                         disabled={status.estado === 'running'}
                         className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
                       >
@@ -4752,6 +4754,19 @@ export function App() {
             tipo: 'ok',
             texto: `Avaliador identificado: ${usuario.displayName || usuario.email}!`,
           });
+        }}
+      />
+
+      {/* Modal de Reauditoria Criteriosa de Entregas TCC */}
+      <ModalReauditoria
+        aberto={modalReauditoriaAberto}
+        onClose={() => setModalReauditoriaAberto(false)}
+        bancas={bancas}
+        mapaSessoesBanca={mapaSessoesBanca}
+        turmaFiltroInicial={turmaFiltro}
+        carregando={status.estado === 'running'}
+        onConfirmarReauditoria={(grupoIds, turma) => {
+          void handleAuditarAgora(grupoIds, turma);
         }}
       />
     </div>

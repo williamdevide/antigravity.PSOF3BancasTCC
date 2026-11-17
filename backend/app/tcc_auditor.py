@@ -2636,6 +2636,15 @@ def sincronizar_e_obter_todas_bancas(
             if grupo_ids_alvo and gid not in grupo_ids_alvo:
                 continue
             if gid in pastas_map:
+                # Regra de Proteção: Nunca reauditar pasta de bancas já realizadas/concluídas
+                ja_salva_meta = salvas.get(gid)
+                if ja_salva_meta and (
+                    ja_salva_meta.get("status_avaliacao") in ("avaliado_banca", "concluida")
+                    or ja_salva_meta.get("banca_realizada") is True
+                ):
+                    if log_cb:
+                        log_cb(f"   🛡️ [PRESERVADO] {meta['turma']} • {meta['grupo']} ({meta['projeto']}): banca já realizada. Não será reauditada.")
+                    continue
                 alvos_auditoria.append(meta)
 
     total_alvos = len(alvos_auditoria)
@@ -2650,10 +2659,20 @@ def sincronizar_e_obter_todas_bancas(
         pasta_grupo = pastas_map.get(gid)
         ja_salva = salvas.get(gid)
 
+        banca_ja_realizada = False
+        if ja_salva and (
+            ja_salva.get("status_avaliacao") in ("avaliado_banca", "concluida")
+            or ja_salva.get("banca_realizada") is True
+        ):
+            banca_ja_realizada = True
+
         deve_auditar_agora = any(m["id"] == gid for m in alvos_auditoria)
-        # Se a pasta existe mas ainda não tem os novos campos de auditoria (parecer_estruturado / data_banca_iso), re-audita automaticamente
-        if pasta_grupo and (not ja_salva or not ja_salva.get("parecer_estruturado")):
+        # Se a pasta existe mas ainda não tem os novos campos de auditoria (parecer_estruturado / data_banca_iso), re-audita automaticamente apenas se NÃO foi realizada
+        if pasta_grupo and not banca_ja_realizada and (not ja_salva or not ja_salva.get("parecer_estruturado")):
             deve_auditar_agora = True
+
+        if banca_ja_realizada:
+            deve_auditar_agora = False
 
         if deve_auditar_agora and pasta_grupo:
             if progress_cb and total_alvos > 0:

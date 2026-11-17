@@ -349,6 +349,7 @@ def salvar_avaliacao_grupo(grupo_id: str, payload: SalvarAvaliacaoRequest) -> Av
         alvo.pontos_atencao = payload.pontos_atencao
 
     alvo.status_avaliacao = "avaliado_banca"
+    alvo.banca_realizada = True
     alvo.atualizado_em = datetime.now().isoformat(timespec="seconds")
     recalcular_totais_avaliacao(alvo)
 

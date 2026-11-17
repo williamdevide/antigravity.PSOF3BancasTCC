@@ -187,3 +187,42 @@ def test_exportar_relatorios_endpoints():
     r_xlsx = client.post("/api/exportar/consolidado-xlsx?turma=I2DEV-B")
     assert r_xlsx.status_code == 200
     assert r_xlsx.json()["arquivo"].endswith(".xlsx")
+
+
+def test_protecao_bancas_ja_realizadas_e_escopo_reauditoria():
+    from backend.app.tcc_auditor import (
+        sincronizar_e_obter_todas_bancas,
+        ler_avaliacoes_salvas,
+        salvar_avaliacoes_salvas,
+    )
+
+    salvas = ler_avaliacoes_salvas()
+    gid = "I2DEV-B_Grupo08"
+    assert gid in salvas
+
+    # Simular que a banca do Grupo 08 já foi realizada pelos professores avaliadores
+    original = dict(salvas[gid])
+    salvas[gid]["banca_realizada"] = True
+    salvas[gid]["status_avaliacao"] = "avaliado_banca"
+    salvas[gid]["parecer_tecnico"] = "PARECER_OFICIAL_BANCA_CONCLUIDA_NAO_SOBRESCREVER"
+    salvar_avaliacoes_salvas(salvas)
+
+    logs: list[str] = []
+    # Disparar sincronização com executar_auditoria_nos_entregues=True
+    resultados = sincronizar_e_obter_todas_bancas(
+        executar_auditoria_nos_entregues=True,
+        grupo_ids_alvo=[gid],
+        log_cb=logs.append,
+    )
+
+    mapa = {b.id: b for b in resultados}
+    # Grupo 08 deve ter sido preservado sem reanálise da pasta
+    assert mapa[gid].banca_realizada is True
+    assert mapa[gid].status_avaliacao == "avaliado_banca"
+    assert mapa[gid].parecer_tecnico == "PARECER_OFICIAL_BANCA_CONCLUIDA_NAO_SOBRESCREVER"
+    assert any("PRESERVADO" in log and "banca já realizada" in log for log in logs)
+
+    # Restaurar avaliação original
+    salvas[gid] = original
+    salvar_avaliacoes_salvas(salvas)
+

@@ -538,4 +538,39 @@ atualize nosso repositorio e o projeto na vmoracle
   - Adicionada asserção com `fitz` verificando que a Ficha MSEP em PDF possui exatamente 2 páginas.
   - Execução via `pytest`: 5/5 testes aprovados com 100% de sucesso.
 
+---
+
+## Sessão 21 — 17/11/2026 (10:15)
+
+### Prompt 21 (17/11/2026 - 10:15)
+```text
+/agente-orquestrador /grill-me /goal o botão reauditar ./tcc não deve analisar pasta de bancas já realizadas. quando clicar nele deve exibir um modal com os tcc que serão reauditados (que não tiveram banca ainda)
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 21
+1. **Filtro e Apresentação do Modal de Reauditoria:**
+   - O modal é disparado ao clicar no botão **"Reauditar ./tcc"**, abrindo automaticamente filtrado pela turma ativa na interface (`Todas`, `I2DEV-A` ou `I2DEV-B`).
+   - Resumo e badges explícitos destacando as bancas que já foram concluídas e que serão **preservadas**.
+   - Checkboxes interativos com opção de "Selecionar Todos / Desmarcar Todos" para controle fino dos trabalhos a reauditar.
+2. **Proteção de Bancas Realizadas no Backend (Python):**
+   - O backend verifica o status da banca (`status_avaliacao in ("avaliado_banca", "concluida")` ou `banca_realizada is True`).
+   - Se a banca já foi realizada, o motor pula a reanálise técnica da pasta e preserva as deliberações, notas oficiais e pareceres já registrados pelos professores avaliadores.
+
+### Implementações Realizadas — Sessão 21:
+1. **Componente `ModalReauditoria.tsx` (`frontend/src/components/ModalReauditoria.tsx`):**
+   - Modal com interface moderna SENAI/Antigravity com seletor de turmas (`Todas`, `I2DEV-A`, `I2DEV-B`).
+   - Card informativo em roxo/índigo detalhando as bancas já realizadas protegidas contra reescrita.
+   - Lista dos TCCs elegíveis com checkboxes, turma, nome do projeto, integrantes, horário e tag *"Aguardando Banca"*.
+   - Botão de ação dinâmico *"Reauditar Selecionados (X)"* que envia a lista exata de `grupo_ids` para a API.
+2. **Integração no `App.tsx`:**
+   - Botão "Reauditar ./tcc" e atalho rápido do `AgentHub` agora abrem o `ModalReauditoria`.
+   - Passagem de `grupo_ids` selecionados para `api.auditarBancas`.
+3. **Proteção no Backend (`backend/app/tcc_auditor.py`, `models.py` e `main.py`):**
+   - `AvaliacaoGrupoModel`: Adicionado campo `banca_realizada: bool = False`.
+   - `sincronizar_e_obter_todas_bancas`: Ignora reauditoria de bancas com `banca_realizada is True` ou `status_avaliacao in ("avaliado_banca", "concluida")`, emitindo log `🛡️ [PRESERVADO]`.
+4. **Testes Automatizados:**
+   - Adicionado teste `test_protecao_bancas_ja_realizadas_e_escopo_reauditoria` no `backend/tests/test_backend.py`.
+   - Suíte `pytest`: 6/6 testes aprovados com 100% de sucesso.
+
+
 
