@@ -7,6 +7,7 @@ import {
   onSnapshot,
   getDocs,
   deleteDoc,
+  where,
 } from './firebase';
 import type {
   AvaliacaoGrupo,
@@ -622,5 +623,45 @@ export async function resetarBancaGrupo(
     };
   } catch (err: unknown) {
     return { ok: false, mensagem: formatarErroFirestore(err, 'resetar e excluir avaliações da banca') };
+  }
+}
+
+/**
+ * Recalcula as médias consolidadas da banca e atualiza a ata no Firestore após edição pós-fechamento
+ */
+export async function recalcularEConsolidarBancaAposEdicao(
+  grupoId: string,
+  grupoBase: AvaliacaoGrupo,
+): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    const colRef = collection(db, COLECAO_AVALIACOES_PROFESSORES);
+    const q = query(colRef, where('grupo_id', '==', grupoId));
+    const snap = await getDocs(q);
+    const avaliacoes: AvaliacaoProfessorIndividual[] = [];
+    snap.forEach((d) => {
+      avaliacoes.push(d.data() as AvaliacaoProfessorIndividual);
+    });
+
+    const consolidada = calcularMediaBanca(avaliacoes, grupoBase);
+    const agora = new Date().toISOString();
+
+    const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
+    await setDoc(
+      docSessaoRef,
+      {
+        media_final_consolidada: consolidada.media_final,
+        status_liberacao_final: consolidada.status_liberacao_final,
+        banca_consolidada: consolidada,
+        atualizado_em: agora,
+      },
+      { merge: true },
+    );
+
+    return {
+      ok: true,
+      mensagem: 'Médias e pareceres da banca reconsolidados com sucesso no Firebase!',
+    };
+  } catch (err: unknown) {
+    return { ok: false, mensagem: formatarErroFirestore(err, 'recalcular e consolidar banca após edição') };
   }
 }

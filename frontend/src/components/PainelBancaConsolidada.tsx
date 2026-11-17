@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   RotateCcw,
   Trash2,
+  Edit3,
 } from 'lucide-react';
 import { CronometroBanca } from './CronometroBanca';
 
@@ -24,6 +25,8 @@ interface PainelBancaConsolidadaProps {
   onEncerrarMinhaAvaliacao: () => Promise<void>;
   onEncerrarEConsolidarBanca: (contingencia?: boolean, justificativa?: string) => Promise<void>;
   onResetarBanca?: () => Promise<void>;
+  onReabrirEdicao?: () => void;
+  modoEdicaoReaberto?: boolean;
   salvando: boolean;
 }
 
@@ -37,6 +40,8 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
   onEncerrarMinhaAvaliacao,
   onEncerrarEConsolidarBanca,
   onResetarBanca,
+  onReabrirEdicao,
+  modoEdicaoReaberto,
   salvando,
 }) => {
   const [modalContingenciaAberto, setModalContingenciaAberto] = useState(false);
@@ -112,20 +117,34 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
             <>
               {/* Botão de Encerrar Minha Avaliação */}
               {professorLogadoUid && (
-                <button
-                  type="button"
-                  onClick={() => void onEncerrarMinhaAvaliacao()}
-                  disabled={salvando}
-                  className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition shadow-xs ${
-                    euJaEncerrei
-                      ? 'border border-emerald-500 bg-emerald-100 text-emerald-900 hover:bg-emerald-200'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  }`}
-                  title="Conclui sua atribuição de notas e libera para consolidação da banca"
-                >
-                  <Check className="h-4 w-4" />
-                  {euJaEncerrei ? '✓ Minha Avaliação Encerrada' : 'Encerrar Minha Avaliação'}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void onEncerrarMinhaAvaliacao()}
+                    disabled={salvando}
+                    className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition shadow-xs ${
+                      euJaEncerrei
+                        ? 'border border-emerald-500 bg-emerald-100 text-emerald-900 hover:bg-emerald-200'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    }`}
+                    title="Conclui sua atribuição de notas e libera para consolidação da banca"
+                  >
+                    <Check className="h-4 w-4" />
+                    {euJaEncerrei ? '✓ Minha Avaliação Encerrada' : 'Encerrar Minha Avaliação'}
+                  </button>
+                  {euJaEncerrei && !modoEdicaoReaberto && onReabrirEdicao && (
+                    <button
+                      type="button"
+                      onClick={onReabrirEdicao}
+                      disabled={salvando}
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                      title="Reabrir minha ficha para ajustes antes da consolidação final"
+                    >
+                      <Edit3 className="h-3.5 w-3.5 text-indigo-600 inline mr-1" />
+                      Reabrir
+                    </button>
+                  )}
+                </div>
               )}
 
               {/* Botão de Fechar e Consolidar (Exclusivo Titular) */}
@@ -164,9 +183,30 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
 
           {/* 3. CONCLUÍDA */}
           {statusSessao === 'concluida' && (
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-400 bg-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-900">
-              <CheckCircle2 className="h-4 w-4 text-emerald-700" />
-              <span>Ata Oficial Consolidada & Encerrada</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 rounded-xl border border-emerald-400 bg-emerald-100 px-3.5 py-1.5 text-xs font-bold text-emerald-900">
+                <CheckCircle2 className="h-4 w-4 text-emerald-700" />
+                <span>Ata Oficial Consolidada &amp; Encerrada</span>
+              </div>
+              {modoEdicaoReaberto ? (
+                <div className="flex items-center gap-1.5 rounded-xl border border-amber-400 bg-amber-100 px-3.5 py-1.5 text-xs font-bold text-amber-950">
+                  <Edit3 className="h-3.5 w-3.5 text-amber-700" />
+                  <span>Modo Edição Ativo</span>
+                </div>
+              ) : (
+                onReabrirEdicao && (
+                  <button
+                    type="button"
+                    onClick={onReabrirEdicao}
+                    disabled={salvando}
+                    className="flex items-center gap-1.5 rounded-xl border border-indigo-300 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-900 shadow-2xs transition hover:bg-indigo-100 hover:border-indigo-400 cursor-pointer"
+                    title="Reabrir a edição da banca para ajustar notas ou parecer técnico. Ao salvar, as médias e descrições serão recalculadas."
+                  >
+                    <Edit3 className="h-3.5 w-3.5 text-indigo-600" />
+                    {isProfessorTitular ? 'Editar Banca' : 'Editar Minha Avaliação'}
+                  </button>
+                )
+              )}
             </div>
           )}
 

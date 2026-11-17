@@ -417,3 +417,25 @@ em [Auditoria & Bancas] os cards já estão exibindo se o tcc esta Aguardando ou
    - Sincronização dos novos arquivos da turma I2DEV-A nos repositórios GitHub (`origin` e `bancas_remote`).
    - Transferência e sincronização dos arquivos para a VM Oracle Cloud em `/var/www/projects/bancas/tcc/I2DEV-A`.
    - Reinício do backend FastAPI (`psof3-bancas.service`) e validação via endpoint HTTPS em `https://bancas.147.15.2.73.sslip.io/api/bancas`.
+
+
+---
+
+## Sessão 17 — 16/11/2026 (23:20)
+
+### Prompt 17 (16/11/2026 - 23:20)
+```text
+/agente-orquestrador /grill-me /goal em auditoria & bancas, na auditoria do lado direito, todos os blocos a partir de 1. Parecer Técnico Detalhado da Auditoria & Observações devem ser minimizados com uma linha para cada e uma seta para baixo que abre esse trecho (dai vira seta para cima e fecha).
+no trecho da Ata da Banca Realizada & Pareceres Oficiais
+deve-se exibir a média final de cada um dos integrantes do grupo.
+a guia ficha msep e arguição não pode ter nenhum valor alterado pelo professor simplesmente por acessá-la. as alterações s´são permitidas se a banca tiver começado, ou após o fechamento da banca o professor pode clicar em editar banca e reabre suas analises, sendo que se isso ocorrer, após salvar ele atualiza as médias e descrições.
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 17
+1. **Minimização (Accordion) dos Blocos da Coluna Direita em Auditoria & Bancas:**
+   - A partir de `1. Parecer Técnico Detalhado da Auditoria & Observações` (incluindo Anexos Obrigatórios, Rastreabilidade de Tabelas SQL e Notas do Pilar 4), cada seção é renderizada colapsada em uma única linha com resumo e seta indicativa (abre/fecha).
+2. **Exibição da Média Final dos Integrantes na Ata da Banca:**
+   - No bloco `Ata da Banca Realizada & Pareceres Oficiais`, inclusão de tabela/cards com a média final consolidada de cada aluno e seu status de resultado.
+3. **Bloqueio de Edição Acidental na Ficha MSEP & Arguição:**
+   - Acesso em modo somente leitura quando a banca não tiver sido iniciada ou estiver concluída.
+   - Edição permitida durante a banca (`em_andamento`) ou via botão "Editar Banca", que reabre para ajuste e, ao salvar, recalcula e atualiza as médias e descrições no Firestore.

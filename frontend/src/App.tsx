@@ -14,6 +14,7 @@ import {
   CloudUpload,
   Code2,
   Download,
+  Edit3,
   ExternalLink,
   FileSpreadsheet,
   FileText,
@@ -59,6 +60,7 @@ import {
   encerrarMinhaAvaliacao,
   encerrarEConsolidarBanca,
   resetarBancaGrupo,
+  recalcularEConsolidarBancaAposEdicao,
   salvarAnaliseAutomaticaFirestore,
   salvarDraftLocalStorage,
   carregarDraftLocalStorage,
@@ -178,6 +180,15 @@ export function App() {
   const [detalhesStatusAberto, setDetalhesStatusAberto] = useState<boolean>(false);
   const [statusManualLiberacao, setStatusManualLiberacao] = useState<ResultadoFinalTipo | null>(null);
 
+  // Estados para os blocos minimizáveis (accordion) da aba Auditoria & Bancas
+  const [blocoParecerAberto, setBlocoParecerAberto] = useState<boolean>(false);
+  const [blocoAnexosAberto, setBlocoAnexosAberto] = useState<boolean>(false);
+  const [blocoTabelasAberto, setBlocoTabelasAberto] = useState<boolean>(false);
+  const [blocoPilar4Aberto, setBlocoPilar4Aberto] = useState<boolean>(false);
+
+  // Estado para reabertura de edição de banca concluída / encerrada
+  const [modoEdicaoReaberto, setModoEdicaoReaberto] = useState<boolean>(false);
+
   const [regrasOficiais, setRegrasOficiais] = useState<RegrasOficiaisResponse | null>(null);
   const [env, setEnv] = useState<ConfigEnv>(CONFIG_INICIAL);
   const [status, setStatus] = useState<AgentStatus>({
@@ -285,6 +296,24 @@ export function App() {
 
   const grupoAtual = bancas.find((b) => b.id === grupoSelecionadoId) || bancas[0] || null;
 
+  // Dados consolidados e sessão ao vivo pós-banca para o grupo selecionado
+  const sessaoAtual = (grupoAtual ? mapaSessoesBanca[grupoAtual.id] : null) || sessaoAoVivo;
+  const statusSessaoBancaAtual = sessaoAtual?.status || 'aguardando_inicio';
+  const consolidadaAtual = sessaoAtual?.banca_consolidada || bancaConsolidada;
+  const minhaAvaliacaoNaSessao = usuarioAuth?.uid && consolidadaAtual
+    ? consolidadaAtual.avaliacoes_individuais[usuarioAuth.uid]
+    : null;
+  const euJaEncerreiMinhaAvaliacao = Boolean(minhaAvaliacaoNaSessao?.concluido);
+
+  // Regra de bloqueio de edição na Ficha MSEP:
+  // NENHUM valor é alterado simplesmente por acessar a guia.
+  // - Se 'aguardando_inicio': somente leitura (exige iniciar a banca ao vivo)
+  // - Se 'em_andamento': liberado para edição até encerrar; se encerrou, pode reabrir
+  // - Se 'concluida': somente leitura oficial, a menos que o professor clique em 'Editar Minha Avaliação / Editar Banca'
+  const podeEditarFicha = statusSessaoBancaAtual === 'em_andamento'
+    ? (!euJaEncerreiMinhaAvaliacao || modoEdicaoReaberto)
+    : (statusSessaoBancaAtual === 'concluida' && modoEdicaoReaberto);
+
   // Determinar se o usuário logado possui privilégios de Professor Titular / Presidente da Banca
   // Como o sistema é exclusivo dos docentes avaliadores, qualquer professor autenticado tem poderes de gestão da banca
   const isProfessorTitular = Boolean(usuarioAuth);
@@ -320,6 +349,7 @@ export function App() {
 
   // Sincronizar estados editáveis com draft de localStorage ou dados originais
   useEffect(() => {
+    setModoEdicaoReaberto(false);
     if (grupoAtual && usuarioAuth) {
       const draft = carregarDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
       if (draft && draft.rubricas.length > 0) {
@@ -343,9 +373,9 @@ export function App() {
     }
   }, [grupoAtual?.id, usuarioAuth?.uid]);
 
-  // Auto-save local em tempo real no localStorage para cada alteração das notas/parecer/status manual
+  // Auto-save local em tempo real no localStorage APENAS quando a edição for ativamente permitida
   useEffect(() => {
-    if (grupoAtual && usuarioAuth && rubricasEdit.length > 0) {
+    if (podeEditarFicha && grupoAtual && usuarioAuth && rubricasEdit.length > 0) {
       salvarDraftLocalStorage({
         grupo_id: grupoAtual.id,
         professor_uid: usuarioAuth.uid,
@@ -356,7 +386,7 @@ export function App() {
         salvo_em: new Date().toISOString(),
       });
     }
-  }, [grupoAtual?.id, usuarioAuth?.uid, rubricasEdit, integrantesEdit, parecerEdit, statusManualLiberacao]);
+  }, [podeEditarFicha, grupoAtual?.id, usuarioAuth?.uid, rubricasEdit, integrantesEdit, parecerEdit, statusManualLiberacao]);
 
   // Escutar avaliações dos 2 professores no Firestore em tempo real
   useEffect(() => {
@@ -597,6 +627,12 @@ export function App() {
 
       await salvarAvaliacaoNoFirestore(avaliacaoIndividual);
 
+      // Se a banca já estava concluída e foi editada, recalcula a consolidação oficial no Firestore
+      if (sessaoAtual?.status === 'concluida') {
+        await recalcularEConsolidarBancaAposEdicao(grupoAtual.id, grupoAtual);
+      }
+      setModoEdicaoReaberto(false);
+
       // 2. Salvar também no backend FastAPI (para relatórios em PDF, Dossiês e XLSX)
       const atualizado = await api.salvarAvaliacao(grupoAtual.id, {
         avaliador: nomeProfessor,
@@ -610,7 +646,9 @@ export function App() {
       setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
       setAviso({
         tipo: 'ok',
-        texto: `Avaliação do grupo ${atualizado.projeto} salva com sucesso no Firebase pelo ${nomeProfessor}! A média da banca entre os 2 professores é sincronizada em tempo real.`,
+        texto: sessaoAtual?.status === 'concluida'
+          ? `Edição concluída com sucesso! As notas e parecer de ${nomeProfessor} foram salvos e as médias da banca foram recalculadas no Firebase.`
+          : `Avaliação do grupo ${atualizado.projeto} salva com sucesso no Firebase pelo ${nomeProfessor}! A média da banca entre os 2 professores é sincronizada em tempo real.`,
       });
     } catch (err) {
       setAviso({
@@ -1009,9 +1047,7 @@ export function App() {
       : `Média final calculada em ${mediaGrupoEdit.toFixed(2)} pts, inferior ao mínimo regulamentar de 50,0 pts exigido para aprovação direta.`;
 
   // Dados consolidados pós-banca realizada para o grupo selecionado
-  const sessaoAtual = (grupoAtual ? mapaSessoesBanca[grupoAtual.id] : null) || sessaoAoVivo;
   const bancaJaRealizadaAtual = sessaoAtual?.status === 'concluida';
-  const consolidadaAtual = sessaoAtual?.banca_consolidada || bancaConsolidada;
   const avaliacoesIndividuaisMap = consolidadaAtual?.avaliacoes_individuais || {};
   const avaliacoesIndividuaisList = Object.values(avaliacoesIndividuaisMap);
   const statusFinalGrupoAtual = bancaJaRealizadaAtual
@@ -2229,6 +2265,59 @@ export function App() {
                                     )}
                                   </div>
                                 </div>
+
+                                {/* Médias Finais Consolidadas de Cada Integrante do Grupo */}
+                                <div className="mt-4 border-t border-indigo-100 pt-3.5">
+                                  <div className="flex flex-wrap items-center justify-between gap-1 pb-1">
+                                    <h4 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-indigo-950">
+                                      <Users className="h-3.5 w-3.5 text-indigo-600" />
+                                      Média Final Consolidada dos Integrantes:
+                                    </h4>
+                                    <span className="text-[10px] text-indigo-800/80 font-medium">
+                                      (Nota coletiva da banca + Pilar 4 individual de cada aluno)
+                                    </span>
+                                  </div>
+                                  <div className="mt-2 grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
+                                    {(consolidadaAtual?.integrantes_medias?.length
+                                      ? consolidadaAtual.integrantes_medias
+                                      : grupoAtual.integrantes_notas
+                                    ).map((aluno) => {
+                                      const isAprovado = aluno.resultado === 'Aprovado';
+                                      const isRetido = aluno.resultado === 'Nota Retida (Pendências)';
+                                      return (
+                                        <div
+                                          key={aluno.nome}
+                                          className="flex items-center justify-between rounded-xl border border-indigo-200/80 bg-white p-3 shadow-2xs"
+                                        >
+                                          <div>
+                                            <p className="text-xs font-bold text-slate-900">{aluno.nome}</p>
+                                            <p className="text-[10px] text-slate-500">
+                                              P4 Sprints/Aulas: <strong className="text-indigo-900">{aluno.p4_nota.toFixed(2)}</strong> pts
+                                            </p>
+                                          </div>
+                                          <div className="text-right">
+                                            <span className="font-mono text-base font-black text-slate-900">
+                                              {aluno.nota_final.toFixed(2)}%
+                                            </span>
+                                            <div className="mt-0.5">
+                                              <span
+                                                className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-black uppercase ${
+                                                  isAprovado
+                                                    ? 'bg-emerald-100 text-emerald-800'
+                                                    : isRetido
+                                                    ? 'bg-amber-100 text-amber-900'
+                                                    : 'bg-red-100 text-red-800'
+                                                }`}
+                                              >
+                                                {isAprovado ? 'Aprovado' : isRetido ? 'Nota Retida' : 'Nova Apresentação'}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
                               </div>
                             )}
 
@@ -2386,212 +2475,309 @@ export function App() {
                               </div>
                             </div>
 
-                            {/* 1º GRANDE CARD: Parecer Técnico Detalhado da Auditoria & Observações (Com Seus Sub-Cards) */}
-                            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs">
-                              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                                <div>
-                                  <h4 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wider text-slate-900">
-                                    <Sparkles className="h-4 w-4 text-red-600" />
-                                    1. Parecer Técnico Detalhado da Auditoria & Observações
-                                  </h4>
-                                  <p className="text-xs text-slate-500">
+                            {/* 1º GRANDE CARD: Parecer Técnico Detalhado da Auditoria & Observações */}
+                            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs transition">
+                              <button
+                                type="button"
+                                onClick={() => setBlocoParecerAberto((prev) => !prev)}
+                                className="flex w-full items-center justify-between p-4 text-left transition hover:bg-slate-50 cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-100 text-red-600 shrink-0">
+                                    <Sparkles className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-900 truncate">
+                                      1. Parecer Técnico Detalhado da Auditoria &amp; Observações
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 hidden sm:block">
+                                      {grupoAtual.parecer_estruturado?.length || 0} dimensões avaliadas • {grupoAtual.pontos_fortes.length} pontos fortes • {grupoAtual.pontos_atencao.length} pendências para arguição
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="hidden md:inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-700">
+                                    {blocoParecerAberto ? 'Recolher' : 'Expandir'}
+                                  </span>
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                                    {blocoParecerAberto ? (
+                                      <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4" />
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+
+                              {blocoParecerAberto && (
+                                <div className="border-t border-slate-100 p-5 pt-3">
+                                  <p className="text-xs text-slate-500 pb-2">
                                     Análise integral dividida por dimensão técnica com sub-cards
                                     estruturados — todos os itens listados sem cortes para a banca.
                                   </p>
-                                </div>
-                              </div>
 
-                              {/* Cards de Parecer Estruturado */}
-                              {grupoAtual.parecer_estruturado &&
-                              grupoAtual.parecer_estruturado.length > 0 ? (
-                                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                                  {grupoAtual.parecer_estruturado.map((bloco, bIdx) => (
-                                    <div
-                                      key={bIdx}
-                                      className={`rounded-xl border p-4 ${
-                                        bloco.status === 'conforme'
-                                          ? 'border-emerald-200 bg-emerald-50/30'
-                                          : bloco.status === 'critico'
-                                          ? 'border-red-200 bg-red-50/30'
-                                          : 'border-amber-200 bg-amber-50/30'
-                                      }`}
-                                    >
-                                      <div className="flex items-start justify-between gap-2">
-                                        <h5 className="text-xs font-extrabold text-slate-900">
-                                          {bloco.titulo}
-                                        </h5>
-                                        <span
-                                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                                  {/* Cards de Parecer Estruturado */}
+                                  {grupoAtual.parecer_estruturado &&
+                                  grupoAtual.parecer_estruturado.length > 0 ? (
+                                    <div className="mt-3 grid gap-4 md:grid-cols-2">
+                                      {grupoAtual.parecer_estruturado.map((bloco, bIdx) => (
+                                        <div
+                                          key={bIdx}
+                                          className={`rounded-xl border p-4 ${
                                             bloco.status === 'conforme'
-                                              ? 'bg-emerald-100 text-emerald-800'
+                                              ? 'border-emerald-200 bg-emerald-50/30'
                                               : bloco.status === 'critico'
-                                              ? 'bg-red-100 text-red-800'
-                                              : 'bg-amber-100 text-amber-900'
+                                              ? 'border-red-200 bg-red-50/30'
+                                              : 'border-amber-200 bg-amber-50/30'
                                           }`}
                                         >
-                                          {bloco.status === 'conforme'
-                                            ? 'Conforme'
-                                            : bloco.status === 'critico'
-                                            ? 'Pendência Crítica'
-                                            : 'Atenção'}
-                                        </span>
-                                      </div>
-                                      <p className="mt-2 whitespace-normal break-words text-xs font-medium leading-relaxed text-slate-800">
-                                        {bloco.resumo}
-                                      </p>
-                                      {bloco.itens && bloco.itens.length > 0 && (
-                                        <ul className="mt-2.5 space-y-1.5 border-t border-slate-200/60 pt-2 text-xs text-slate-700">
-                                          {bloco.itens.map((it, i) => (
-                                            <li
-                                              key={i}
-                                              className="flex items-start gap-1.5 whitespace-normal break-words leading-relaxed"
+                                          <div className="flex items-start justify-between gap-2">
+                                            <h5 className="text-xs font-extrabold text-slate-900">
+                                              {bloco.titulo}
+                                            </h5>
+                                            <span
+                                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                                                bloco.status === 'conforme'
+                                                  ? 'bg-emerald-100 text-emerald-800'
+                                                  : bloco.status === 'critico'
+                                                  ? 'bg-red-100 text-red-800'
+                                                  : 'bg-amber-100 text-amber-900'
+                                              }`}
                                             >
-                                              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-500" />
-                                              <span>{it}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      )}
+                                              {bloco.status === 'conforme'
+                                                ? 'Conforme'
+                                                : bloco.status === 'critico'
+                                                ? 'Pendência Crítica'
+                                                : 'Atenção'}
+                                            </span>
+                                          </div>
+                                          <p className="mt-2 whitespace-normal break-words text-xs font-medium leading-relaxed text-slate-800">
+                                            {bloco.resumo}
+                                          </p>
+                                          {bloco.itens && bloco.itens.length > 0 && (
+                                            <ul className="mt-2.5 space-y-1.5 border-t border-slate-200/60 pt-2 text-xs text-slate-700">
+                                              {bloco.itens.map((it, i) => (
+                                                <li
+                                                  key={i}
+                                                  className="flex items-start gap-1.5 whitespace-normal break-words leading-relaxed"
+                                                >
+                                                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-500" />
+                                                  <span>{it}</span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          )}
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
+                                  ) : (
+                                    <p className="mt-3 whitespace-pre-line text-xs leading-relaxed text-slate-700">
+                                      {grupoAtual.parecer_tecnico}
+                                    </p>
+                                  )}
+
+                                  {/* Listas Completas de Pontos Fortes e Pontos de Atenção (Sem Cortes) */}
+                                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/20 p-4">
+                                      <h5 className="flex items-center gap-1.5 text-xs font-extrabold uppercase text-emerald-800">
+                                        <CheckCircle2 className="h-4 w-4" />
+                                        Pontos Fortes Verificados ({grupoAtual.pontos_fortes.length})
+                                      </h5>
+                                      <ul className="mt-2.5 space-y-1.5 text-xs text-slate-700">
+                                        {grupoAtual.pontos_fortes.map((pf, i) => (
+                                          <li
+                                            key={i}
+                                            className="flex items-start gap-2 whitespace-normal break-words leading-relaxed"
+                                          >
+                                            <span className="font-bold text-emerald-600">✓</span>
+                                            <span>{pf}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+
+                                    <div className="rounded-xl border border-red-200 bg-red-50/20 p-4">
+                                      <h5 className="flex items-center gap-1.5 text-xs font-extrabold uppercase text-red-800">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        Pendências & Observações para Cobrança em Banca (
+                                        {grupoAtual.pontos_atencao.length})
+                                      </h5>
+                                      <ul className="mt-2.5 space-y-1.5 text-xs text-slate-700">
+                                        {grupoAtual.pontos_atencao.map((pa, i) => (
+                                          <li
+                                            key={i}
+                                            className="flex items-start gap-2 whitespace-normal break-words leading-relaxed"
+                                          >
+                                            <span className="font-bold text-red-600">•</span>
+                                            <span>{pa}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  </div>
                                 </div>
-                              ) : (
-                                <p className="mt-3 whitespace-pre-line text-xs leading-relaxed text-slate-700">
-                                  {grupoAtual.parecer_tecnico}
-                                </p>
                               )}
-
-                              {/* Listas Completas de Pontos Fortes e Pontos de Atenção (Sem Cortes) */}
-                              <div className="mt-4 grid gap-4 md:grid-cols-2">
-                                <div className="rounded-xl border border-emerald-200 bg-emerald-50/20 p-4">
-                                  <h5 className="flex items-center gap-1.5 text-xs font-extrabold uppercase text-emerald-800">
-                                    <CheckCircle2 className="h-4 w-4" />
-                                    Pontos Fortes Verificados ({grupoAtual.pontos_fortes.length})
-                                  </h5>
-                                  <ul className="mt-2.5 space-y-1.5 text-xs text-slate-700">
-                                    {grupoAtual.pontos_fortes.map((pf, i) => (
-                                      <li
-                                        key={i}
-                                        className="flex items-start gap-2 whitespace-normal break-words leading-relaxed"
-                                      >
-                                        <span className="font-bold text-emerald-600">✓</span>
-                                        <span>{pf}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-
-                                <div className="rounded-xl border border-red-200 bg-red-50/20 p-4">
-                                  <h5 className="flex items-center gap-1.5 text-xs font-extrabold uppercase text-red-800">
-                                    <AlertTriangle className="h-4 w-4" />
-                                    Pendências & Observações para Cobrança em Banca (
-                                    {grupoAtual.pontos_atencao.length})
-                                  </h5>
-                                  <ul className="mt-2.5 space-y-1.5 text-xs text-slate-700">
-                                    {grupoAtual.pontos_atencao.map((pa, i) => (
-                                      <li
-                                        key={i}
-                                        className="flex items-start gap-2 whitespace-normal break-words leading-relaxed"
-                                      >
-                                        <span className="font-bold text-red-600">•</span>
-                                        <span>{pa}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </div>
                             </div>
 
                             {/* 2º GRANDE CARD: Anexos Obrigatórios & Padrão CTDS-2026-02 */}
-                            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs">
-                              <h4 className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700">
-                                <span>
-                                  2. Anexos Obrigatórios & Padrão CTDS-2026-02 (Pasta:{' '}
-                                  {grupoAtual.nome_pasta_entregue})
-                                </span>
-                                <span className="text-emerald-700">
-                                  {
-                                    grupoAtual.arquivos_entregues.filter((a) => a.encontrado).length
-                                  }
-                                  /7 arquivos ({grupoAtual.conformidade_nomenclatura_pct}%)
-                                </span>
-                              </h4>
-                              <div className="mt-3 overflow-x-auto">
-                                <table className="w-full text-left text-xs">
-                                  <thead>
-                                    <tr className="border-b border-slate-200 text-[11px] text-slate-500">
-                                      <th className="pb-2">Tipo</th>
-                                      <th className="pb-2">Arquivo Entregue</th>
-                                      <th className="pb-2">Status Nomenclatura</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-100">
-                                    {grupoAtual.arquivos_entregues.map((arq) => (
-                                      <tr key={arq.tipo}>
-                                        <td className="py-2 font-semibold text-slate-800">
-                                          {arq.tipo}
-                                        </td>
-                                        <td className="py-2 font-mono text-[11px] text-slate-600">
-                                          {arq.nome_arquivo || '—'}
-                                        </td>
-                                        <td className="py-2">
-                                          {arq.nomenclatura_conforme ? (
-                                            <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
-                                              <CheckCircle2 className="h-3.5 w-3.5" /> Conforme
-                                            </span>
-                                          ) : (
-                                            <span className="font-medium text-amber-700">
-                                              ⚠️{' '}
-                                              {arq.alertas_nomenclatura.join(' ') ||
-                                                'Não encontrado'}
-                                            </span>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
+                            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs transition">
+                              <button
+                                type="button"
+                                onClick={() => setBlocoAnexosAberto((prev) => !prev)}
+                                className="flex w-full items-center justify-between p-4 text-left transition hover:bg-slate-50 cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
+                                    <FileText className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800 truncate">
+                                      2. Anexos Obrigatórios &amp; Padrão CTDS-2026-02
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 hidden sm:block">
+                                      Pasta: {grupoAtual.nome_pasta_entregue} • {grupoAtual.arquivos_entregues.filter((a) => a.encontrado).length}/7 arquivos ({grupoAtual.conformidade_nomenclatura_pct}%)
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="hidden md:inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                                    {grupoAtual.arquivos_entregues.filter((a) => a.encontrado).length}/7 arquivos
+                                  </span>
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                                    {blocoAnexosAberto ? (
+                                      <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4" />
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+
+                              {blocoAnexosAberto && (
+                                <div className="border-t border-slate-100 p-4">
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                      <thead>
+                                        <tr className="border-b border-slate-200 text-[11px] text-slate-500">
+                                          <th className="pb-2">Tipo</th>
+                                          <th className="pb-2">Arquivo Entregue</th>
+                                          <th className="pb-2">Status Nomenclatura</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-100">
+                                        {grupoAtual.arquivos_entregues.map((arq) => (
+                                          <tr key={arq.tipo}>
+                                            <td className="py-2 font-semibold text-slate-800">
+                                              {arq.tipo}
+                                            </td>
+                                            <td className="py-2 font-mono text-[11px] text-slate-600">
+                                              {arq.nome_arquivo || '—'}
+                                            </td>
+                                            <td className="py-2">
+                                              {arq.nomenclatura_conforme ? (
+                                                <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+                                                  <CheckCircle2 className="h-3.5 w-3.5" /> Conforme
+                                                </span>
+                                              ) : (
+                                                <span className="font-medium text-amber-700">
+                                                  ⚠️{' '}
+                                                  {arq.alertas_nomenclatura.join(' ') ||
+                                                    'Não encontrado'}
+                                                </span>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             {/* 3º GRANDE CARD: Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) */}
                             <div
-                              className={`rounded-xl border-2 p-4 ${
+                              className={`overflow-hidden rounded-xl border-2 shadow-2xs transition ${
                                 grupoAtual.auditoria_tecnica
                                   .inviabiliza_finalizacao_persistencia ||
                                 !grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                  ? 'border-red-300 bg-red-50/40'
-                                  : 'border-emerald-300 bg-emerald-50/40'
+                                  ? 'border-red-300 bg-red-50/20'
+                                  : 'border-emerald-300 bg-emerald-50/20'
                               }`}
                             >
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <h4 className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-900">
-                                  <Server className="h-4 w-4 text-red-600" />
-                                  3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação &
-                                  Consumo no Código)
-                                </h4>
-                                <span
-                                  className={`rounded-full px-3 py-0.5 text-xs font-bold ${
-                                    grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
+                              <button
+                                type="button"
+                                onClick={() => setBlocoTabelasAberto((prev) => !prev)}
+                                className="flex w-full items-center justify-between p-4 text-left transition hover:bg-white/80 cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-100 text-red-600 shrink-0">
+                                    <Server className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-900 truncate">
+                                      3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Código)
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 hidden sm:block">
+                                      {grupoAtual.auditoria_tecnica.sql_tabelas_qtd} tabelas .sql • {grupoAtual.auditoria_tecnica.tabelas_sql_presentes_online_qtd} presentes online • {grupoAtual.auditoria_tecnica.tabelas_ciclo_completo_qtd} ciclo completo
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span
+                                    className={`hidden md:inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                      grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
+                                      !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
+                                        ? 'bg-red-600 text-white'
+                                        : grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem &&
+                                          grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                        ? 'bg-emerald-600 text-white'
+                                        : 'bg-amber-500 text-white'
+                                    }`}
+                                  >
+                                    {grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
                                     !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
-                                      ? 'bg-red-600 text-white'
-                                      : grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem &&
-                                        grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                      ? 'bg-emerald-600 text-white'
-                                      : 'bg-amber-500 text-white'
-                                  }`}
-                                >
-                                  {grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
-                                  !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
-                                    ? '❌ BLOQUEIO: Persistência do Tema Incompleta no Banco Online'
-                                    : grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem &&
-                                      grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                    ? '✅ 100% Nuvem • Ciclo Completo (INSERT + SELECT)'
-                                    : '⚠️ Banco Online OK • Falta Povoamento .SQL'}
-                                </span>
-                              </div>
+                                      ? '❌ Pendência de Persistência'
+                                      : `${grupoAtual.auditoria_tecnica.tabelas_ciclo_completo_qtd}/${grupoAtual.auditoria_tecnica.sql_tabelas_qtd} Tabelas 100% OK`}
+                                  </span>
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                                    {blocoTabelasAberto ? (
+                                      <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4" />
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
 
-                              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                              {blocoTabelasAberto && (
+                                <div className="border-t border-slate-200/80 p-4">
+                                  <div className="flex flex-wrap items-center justify-between gap-2 pb-3">
+                                    <span className="text-xs font-bold text-slate-800">
+                                      Status da Rastreabilidade e Persistência
+                                    </span>
+                                    <span
+                                      className={`rounded-full px-3 py-0.5 text-xs font-bold ${
+                                        grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
+                                        !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
+                                          ? 'bg-red-600 text-white'
+                                          : grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem &&
+                                            grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                          ? 'bg-emerald-600 text-white'
+                                          : 'bg-amber-500 text-white'
+                                      }`}
+                                    >
+                                      {grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
+                                      !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
+                                        ? '❌ BLOQUEIO: Persistência do Tema Incompleta no Banco Online'
+                                        : grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem &&
+                                          grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                        ? '✅ 100% Nuvem • Ciclo Completo (INSERT + SELECT)'
+                                        : '⚠️ Banco Online OK • Falta Povoamento .SQL'}
+                                    </span>
+                                  </div>
+
+                                  <div className="grid gap-3 sm:grid-cols-2">
                                 <div className="rounded-lg border border-slate-200 bg-white p-3">
                                   <span className="text-[10px] font-bold uppercase text-slate-500">
                                     Onde a Aplicação está Publicada (Item 2.4 — Deploy)
@@ -2903,79 +3089,107 @@ export function App() {
                                   </div>
                                 )}
                               </div>
+                                </div>
+                              )}
                             </div>
 
                             {/* 4. Pontuação Oficial do Pilar 4 (PDFs anexados em ./tcc) */}
-                            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-800">
-                                  <Award className="h-4 w-4 text-indigo-600" />
-                                  4. Notas Individuais da Parte 4 (Extraídas de{' '}
-                                  {grupoAtual.turma.toLowerCase()}-entregas-participação.pdf)
-                                </h4>
-                                <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-bold text-indigo-800">
-                                  4.1 Sprints (8,0) + 4.2 Participação (7,0) = 15,0 pts
-                                </span>
-                              </div>
-                              <div className="mt-3 overflow-x-auto">
-                                <table className="w-full text-left text-xs">
-                                  <thead>
-                                    <tr className="border-b border-slate-200 text-[11px] text-slate-500">
-                                      <th className="pb-2">Aluno</th>
-                                      <th className="pb-2 text-center">4.1 Relatórios Semanais</th>
-                                      <th className="pb-2 text-center">4.2 Participação Aulas</th>
-                                      <th className="pb-2 text-center">Total P4</th>
-                                      <th className="pb-2 text-center">Nota Final</th>
-                                      <th className="pb-2 text-center">Status Liberação</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-200/70">
-                                    {grupoAtual.integrantes_notas.map((ind) => (
-                                      <tr key={ind.nome}>
-                                        <td className="py-2">
-                                          <p className="font-bold text-slate-900">{ind.nome}</p>
-                                          <p className="text-[10px] text-slate-500">
-                                            {ind.nome_completo_planilha} • Mat. {ind.matricula}
-                                          </p>
-                                        </td>
-                                        <td className="py-2 text-center">
-                                          <span
-                                            className={`font-mono font-bold ${
-                                              ind.nivel_4_1 === 'Insuficiente'
-                                                ? 'text-red-600'
-                                                : 'text-slate-900'
-                                            }`}
-                                          >
-                                            {ind.nota_4_1_sprints.toFixed(2)} / 8.00
-                                          </span>
-                                          <span className="block text-[10px] text-slate-500">
-                                            {ind.relatorios_entregues}/{ind.total_relatorios}{' '}
-                                            entregues ({ind.nivel_4_1})
-                                          </span>
-                                        </td>
-                                        <td className="py-2 text-center">
-                                          <span className="font-mono font-bold text-slate-900">
-                                            {ind.nota_4_2_participacao.toFixed(2)} / 7.00
-                                          </span>
-                                          <span className="block text-[10px] text-slate-500">
-                                            {ind.aulas_participadas}/{ind.total_aulas_turma} aulas (
-                                            {ind.nivel_4_2})
-                                          </span>
-                                        </td>
-                                        <td className="py-2 text-center font-mono font-bold text-indigo-700">
-                                          {ind.p4_nota.toFixed(2)} / 15.0
-                                        </td>
-                                        <td className="py-2 text-center font-mono text-sm font-black text-slate-900">
-                                          {ind.nota_final.toFixed(2)}%
-                                        </td>
-                                        <td className="py-2 text-center">
-                                          {badgeResultadoFinal(ind.resultado)}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
+                            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xs transition">
+                              <button
+                                type="button"
+                                onClick={() => setBlocoPilar4Aberto((prev) => !prev)}
+                                className="flex w-full items-center justify-between p-4 text-left transition hover:bg-slate-50 cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
+                                    <Award className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-800 truncate">
+                                      4. Notas Individuais da Parte 4 (Sprints &amp; Participação)
+                                    </h4>
+                                    <p className="text-[11px] text-slate-500 hidden sm:block">
+                                      Extraídas de {grupoAtual.turma.toLowerCase()}-entregas-participação.pdf • 4.1 Sprints (8,0) + 4.2 Participação (7,0) = 15,0 pts
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="hidden md:inline-flex rounded-full bg-indigo-100 px-2.5 py-0.5 text-[10px] font-bold text-indigo-800">
+                                    {grupoAtual.integrantes_notas.length} Integrantes
+                                  </span>
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                                    {blocoPilar4Aberto ? (
+                                      <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4" />
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+
+                              {blocoPilar4Aberto && (
+                                <div className="border-t border-slate-200 bg-slate-50/60 p-4">
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs">
+                                      <thead>
+                                        <tr className="border-b border-slate-200 text-[11px] text-slate-500">
+                                          <th className="pb-2">Aluno</th>
+                                          <th className="pb-2 text-center">4.1 Relatórios Semanais</th>
+                                          <th className="pb-2 text-center">4.2 Participação Aulas</th>
+                                          <th className="pb-2 text-center">Total P4</th>
+                                          <th className="pb-2 text-center">Nota Final</th>
+                                          <th className="pb-2 text-center">Status Liberação</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-slate-200/70">
+                                        {grupoAtual.integrantes_notas.map((ind) => (
+                                          <tr key={ind.nome}>
+                                            <td className="py-2">
+                                              <p className="font-bold text-slate-900">{ind.nome}</p>
+                                              <p className="text-[10px] text-slate-500">
+                                                {ind.nome_completo_planilha} • Mat. {ind.matricula}
+                                              </p>
+                                            </td>
+                                            <td className="py-2 text-center">
+                                              <span
+                                                className={`font-mono font-bold ${
+                                                  ind.nivel_4_1 === 'Insuficiente'
+                                                    ? 'text-red-600'
+                                                    : 'text-slate-900'
+                                                }`}
+                                              >
+                                                {ind.nota_4_1_sprints.toFixed(2)} / 8.00
+                                              </span>
+                                              <span className="block text-[10px] text-slate-500">
+                                                {ind.relatorios_entregues}/{ind.total_relatorios}{' '}
+                                                entregues ({ind.nivel_4_1})
+                                              </span>
+                                            </td>
+                                            <td className="py-2 text-center">
+                                              <span className="font-mono font-bold text-slate-900">
+                                                {ind.nota_4_2_participacao.toFixed(2)} / 7.00
+                                              </span>
+                                              <span className="block text-[10px] text-slate-500">
+                                                {ind.aulas_participadas}/{ind.total_aulas_turma} aulas (
+                                                {ind.nivel_4_2})
+                                              </span>
+                                            </td>
+                                            <td className="py-2 text-center font-mono font-bold text-indigo-700">
+                                              {ind.p4_nota.toFixed(2)} / 15.0
+                                            </td>
+                                            <td className="py-2 text-center font-mono text-sm font-black text-slate-900">
+                                              {ind.nota_final.toFixed(2)}%
+                                            </td>
+                                            <td className="py-2 text-center">
+                                              {badgeResultadoFinal(ind.resultado)}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -3043,11 +3257,15 @@ export function App() {
                     <button
                       type="button"
                       onClick={() => void handleSalvarFicha()}
-                      disabled={salvandoFicha}
-                      className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-emerald-700 disabled:opacity-50"
+                      disabled={salvandoFicha || !podeEditarFicha}
+                      className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Save className="h-4 w-4" />
-                      {salvandoFicha ? 'Salvando...' : 'Salvar Ficha & Sincronizar Firebase'}
+                      {salvandoFicha
+                        ? 'Salvando...'
+                        : modoEdicaoReaberto
+                        ? 'Salvar Alterações & Recalcular Médias'
+                        : 'Salvar Ficha & Sincronizar Firebase'}
                     </button>
                     <button
                       type="button"
@@ -3091,8 +3309,102 @@ export function App() {
                   onEncerrarMinhaAvaliacao={handleEncerrarMinhaAvaliacao}
                   onEncerrarEConsolidarBanca={handleEncerrarEConsolidarBanca}
                   onResetarBanca={handleResetarBanca}
+                  onReabrirEdicao={() => setModoEdicaoReaberto(true)}
+                  modoEdicaoReaberto={modoEdicaoReaberto}
                   salvando={salvandoFicha}
                 />
+
+                {/* Banners Informativos de Bloqueio ou Edição Reaberta */}
+                {!podeEditarFicha && statusSessaoBancaAtual === 'aguardando_inicio' && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-xs text-amber-950 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-200 text-amber-900 shrink-0">
+                        <Lock className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-amber-900">
+                          Modo Somente Leitura — Banca Ainda Não Iniciada
+                        </p>
+                        <p className="text-xs text-amber-800">
+                          A atribuição e alteração de notas, rubricas e pareceres só é permitida após o início oficial da banca.
+                        </p>
+                      </div>
+                    </div>
+                    {isProfessorTitular && (
+                      <button
+                        type="button"
+                        onClick={() => void handleIniciarBanca()}
+                        disabled={salvandoFicha}
+                        className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md transition hover:bg-emerald-700"
+                      >
+                        <Play className="h-4 w-4 fill-white" />
+                        Iniciar Banca Agora
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {!podeEditarFicha && statusSessaoBancaAtual === 'concluida' && !modoEdicaoReaberto && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-indigo-200 bg-indigo-50/80 p-4 text-xs text-indigo-950 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-200 text-indigo-900 shrink-0">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-indigo-950">
+                          Ata Oficial Consolidada &amp; Encerrada (Modo Somente Leitura)
+                        </p>
+                        <p className="text-xs text-indigo-800">
+                          Esta banca já foi apresentada e homologada. Para retificar qualquer critério ou parecer, clique no botão de edição.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setModoEdicaoReaberto(true)}
+                      className="flex items-center gap-2 rounded-xl border border-indigo-300 bg-white px-4 py-2 text-xs font-bold text-indigo-900 shadow-xs transition hover:bg-indigo-100 cursor-pointer"
+                    >
+                      <Edit3 className="h-4 w-4 text-indigo-600" />
+                      Editar Minha Avaliação / Editar Banca
+                    </button>
+                  </div>
+                )}
+
+                {modoEdicaoReaberto && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-amber-400 bg-amber-100 p-4 text-xs text-amber-950 shadow-md">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-300 text-amber-950 shrink-0">
+                        <Edit3 className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-amber-950">
+                          Modo de Edição Ativo (Banca Reaberta)
+                        </p>
+                        <p className="text-xs text-amber-900">
+                          Faça os ajustes desejados nas rubricas, notas e parecer técnico. Ao salvar, as médias e descrições serão recalculadas e reconsolidadas automaticamente no Firebase.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setModoEdicaoReaberto(false)}
+                        className="rounded-lg border border-amber-400 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                      >
+                        Cancelar Edição
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleSalvarFicha()}
+                        disabled={salvandoFicha}
+                        className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 cursor-pointer"
+                      >
+                        <Save className="h-4 w-4" />
+                        Salvar Alterações &amp; Recalcular Médias
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Cabeçalho Visual Idêntico à Ficha SENAI */}
                 <div className="overflow-hidden rounded-2xl border-2 border-slate-900 bg-white shadow-sm">
@@ -3140,8 +3452,13 @@ export function App() {
                       <input
                         type="text"
                         value={avaliadorEdit}
+                        disabled={!podeEditarFicha}
                         onChange={(e) => setAvaliadorEdit(e.target.value)}
-                        className="w-full rounded border border-slate-300 bg-white px-2 py-0.5 text-xs font-semibold"
+                        className={`w-full rounded border px-2 py-0.5 text-xs font-semibold ${
+                          !podeEditarFicha
+                            ? 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'
+                            : 'border-slate-300 bg-white text-slate-900'
+                        }`}
                       />
                     </div>
                   </div>
@@ -3303,11 +3620,12 @@ export function App() {
                                         {foiAlterado && (
                                           <button
                                             type="button"
+                                            disabled={!podeEditarFicha}
                                             onClick={() => restaurarRubricaAutomatica(r.codigo)}
                                             title={`Restaurar valor calculado automaticamente (${r.nivel_sugerido_ia}: ${r.nota_sugerida_ia.toFixed(
                                               2,
                                             )})`}
-                                            className="inline-flex items-center gap-0.5 rounded-md bg-amber-500 px-2 py-1 text-[10px] font-extrabold text-white shadow-2xs transition hover:bg-amber-600"
+                                            className="inline-flex items-center gap-0.5 rounded-md bg-amber-500 px-2 py-1 text-[10px] font-extrabold text-white shadow-2xs transition hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                           >
                                             <RotateCcw className="h-3 w-3" />
                                             Rest.
@@ -3319,10 +3637,13 @@ export function App() {
                                             <button
                                               key={nv}
                                               type="button"
+                                              disabled={!podeEditarFicha}
                                               onClick={() =>
                                                 aplicarPresetNivelRubrica(r.codigo, nv, r.peso_max)
                                               }
                                               className={`rounded-md px-2 py-1 text-[10px] font-bold transition ${
+                                                !podeEditarFicha ? 'cursor-not-allowed opacity-80 ' : ''
+                                              }${
                                                 r.nivel === nv
                                                   ? nv === 'Avançado'
                                                     ? 'bg-emerald-600 text-white'
@@ -3352,6 +3673,7 @@ export function App() {
                                         step="0.1"
                                         min={0}
                                         max={r.peso_max}
+                                        disabled={!podeEditarFicha}
                                         placeholder={isPendenteAoVivo ? '—' : '0.0'}
                                         value={isPendenteAoVivo ? '' : r.nota}
                                         onChange={(e) =>
@@ -3362,7 +3684,9 @@ export function App() {
                                           )
                                         }
                                         className={`w-20 rounded-lg border px-2 py-1 text-center font-mono text-xs font-bold focus:outline-none ${
-                                          isPendenteAoVivo
+                                          !podeEditarFicha
+                                            ? 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'
+                                            : isPendenteAoVivo
                                             ? 'border-2 border-amber-500 bg-amber-100/80 text-amber-950 placeholder:text-amber-700'
                                             : 'border-slate-300 bg-white text-slate-900 focus:border-red-500'
                                         }`}
@@ -3458,8 +3782,13 @@ export function App() {
                                             onClick={() =>
                                               restaurarItemIntegrante(idx, 'nota_3_1_arguicao')
                                             }
+                                            disabled={!podeEditarFicha}
                                             title="Restaurar estado inicial (Pendente)"
-                                            className="inline-flex items-center gap-0.5 rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-extrabold text-white hover:bg-amber-600"
+                                            className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-extrabold text-white transition ${
+                                              !podeEditarFicha
+                                                ? 'bg-amber-300 cursor-not-allowed opacity-60'
+                                                : 'bg-amber-500 hover:bg-amber-600'
+                                            }`}
                                           >
                                             <RotateCcw className="h-2.5 w-2.5" />
                                             Rest.
@@ -3470,6 +3799,7 @@ export function App() {
                                             <button
                                               key={nv}
                                               type="button"
+                                              disabled={!podeEditarFicha}
                                               onClick={() =>
                                                 aplicarNivelIntegrante(
                                                   idx,
@@ -3479,6 +3809,8 @@ export function App() {
                                                 )
                                               }
                                               className={`rounded px-1.5 py-0.5 text-[9px] font-bold transition ${
+                                                !podeEditarFicha ? 'cursor-not-allowed opacity-75' : ''
+                                              } ${
                                                 ind.nivel_3_1 === nv
                                                   ? nv === 'Avançado'
                                                     ? 'bg-emerald-600 text-white'
@@ -3499,6 +3831,7 @@ export function App() {
                                         step="0.2"
                                         min={0}
                                         max={6}
+                                        disabled={!podeEditarFicha}
                                         placeholder={pendente31 ? 'Preencher' : '0.0'}
                                         value={pendente31 ? '' : ind.nota_3_1_arguicao}
                                         onChange={(e) =>
@@ -3510,7 +3843,9 @@ export function App() {
                                           )
                                         }
                                         className={`w-24 rounded-lg border px-2 py-1 text-center font-mono text-xs font-bold ${
-                                          pendente31
+                                          !podeEditarFicha
+                                            ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500'
+                                            : pendente31
                                             ? 'border-2 border-amber-500 bg-amber-100 text-amber-950 placeholder:text-[10px] placeholder:font-extrabold placeholder:text-amber-800'
                                             : 'border-slate-300 bg-white text-slate-900'
                                         }`}
@@ -3534,13 +3869,18 @@ export function App() {
                                         {alterado41 && (
                                           <button
                                             type="button"
+                                            disabled={!podeEditarFicha}
                                             onClick={() =>
                                               restaurarItemIntegrante(idx, 'nota_4_1_sprints')
                                             }
                                             title={`Restaurar nota do PDF (${ind.nota_4_1_sugerida.toFixed(
                                               2,
                                             )})`}
-                                            className="inline-flex items-center gap-0.5 rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-extrabold text-white hover:bg-amber-600"
+                                            className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-extrabold text-white transition ${
+                                              !podeEditarFicha
+                                                ? 'bg-amber-300 cursor-not-allowed opacity-60'
+                                                : 'bg-amber-500 hover:bg-amber-600'
+                                            }`}
                                           >
                                             <RotateCcw className="h-2.5 w-2.5" />
                                             Rest.
@@ -3551,6 +3891,7 @@ export function App() {
                                           step="0.2"
                                           min={0}
                                           max={8}
+                                          disabled={!podeEditarFicha}
                                           value={ind.nota_4_1_sprints}
                                           onChange={(e) =>
                                             atualizarNotaIntegrante(
@@ -3560,7 +3901,11 @@ export function App() {
                                               8.0,
                                             )
                                           }
-                                          className="w-16 rounded border border-slate-300 px-1.5 py-1 text-center font-mono font-bold"
+                                          className={`w-16 rounded border px-1.5 py-1 text-center font-mono font-bold ${
+                                            !podeEditarFicha
+                                              ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500'
+                                              : 'border-slate-300 bg-white text-slate-900'
+                                          }`}
                                         />
                                       </div>
                                       <span className="text-[10px] text-slate-500">
@@ -3577,13 +3922,18 @@ export function App() {
                                         {alterado42 && (
                                           <button
                                             type="button"
+                                            disabled={!podeEditarFicha}
                                             onClick={() =>
                                               restaurarItemIntegrante(idx, 'nota_4_2_participacao')
                                             }
                                             title={`Restaurar nota do PDF (${ind.nota_4_2_sugerida.toFixed(
                                               2,
                                             )})`}
-                                            className="inline-flex items-center gap-0.5 rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-extrabold text-white hover:bg-amber-600"
+                                            className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-extrabold text-white transition ${
+                                              !podeEditarFicha
+                                                ? 'bg-amber-300 cursor-not-allowed opacity-60'
+                                                : 'bg-amber-500 hover:bg-amber-600'
+                                            }`}
                                           >
                                             <RotateCcw className="h-2.5 w-2.5" />
                                             Rest.
@@ -3594,6 +3944,7 @@ export function App() {
                                           step="0.2"
                                           min={0}
                                           max={7}
+                                          disabled={!podeEditarFicha}
                                           value={ind.nota_4_2_participacao}
                                           onChange={(e) =>
                                             atualizarNotaIntegrante(
@@ -3603,7 +3954,11 @@ export function App() {
                                               7.0,
                                             )
                                           }
-                                          className="w-16 rounded border border-slate-300 px-1.5 py-1 text-center font-mono font-bold"
+                                          className={`w-16 rounded border px-1.5 py-1 text-center font-mono font-bold ${
+                                            !podeEditarFicha
+                                              ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500'
+                                              : 'border-slate-300 bg-white text-slate-900'
+                                          }`}
                                         />
                                       </div>
                                       <span className="text-[10px] text-slate-500">
@@ -3696,8 +4051,9 @@ export function App() {
                           {grupoAtual.parecer_tecnico && (
                             <button
                               type="button"
+                              disabled={!podeEditarFicha}
                               onClick={() => setParecerEdit(grupoAtual.parecer_tecnico)}
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 hover:text-indigo-900 hover:underline"
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 hover:text-indigo-900 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <Sparkles className="h-3 w-3" />
                               Carregar síntese da auditoria como rascunho
@@ -3707,9 +4063,14 @@ export function App() {
                         <textarea
                           rows={6}
                           value={parecerEdit}
+                          readOnly={!podeEditarFicha}
                           onChange={(e) => setParecerEdit(e.target.value)}
                           placeholder="Digite aqui as considerações finais e o parecer consolidado da banca avaliadora para impressão na Ficha MSEP..."
-                          className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-3 text-xs leading-relaxed text-slate-800 placeholder:text-slate-400 focus:border-red-500 focus:outline-none"
+                          className={`mt-1.5 w-full rounded-xl border p-3 text-xs leading-relaxed placeholder:text-slate-400 focus:outline-none ${
+                            !podeEditarFicha
+                              ? 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'
+                              : 'border-slate-300 bg-white text-slate-800 focus:border-red-500'
+                          }`}
                         />
 
                         {/* ========================================================================= */}
@@ -3808,8 +4169,11 @@ export function App() {
                               <div className="inline-flex rounded-lg border border-slate-300 bg-white p-0.5 shadow-2xs">
                                 <button
                                   type="button"
+                                  disabled={!podeEditarFicha}
                                   onClick={() => setStatusManualLiberacao('Aprovado')}
-                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    !podeEditarFicha ? 'cursor-not-allowed' : 'cursor-pointer'
+                                  } ${
                                     statusGrupoTipo === 'liberada' && statusManualLiberacao === 'Aprovado'
                                       ? 'bg-emerald-600 text-white shadow-xs'
                                       : 'text-slate-700 hover:bg-emerald-50 hover:text-emerald-900'
@@ -3821,8 +4185,11 @@ export function App() {
                                 </button>
                                 <button
                                   type="button"
+                                  disabled={!podeEditarFicha}
                                   onClick={() => setStatusManualLiberacao('Nota Retida (Pendências)')}
-                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    !podeEditarFicha ? 'cursor-not-allowed' : 'cursor-pointer'
+                                  } ${
                                     statusGrupoTipo === 'retida' && statusManualLiberacao === 'Nota Retida (Pendências)'
                                       ? 'bg-amber-500 text-slate-950 shadow-xs'
                                       : 'text-slate-700 hover:bg-amber-50 hover:text-amber-900'
@@ -3834,8 +4201,11 @@ export function App() {
                                 </button>
                                 <button
                                   type="button"
+                                  disabled={!podeEditarFicha}
                                   onClick={() => setStatusManualLiberacao('Nova Chance (Data Futura)')}
-                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                                  className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    !podeEditarFicha ? 'cursor-not-allowed' : 'cursor-pointer'
+                                  } ${
                                     statusGrupoTipo === 'nova_apresentacao' && statusManualLiberacao === 'Nova Chance (Data Futura)'
                                       ? 'bg-red-600 text-white shadow-xs'
                                       : 'text-slate-700 hover:bg-red-50 hover:text-red-900'
@@ -3852,8 +4222,9 @@ export function App() {
                             {statusManualLiberacao && (
                               <button
                                 type="button"
+                                disabled={!podeEditarFicha}
                                 onClick={() => setStatusManualLiberacao(null)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer"
+                                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Reverter a escolha manual e restaurar o status calculado automaticamente pelo sistema"
                               >
                                 <RotateCcw className="h-3 w-3 text-indigo-600" />

@@ -20,6 +20,7 @@ import {
   onSnapshot,
   getDocs,
   deleteDoc,
+  where,
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -82,5 +83,6 @@ export {
   onSnapshot,
   getDocs,
   deleteDoc,
+  where,
 };
 export type { User };
