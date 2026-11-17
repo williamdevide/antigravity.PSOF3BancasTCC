@@ -602,6 +602,35 @@ atualize nosso repositorio e o projeto na vmoracle
    - Git commit e push realizados nas branches `master` e `main` dos remotes `origin` e `bancas_remote`.
    - Disparo do webhook de atualização no orquestrador da VM Oracle Cloud (`147.15.2.73`) e validação dos endpoints online com HTTP 200.
 
+---
+
+## Sessão 24 — 17/11/2026 (12:09)
+
+### Prompt 24 (17/11/2026 - 12:09)
+```text
+o arquivo .sql na pasta da labwarenext estava errado, atualizei ele, faça as publicações novamente
+```
+
+### Implementações e Ações Realizadas — Sessão 24:
+1. **Auditoria do Novo Arquivo `.sql` da LabWareNext (`I2DEV-A_Grupo05`):**
+   - Detectado o arquivo atualizado `CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle (1).sql` com 777 KB.
+   - O arquivo possui 8 tabelas modeladas (`acesso`, `candidato`, `candidatura`, `empresa`, `entrevista`, `feedback`, `rh`, `vaga`), todas povoadas com registros válidos, contendo chaves primárias e relacionamentos/FKs ativos.
+   - Motor de auditoria validou 8/8 tabelas em ciclo completo de gravação e consumo, confirmando correspondência integral entre o script DDL e o código PHP.
+   - Pontuação consolidada com louvor: Rubrica 2.3 = **9.4 (Avançado)** e Rubrica 2.4 = **4.8 (Avançado)**.
+
+2. **Refinamento de Precedência entre Provedores de Banco Online:**
+   - Ajustada a regra de verificação no `_auditar_online_github_e_deploy` para evitar que instâncias com backend PHP que utilizam **Supabase Cloud** (como `Guardião Animal`, que hospeda na InfinityFree mas persiste no Supabase) sejam incorretamente sobrescritas como MySQL local da InfinityFree.
+   - Garantido que projetos exclusivamente MySQL em cluster PHP (como `BRIO`, em `brio.site.je`) permaneçam reconhecidos com MySQL Cloud e ciclo completo de 19 tabelas.
+
+3. **Validação Automatizada com Testes de Regressão:**
+   - Suíte `pytest backend/tests/test_backend.py` executada com **6/6 testes aprovados (100% PASS)**.
+   - Base de avaliações em `backend/data/avaliacoes.json` e relatórios consolidados em disco perfeitamente sincronizados.
+
+4. **Publicação nos Repositórios GitHub e Deploy na VM Oracle Cloud:**
+   - Git commit e push executados nas branches `master` e `main` de `origin` e `bancas_remote`.
+   - Disparado o webhook de auto-deploy na VM Oracle Cloud (`147.15.2.73`) com validação online e integridade dos endpoints.
+
+
 
 
 

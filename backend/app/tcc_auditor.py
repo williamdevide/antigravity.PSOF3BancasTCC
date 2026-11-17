@@ -599,7 +599,7 @@ def _analisar_arquivo_zip(
                             ref_vm = f"MySQL @ VM Oracle ({det.deploy_url or '147.15.2.73'})"
                             if ref_vm not in urls_banco:
                                 urls_banco.append(ref_vm)
-                        elif any(k in (det.deploy_url or "").lower() for k in ("site.je", "fwh.is", "infinityfree", "epizy", "byethost")):
+                        elif (not supa_url_encontrada and not fb_project_encontrado) and any(k in (det.deploy_url or "").lower() for k in ("site.je", "fwh.is", "infinityfree", "epizy", "byethost")):
                             provedores_banco.add("MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)")
                             ref_inf = f"MySQL Cloud @ {det.deploy_url} (Cluster InfinityFree)"
                             if ref_inf not in urls_banco:
@@ -834,7 +834,9 @@ def _analisar_arquivo_zip(
         evidencia_str = ""
 
         is_php_cloud_bd = bool(
-            any(k in (det.deploy_url or "").lower() for k in ("site.je", "fwh.is", "infinityfree", "epizy", "byethost"))
+            not supa_url_encontrada
+            and not fb_project_encontrado
+            and any(k in (det.deploy_url or "").lower() for k in ("site.je", "fwh.is", "infinityfree", "epizy", "byethost"))
         )
 
         if det.hospedado_vm_oracle:
@@ -1474,8 +1476,12 @@ def _auditar_online_github_e_deploy(
             det.deploy_diagnostico = f"Não foi possível conectar ao Deploy ({deploy_url}): {exc}"
 
     is_infinityfree_ou_php_cloud = bool(
-        any(k in (det.deploy_url or "").lower() for k in ("site.je", "fwh.is", "infinityfree", "epizy", "byethost"))
-        or "infinityfree" in (det.deploy_provedor or "").lower()
+        not (det.banco_provedor_nuvem or "").startswith("Supabase")
+        and not (det.banco_provedor_nuvem or "").startswith("Google Firebase")
+        and (
+            any(k in (det.deploy_url or "").lower() for k in ("site.je", "fwh.is", "infinityfree", "epizy", "byethost"))
+            or "infinityfree" in (det.deploy_provedor or "").lower()
+        )
     )
 
     if det.hospedado_vm_oracle and det.deploy_online_ok:

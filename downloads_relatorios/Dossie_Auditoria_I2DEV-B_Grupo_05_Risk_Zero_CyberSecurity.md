@@ -6,24 +6,24 @@
 - **Integrantes:** Felipe, Nikolas, Miguel
 - **Tema Oficial:** Boas práticas de segurança na era da informação
 - **Avaliador Responsável:** Prof. William Devidé Komel
-- **Auditado em:** `2026-11-17T10:51:36`
+- **Auditado em:** `2026-11-17T12:12:52`
 
 ---
 
 ## 1. Resumo das Notas MSEP (4 Pilares = 100%)
 
 - **Pilar 1 — Documentação Técnica / TCC (30%):** `28.63 / 30.00`
-- **Pilar 2 — Sistema e Aplicação Desenvolvida (40%):** `32.30 / 40.00`
+- **Pilar 2 — Sistema e Aplicação Desenvolvida (40%):** `29.30 / 40.00`
 - **Pilar 3 — Base Apresentação & Slides (3.2 + 3.3):** `3.85 / 9.00` (+ 3.1 Arguição Individual até 6.00)
-- **Média Geral Consolidada da Equipe:** **`78.25 / 100.00`**
+- **Média Geral Consolidada da Equipe:** **`75.25 / 100.00`**
 
 ### Consolidação Individual dos Integrantes
 
 | Integrante | Planilha Oficial (P4) | Sprints (4.1) | Aulas (4.2) | P1 (30%) | P2 (40%) | P3 (15%) | P4 (15%) | Nota Final (100%) | Status / Liberação |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Felipe** | `FELIPE ARTHUR MORINI MACHADO` | 10/10 (`8.00`) | 14/16 (`6.10`) | 28.63 | 32.30 | 3.85 | 14.10 | **78.88%** | **Nota Retida (Pendências)** (2.3 Banco de Dados Físico (3.8/10.0), Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))) |
-| **Nikolas** | `NIKOLAS MELO LIMA` | 10/10 (`8.00`) | 15/16 (`6.60`) | 28.63 | 32.30 | 3.85 | 14.60 | **79.38%** | **Nota Retida (Pendências)** (2.3 Banco de Dados Físico (3.8/10.0), Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))) |
-| **Miguel** | `MIGUEL RODRIGUES CAMARGO` | 7/10 (`5.60`) | 14/16 (`6.10`) | 28.63 | 32.30 | 3.85 | 11.70 | **76.48%** | **Nota Retida (Pendências)** (2.3 Banco de Dados Físico (3.8/10.0), Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))) |
+| **Felipe** | `FELIPE ARTHUR MORINI MACHADO` | 10/10 (`8.00`) | 14/16 (`6.10`) | 28.63 | 29.30 | 3.85 | 14.10 | **75.88%** | **Nota Retida (Pendências)** (2.3 Banco de Dados Físico (3.8/10.0), 2.5 GitHub & README (1.8/5.0), Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))) |
+| **Nikolas** | `NIKOLAS MELO LIMA` | 10/10 (`8.00`) | 15/16 (`6.60`) | 28.63 | 29.30 | 3.85 | 14.60 | **76.38%** | **Nota Retida (Pendências)** (2.3 Banco de Dados Físico (3.8/10.0), 2.5 GitHub & README (1.8/5.0), Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))) |
+| **Miguel** | `MIGUEL RODRIGUES CAMARGO` | 7/10 (`5.60`) | 14/16 (`6.10`) | 28.63 | 29.30 | 3.85 | 11.70 | **73.48%** | **Nota Retida (Pendências)** (2.3 Banco de Dados Físico (3.8/10.0), 2.5 GitHub & README (1.8/5.0), Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))) |
 
 ---
 
@@ -91,9 +91,9 @@
 
 ### 3.4. Auditoria Online, Deploy em Nuvem & Rastreabilidade das Tabelas (Itens 2.3 e 2.4)
 - **GitHub URL (`links.txt`):** https://github.com/MeloozXz/RiskZero.git
-- **Diagnóstico GitHub:** Repositório 'MeloozXz/RiskZero' ativo (HTTP 200). 19 commit(s) inspecionado(s) (MeloozXz: 17, nikolasmelo: 2). README online: Não.
+- **Diagnóstico GitHub:** Repositório 'MeloozXz/RiskZero' retornou HTTP 403 (privado ou inexistente).
 - **Deploy URL (`links.txt`):** https://riskzero-vault.vercel.app/ (Provedor: `Vercel Cloud`)
-- **Diagnóstico Deploy (2.4):** Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 592 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.
+- **Diagnóstico Deploy (2.4):** Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 662 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.
 - **Banco de Dados em Nuvem Publicado (2.3):** `Google Firebase Cloud Firestore` (securityproject-67800.firebaseapp.com)
 - **Chaves `localStorage` de UI/Sessão Permitidas (Não Penalizam):** `rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}, rz_privacy_screen_enabled, riskzero.realIpBaseline, riskzero_client_wg_pubkey, riskzero_client_private_key, riskzero_warp_active_credentials`
 - **Persistência Local Indevida do Tema do Projeto:** `rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers`
@@ -148,8 +148,8 @@
 | **2.1** | 2.1 Backend (APIs) | `Avançado` | **9.40** | 10.00 | Camada de serviços, autenticação, regras de negócio e persistência estruturada (25 arquivos principais). (Módulos de Backend/Serviços/Integrações no ZIP: 25 • Alertas de segurança: 0) |
 | **2.2** | 2.2 Frontend (UI/UX) | `Avançado` | **9.50** | 10.00 | Interface estruturada com 25 arquivos de visualização/componentes responsivos. (Componentes/Telas Frontend no ZIP: 25 • Tecnologias UI: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite) |
 | **2.3** | 2.3 Banco de Dados Físico | `Insuficiente` | **3.80** | 10.00 | Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers), abatendo a nota da rubrica 2.3. (Estrutura DDL (.sql / VM Oracle) vs DER: 8 tabelas (PK: Sim, FK: Sim) • Tabelas gravadas (INSERT/UPDATE) pelo código: 6/8 • Tabelas consumidas (SELECT) pelo código: 6/8 • Registros no script / banco: 176 registros (Todas as tabelas com registros: SIM) • Chaves localStorage permitidas (UI/Sessão): rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey} • Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)) |
-| **2.4** | 2.4 Deploy Online | `Avançado` | **4.80** | 5.00 | Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 592 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo. (Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (592 ms) • Banco de Dados Online Ativo: Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com) • Tabelas presentes no BD Online: 6/8 • Sistema apontando para o BD Online: SIM (Integrado)) |
-| **2.5** | 2.5 GitHub & README | `Avançado` | **4.80** | 5.00 | Repositório 'MeloozXz/RiskZero' ativo (HTTP 200). 19 commit(s) inspecionado(s) (MeloozXz: 17, nikolasmelo: 2). README online: Não. (URL GitHub em links.txt: https://github.com/MeloozXz/RiskZero.git • README.md no projeto: Sim (4625 bytes) • Commits inspecionados na API: 19) |
+| **2.4** | 2.4 Deploy Online | `Avançado` | **4.80** | 5.00 | Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 662 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo. (Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (662 ms) • Banco de Dados Online Ativo: Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com) • Tabelas presentes no BD Online: 6/8 • Sistema apontando para o BD Online: SIM (Integrado)) |
+| **2.5** | 2.5 GitHub & README | `Insuficiente` | **1.80** | 5.00 | Repositório 'MeloozXz/RiskZero' retornou HTTP 403 (privado ou inexistente). (URL GitHub em links.txt: https://github.com/MeloozXz/RiskZero.git • README.md no projeto: Sim (4625 bytes) • Commits inspecionados na API: 0) |
 | **3.1** | 3.1 Arguição do Código | `Pendente` | **0.00** | 6.00 | Item presencial obrigatório (6,0 pts): Inicia VAZIO (Pendente). Selecione o nível (Insuficiente, Pleno ou Avançado) para cada integrante durante a sabatina técnica. (PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie o domínio tecnológico individual de cada aluno na tabela abaixo.) |
 | **3.2** | 3.2 Pitch do Grupo | `Pendente` | **0.00** | 5.00 | Item presencial obrigatório (5,0 pts): Inicia VAZIO (Pendente). Preencha durante/após a apresentação ao vivo da equipe. (PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie coesão da equipe, síntese, postura e tempo de apresentação (15-20 min).) |
 | **3.3** | 3.3 Material de Slides | `Avançado` | **3.85** | 4.00 | Apresentação com 9 slides cobrindo 6/7 tópicos exigidos no Roteiro de Banca. (Total de slides na apresentação: 9 • Etapas do roteiro oficial cobertas: 6/7) |
@@ -196,7 +196,7 @@ Provedor de Autenticação / Dados: Google Firebase Cloud Firestore
 ```
 Hospedagem da Aplicação: Vercel Cloud (https://riskzero-vault.vercel.app/)
 Hospedagem do Banco: Google Firebase Cloud Firestore
-Status HTTP: 200 (592 ms)
+Status HTTP: 200 (662 ms)
 ```
 
 ---
@@ -226,7 +226,7 @@ Nota Pilar 1: 28.63 / 30,00 pts • 13305 palavras (~48 págs.) • ⚠️ Pend�
 
 ### 3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy (`CRITICO`)
 Online: 6/8 • Grava: 6/8 • Consome (SELECT): 6/8
-- Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (592 ms).
+- Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (662 ms).
 - Publicação do Banco de Dados (Item 2.3): Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com).
 - Script SQL Entregue ('CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql'): 8 tabelas DDL (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas, logs_auditoria, servidores_vpn) e 176 registros INSERT INTO.
 - Rastreabilidade das Tabelas do .sql no Banco Online (Google Firebase Cloud Firestore): 6/8 existem online • 6/8 possuem gravação (INSERT/UPDATE) • 6/8 são consumidas via leitura (SELECT) • 6/8 com ciclo completo.
@@ -235,11 +235,11 @@ Online: 6/8 • Grava: 6/8 • Consome (SELECT): 6/8
 - ❌ PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas) possuem 6/8 ciclos completos no banco online, entidades centrais do tema [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers).
 - ✅ Povoamento SQL Conforme: Todas as 8 tabelas possuem no mínimo 20 registros inseridos via INSERT INTO.
 
-### 4. Engenharia de Software (Frontend, Backend e Versionamento GitHub) (`CONFORME`)
-Nota Pilar 2: 32.30 / 40,00 pts • Stack: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite
+### 4. Engenharia de Software (Frontend, Backend e Versionamento GitHub) (`CRITICO`)
+Nota Pilar 2: 29.30 / 40,00 pts • Stack: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite
 - Stack Tecnológica Detectada no Pacote ZIP (206 arquivos úteis): Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite.
 - Estrutura de Código: 25 arquivos de interface (Frontend) e 25 arquivos de serviços/regras/integração (Backend).
-- ✅ GitHub Ativo: Repositório 'MeloozXz/RiskZero' ativo (HTTP 200). 19 commit(s) inspecionado(s) (MeloozXz: 17, nikolasmelo: 2). README online: Não.
+- ❌ Repositório 'MeloozXz/RiskZero' retornou HTTP 403 (privado ou inexistente).
 
 ### 5. Histórico Oficial de Sprints (8,0 pts) e Participação em Aula (7,0 pts) (`CONFORME`)
 Extraído automaticamente dos PDFs oficiais de entregas e participação da turma
@@ -251,6 +251,7 @@ Extraído automaticamente dos PDFs oficiais de entregas e participação da turm
 Nota Retida (Pendências)
 - Status Geral do Grupo: Nota Retida (Pendências).
 - Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.
-- 🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 78.25 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:
+- 🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 75.25 pts (>= 50,0 pts), existem 3 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:
 -    • Pendência bloqueante: 2.3 Banco de Dados Físico (3.8/10.0)
+-    • Pendência bloqueante: 2.5 GitHub & README (1.8/5.0)
 -    • Pendência bloqueante: Formatação ABNT (Margens fora do padrão ABNT: detectado Sup 2.5cm, Esq 3.0cm, Inf 2.5cm, Dir 3.0cm (exigido: 3,0 cm Superior e Esquerda / 2,0 cm Inferior e Direita))
