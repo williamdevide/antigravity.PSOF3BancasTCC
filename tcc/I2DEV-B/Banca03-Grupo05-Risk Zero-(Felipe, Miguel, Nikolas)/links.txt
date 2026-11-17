@@ -1,2 +1,2 @@
-GitHub:
+GitHub: https://github.com/MeloozXz/RiskZero.git
 Deploy: https://riskzero-vault.vercel.app/

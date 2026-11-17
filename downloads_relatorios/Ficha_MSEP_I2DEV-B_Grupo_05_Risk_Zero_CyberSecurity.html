@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Ficha de Avaliação MSEP — Risk Zero / CyberSecurity</title>
+<style>
+  @page { size: A4; margin: 10mm; }
+  * { box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; }
+  body { margin: 0; padding: 0; color: #111827; font-size: 10.5px; line-height: 1.32; }
+  .header-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; border: 1.5px solid #0f294a; }
+  .senai-logo { width: 18%; background: #e30613; color: #fff; font-weight: 900; font-size: 22px; text-align: center; letter-spacing: 1px; vertical-align: middle; padding: 10px 6px; }
+  .senai-info { width: 60%; background: #0f294a; color: #fff; padding: 7px 12px; vertical-align: middle; }
+  .senai-info .escola { font-size: 12.5px; font-weight: bold; }
+  .senai-info .curso { font-size: 9.5px; color: #facc15; font-weight: bold; margin-top: 2px; }
+  .senai-info .uc { font-size: 10.5px; font-weight: bold; margin-top: 2px; }
+  .senai-info .docente { font-size: 9px; color: #e2e8f0; margin-top: 2px; }
+  .resultado-box { width: 22%; background: #fff; color: #0f294a; text-align: center; vertical-align: middle; padding: 6px; border-left: 1.5px solid #0f294a; }
+  .resultado-box .lbl { font-size: 11px; font-weight: bold; }
+  .resultado-box .val { font-size: 12px; font-weight: 900; color: #b91c1c; margin-top: 4px; }
+  .doc-title { text-align: center; margin: 6px 0 8px 0; }
+  .doc-title h1 { font-size: 13.5px; margin: 0; color: #0f172a; letter-spacing: 0.3px; }
+  .doc-title p { font-size: 10px; margin: 2px 0 0 0; color: #475569; }
+  .meta-box { width: 100%; border-collapse: collapse; margin-bottom: 8px; background: #e2e8f0; border: 1px solid #cbd5e1; }
+  .meta-box td { padding: 4px 8px; font-size: 10.5px; border-bottom: 1px solid #cbd5e1; }
+  .tbl { width: 100%; border-collapse: collapse; margin-bottom: 9px; }
+  .tbl th, .tbl td { border: 1px solid #cbd5e1; padding: 4px 6px; vertical-align: middle; }
+  .pilar-hdr { background: #0f294a; color: #fff; font-weight: bold; font-size: 11px; text-align: left; padding: 5px 8px; }
+  .sub-hdr th { background: #1e293b; color: #fff; font-size: 9.8px; text-align: left; }
+  .col-crit { width: 19%; }
+  .col-desc { width: 32%; color: #334155; font-size: 9.6px; }
+  .col-niveis { width: 29%; font-size: 9px; color: #1e293b; }
+  .col-peso { width: 8%; text-align: center; font-weight: bold; }
+  .col-nota { width: 12%; text-align: center; font-size: 10.5px; }
+  .chk-box { font-family: monospace; color: #0f294a; font-weight: bold; }
+  .total-row td { background: #0f294a; color: #fff; font-weight: bold; text-align: right; padding: 4px 8px; }
+  .center { text-align: center; }
+  .page-break { page-break-before: always; }
+  .parecer-container { border: 1px solid #94a3b8; border-radius: 4px; padding: 8px 10px; background: #f8fafc; margin-top: 6px; font-size: 10px; }
+  .parecer-grid { display: flex; gap: 12px; margin-top: 6px; }
+  .parecer-col { flex: 1; background: #fff; border: 1px solid #e2e8f0; padding: 6px 8px; border-radius: 4px; }
+  .parecer-col h4 { margin: 0 0 4px 0; font-size: 10px; }
+  .parecer-col ul { margin: 0; padding-left: 14px; font-size: 9.2px; }
+  .assinaturas { width: 100%; margin-top: 18px; border-collapse: collapse; }
+  .assinaturas td { width: 33.3%; text-align: center; padding-top: 22px; font-size: 9.5px; color: #334155; }
+  .footer-bar { margin-top: 8px; text-align: center; font-size: 8.5px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- PÁGINA 1 -->
+<table class="header-table">
+  <tr>
+    <td class="senai-logo">SENAI</td>
+    <td class="senai-info">
+      <div class="escola">Escola SENAI Ourinhos (Unidade 7.94)</div>
+      <div class="curso">TECNOLOGIA DE INFORMAÇÃO E COMUNICAÇÃO | TÉCNICO EM DESENVOLVIMENTO DE SISTEMAS</div>
+      <div class="uc">MÓDULO ESPECÍFICO II: PROJETOS DE SOFTWARE III (PSOF3)</div>
+      <div class="docente">Docente Responsável: Prof. William Devidé Komel (william.komel@docente.senai.br)</div>
+    </td>
+    <td class="resultado-box">
+      <div class="lbl">Resultado:</div>
+      <div class="val">75.7 pts (NOTA RETIDA)</div>
+    </td>
+  </tr>
+</table>
+
+<div class="doc-title">
+  <h1>FICHA DE AVALIAÇÃO DA BANCA TCC — RUBRICAS MSEP</h1>
+  <p>Projetos de Software III (PSOF3) — Formato de Avaliação do 4º Semestre (100% da UC)</p>
+</div>
+
+<table class="meta-box">
+  <tr>
+    <td colspan="2"><strong>Projeto:</strong> Risk Zero / CyberSecurity (Grupo 05)</td>
+    <td><strong>Data:</strong> 16/11/2026 (Terceiro Horário)</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Turma:</strong> (__) I2DEV-A / (X) I2DEV-B</td>
+    <td><strong>Avaliador:</strong> Prof. William Devidé Komel</td>
+  </tr>
+  <tr>
+    <td><strong>Integrantes: 1.</strong> Felipe</td>
+    <td><strong>2.</strong> Nikolas</td>
+    <td><strong>3.</strong> Miguel</td>
+  </tr>
+</table>
+
+<table class="tbl">
+  <tr class="sub-hdr">
+    <th style="width:26%">Pilar de Avaliação (100% da UC)</th>
+    <th style="width:62%">Entregáveis Principais Avaliados</th>
+    <th style="width:12%; text-align:center;">Peso</th>
+  </tr>
+  <tr>
+    <td><strong>1. Documentação Técnica / TCC</strong></td>
+    <td>Monografia ABNT, Requisitos, BD, Wireframes/Protótipo, Arquitetura, Plano de Negócios, Testes, Backlog/Cronograma</td>
+    <td class="center"><strong>30,0%</strong></td>
+  </tr>
+  <tr>
+    <td><strong>2. Sistema e Aplicação</strong></td>
+    <td>Backend (APIs/REST), Frontend (UI/UX Responsivo), Banco de Dados Físico/Nuvem (mín. 20 reg/entidade), Deploy Online, GitHub/README</td>
+    <td class="center"><strong>40,0%</strong></td>
+  </tr>
+  <tr>
+    <td><strong>3. Apresentação e Banca</strong></td>
+    <td>Arguição Individual do Código, Pitch Coletivo da Equipe, Material Visual de Slides (.pptx/.pdf)</td>
+    <td class="center"><strong>15,0%</strong></td>
+  </tr>
+  <tr>
+    <td><strong>4. Participação e Acompanhamento</strong></td>
+    <td>Relatórios Semanais de Sprint (Forms/GitHub), Participação, Proatividade e Comportamento nas Aulas</td>
+    <td class="center"><strong>15,0%</strong></td>
+  </tr>
+</table>
+
+<!-- PILAR 1 -->
+<table class="tbl">
+  <tr><td colspan="5" class="pilar-hdr">1. Pilar Documentação Técnica / TCC (Peso: 30,0%)</td></tr>
+  <tr class="sub-hdr">
+    <th>Critério / Item</th>
+    <th>Descrição do Entregável</th>
+    <th>Níveis de Desempenho (MSEP)</th>
+    <th class="center">Peso Máx</th>
+    <th class="center">Check / Nota</th>
+  </tr>
+  
+                <tr>
+                    <td class="col-crit"><strong>1.1 Monografia ABNT</strong></td>
+                    <td class="col-desc">Redação formal da monografia do TCC nas normas ABNT completas (Capa, Folha de Rosto, Sumário, Introdução, Justificativa, Fundamentação Teórica, Metodologia, Desenvolvimento, Resultados e Conclusão).</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente (0-49%):</strong> Incompleta / Erros ABNT.</div>
+                        <div><strong>Pleno (50-89%):</strong> Estrutura ABNT correta.</div>
+                        <div><strong>Avançado (90-100%):</strong> Redação e rigor impecáveis.</div>
+                    </td>
+                    <td class="col-peso">8,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>7,68</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>1.2 Requisitos RF/RNF</strong></td>
+                    <td class="col-desc">Mapeamento e detalhamento dos Requisitos Funcionais (RFs) e Não Funcionais (RNFs).</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Ausentes/Confusos.</div>
+                        <div><strong>Pleno:</strong> Mapeados e coerentes.</div>
+                        <div><strong>Avançado:</strong> Rastreabilidade total.</div>
+                    </td>
+                    <td class="col-peso">3,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>3,00</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>1.3 Modelagem de BD</strong></td>
+                    <td class="col-desc">Diagrama MER/DER e Dicionário de Dados detalhado.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Inexistente/Errado.</div>
+                        <div><strong>Pleno:</strong> Diagrama e dicionário ok.</div>
+                        <div><strong>Avançado:</strong> Normalização perfeita.</div>
+                    </td>
+                    <td class="col-peso">3,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>2,90</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>1.4 Protótipo &amp; Figma</strong></td>
+                    <td class="col-desc">Wireframes e link do protótipo navegável em alta fidelidade.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Sem protótipo.</div>
+                        <div><strong>Pleno:</strong> Telas navegáveis ok.</div>
+                        <div><strong>Avançado:</strong> UI/UX profissional.</div>
+                    </td>
+                    <td class="col-peso">3,00</td>
+                    <td class="col-nota"><span class='chk-box'>[P]</span> <strong>2,55</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>1.5 Arquitetura &amp; Stack</strong></td>
+                    <td class="col-desc">Diagrama de arquitetura (MVC/REST) e justificativa da stack.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Não especificado.</div>
+                        <div><strong>Pleno:</strong> Diagrama e stack ok.</div>
+                        <div><strong>Avançado:</strong> Decisões justificadas.</div>
+                    </td>
+                    <td class="col-peso">3,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>2,90</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>1.6 Plano de Negócio</strong></td>
+                    <td class="col-desc">Estudo de viabilidade, precificação, monetização e upgrades.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Ausente.</div>
+                        <div><strong>Pleno:</strong> Precificação coerente.</div>
+                        <div><strong>Avançado:</strong> Modelo sustentável.</div>
+                    </td>
+                    <td class="col-peso">3,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>2,85</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>1.7 Testes &amp; Relatório</strong></td>
+                    <td class="col-desc">Casos de teste manuais/automatizados e relatório de erros.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Sem testes.</div>
+                        <div><strong>Pleno:</strong> Casos de teste ok.</div>
+                        <div><strong>Avançado:</strong> Relatório completo.</div>
+                    </td>
+                    <td class="col-peso">3,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>3,00</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>1.8 Backlog &amp; Cronograma</strong></td>
+                    <td class="col-desc">Gestão ágil do projeto (Kanban/GitHub Projects) e cronograma.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Desorganizado.</div>
+                        <div><strong>Pleno:</strong> Backlog atualizado.</div>
+                        <div><strong>Avançado:</strong> Gestão ágil exemplar.</div>
+                    </td>
+                    <td class="col-peso">4,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>3,75</strong></td>
+                </tr>
+                
+  <tr class="total-row">
+    <td colspan="4">Total Pilar 1 (Máx 30,00):</td>
+    <td class="center">28.63</td>
+  </tr>
+</table>
+
+<!-- PILAR 2 -->
+<table class="tbl">
+  <tr><td colspan="5" class="pilar-hdr">2. Pilar Sistema e Aplicação Desenvolvida (Peso: 40,0%)</td></tr>
+  <tr class="sub-hdr">
+    <th>Critério / Item</th>
+    <th>Descrição do Entregável</th>
+    <th>Níveis de Desempenho (MSEP)</th>
+    <th class="center">Peso Máx</th>
+    <th class="center">Check / Nota</th>
+  </tr>
+  
+                <tr>
+                    <td class="col-crit"><strong>2.1 Backend (APIs)</strong></td>
+                    <td class="col-desc">Código-fonte do servidor, APIs/REST, rotas e regras de negócio.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> APIs com falhas.</div>
+                        <div><strong>Pleno:</strong> Rotas e regras operacionais.</div>
+                        <div><strong>Avançado:</strong> Código limpo e seguro.</div>
+                    </td>
+                    <td class="col-peso">10,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>9,40</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>2.2 Frontend (UI/UX)</strong></td>
+                    <td class="col-desc">Interfaces responsivas, acessíveis e com navegação fluida.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Layout quebrado.</div>
+                        <div><strong>Pleno:</strong> Responsivo e funcional.</div>
+                        <div><strong>Avançado:</strong> UX/UI excelente.</div>
+                    </td>
+                    <td class="col-peso">10,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>9,50</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>2.3 Banco de Dados Físico</strong></td>
+                    <td class="col-desc">Script .sql no GitHub e banco online com mín. 20 reg/entidade.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Sem dados/Local.</div>
+                        <div><strong>Pleno:</strong> Nuvem e mín. 20 reg.</div>
+                        <div><strong>Avançado:</strong> Povoado e performático.</div>
+                    </td>
+                    <td class="col-peso">10,00</td>
+                    <td class="col-nota"><span class='chk-box'>[I]</span> <strong>3,80</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>2.4 Deploy Online</strong></td>
+                    <td class="col-desc">Aplicação publicada e rodando em servidor/nuvem (URL ativa).</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Apenas localhost.</div>
+                        <div><strong>Pleno:</strong> Deploy online ativo.</div>
+                        <div><strong>Avançado:</strong> Deploy estável sem erros.</div>
+                    </td>
+                    <td class="col-peso">5,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>4,80</strong></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>2.5 GitHub &amp; README</strong></td>
+                    <td class="col-desc">Repositório organizado, versionamento e README.md funcional.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Desorganizado.</div>
+                        <div><strong>Pleno:</strong> README com instruções.</div>
+                        <div><strong>Avançado:</strong> Documentação impecável.</div>
+                    </td>
+                    <td class="col-peso">5,00</td>
+                    <td class="col-nota"><span class='chk-box'>[I]</span> <strong>2,20</strong></td>
+                </tr>
+                
+  <tr class="total-row">
+    <td colspan="4">Total Pilar 2 (Máx 40,00):</td>
+    <td class="center">29.70</td>
+  </tr>
+</table>
+
+<div class="footer-bar">
+  R VITORIO CHRISTONI, 1.500 - Vila São Luiz - Ourinhos - SP - 19911-200 - Fone: (14) 3302-1250 - Página 1 de 2
+</div>
+
+<!-- PÁGINA 2 -->
+<div class="page-break"></div>
+
+<div class="footer-bar" style="border-top:none; border-bottom:1px solid #e2e8f0; margin-bottom:8px; padding-bottom:4px;">
+  R VITORIO CHRISTONI, 1.500 - Vila São Luiz - Ourinhos - SP - 19911-200 - Fone: (14) 3302-1250 - Página 2 de 2
+</div>
+
+<!-- PILAR 3 -->
+<table class="tbl">
+  <tr><td colspan="5" class="pilar-hdr">3. Pilar Apresentação e Defesa para a Banca (Peso: 15,0%)</td></tr>
+  <tr class="sub-hdr">
+    <th>Critério / Item</th>
+    <th>Descrição do Entregável</th>
+    <th>Níveis de Desempenho (MSEP)</th>
+    <th class="center">Peso Máx</th>
+    <th class="center">Check / Nota</th>
+  </tr>
+  
+                <tr>
+                    <td class="col-crit"><strong>3.1 Arguição do Código</strong></td>
+                    <td class="col-desc">Arguição individual sobre trechos do código-fonte e autoria.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Não domina o código.</div>
+                        <div><strong>Pleno:</strong> Explica a lógica.</div>
+                        <div><strong>Avançado:</strong> Domínio técnico total.</div>
+                    </td>
+                    <td class="col-peso">6,00</td>
+                    <td class="col-nota"><span style='color:#d97706;font-weight:bold;font-size:9px;'>[ &nbsp; ] Preencher Ao Vivo</span></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>3.2 Pitch do Grupo</strong></td>
+                    <td class="col-desc">Coesão da equipe, síntese, postura e respeito ao tempo (15-20 min).</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Desalinhado/Fora tempo.</div>
+                        <div><strong>Pleno:</strong> Boa sincronia e tempo.</div>
+                        <div><strong>Avançado:</strong> Pitch altamente persuasivo.</div>
+                    </td>
+                    <td class="col-peso">5,00</td>
+                    <td class="col-nota"><span style='color:#d97706;font-weight:bold;font-size:9px;'>[ &nbsp; ] Preencher Ao Vivo</span></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>3.3 Material de Slides</strong></td>
+                    <td class="col-desc">Slides (.pptx/.pdf) com problema, solução, arquitetura e negócio.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Slides fracos.</div>
+                        <div><strong>Pleno:</strong> Slides organizados.</div>
+                        <div><strong>Avançado:</strong> Visual e estrutura nota 10.</div>
+                    </td>
+                    <td class="col-peso">4,00</td>
+                    <td class="col-nota"><span class='chk-box'>[A]</span> <strong>3,85</strong></td>
+                </tr>
+                
+  <tr class="total-row">
+    <td colspan="4">Total Base Grupo (3.2 + 3.3) + 3.1 Individual:</td>
+    <td class="center">Base 3.85 + Ind.</td>
+  </tr>
+</table>
+
+<!-- PILAR 4 -->
+<table class="tbl">
+  <tr><td colspan="5" class="pilar-hdr">4. Pilar Participação e Acompanhamento Contínuo (Peso: 15,0%)</td></tr>
+  <tr class="sub-hdr">
+    <th>Critério / Item</th>
+    <th>Descrição do Entregável</th>
+    <th>Níveis de Desempenho (MSEP)</th>
+    <th class="center">Peso Máx</th>
+    <th class="center">Check / Nota</th>
+  </tr>
+  
+                <tr>
+                    <td class="col-crit"><strong>4.1 Relatórios de Sprint</strong></td>
+                    <td class="col-desc">Preenchimento regular dos relatórios semanais com commits e uso ético de IA.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Incompleto/Atrasado.</div>
+                        <div><strong>Pleno:</strong> Entregas pontuais.</div>
+                        <div><strong>Avançado:</strong> Transparência total.</div>
+                    </td>
+                    <td class="col-peso">8,00</td>
+                    <td class="col-nota"><strong>Individual</strong><br/><span style='font-size:8.5px;color:#475569;'>(Média 7,20)</span></td>
+                </tr>
+                
+
+                <tr>
+                    <td class="col-crit"><strong>4.2 Participação em Aula</strong></td>
+                    <td class="col-desc">Frequência ativa, proatividade nas mentorias e conduta no laboratório.</td>
+                    <td class="col-niveis">
+                        <div><strong>Insuficiente:</strong> Ausente/Passivo.</div>
+                        <div><strong>Pleno:</strong> Participativo.</div>
+                        <div><strong>Avançado:</strong> Proativo e colaborador.</div>
+                    </td>
+                    <td class="col-peso">7,00</td>
+                    <td class="col-nota"><strong>Individual</strong><br/><span style='font-size:8.5px;color:#475569;'>(Média 6,27)</span></td>
+                </tr>
+                
+  <tr class="total-row">
+    <td colspan="4">Total Pilar 4 (Máx 15,00):</td>
+    <td class="center">Individual</td>
+  </tr>
+</table>
+
+<!-- CONSOLIDAÇÃO FINAL -->
+<table class="tbl" style="margin-top: 10px;">
+  <tr><td colspan="7" class="pilar-hdr" style="background:#0f172a;">CONSOLIDAÇÃO FINAL DAS NOTAS INDIVIDUAIS DOS INTEGRANTES</td></tr>
+  <tr class="sub-hdr">
+    <th style="width:28%">Nome do Aluno / Integrante</th>
+    <th class="center" style="width:10%">P1 (30%)</th>
+    <th class="center" style="width:10%">P2 (40%)</th>
+    <th class="center" style="width:10%">P3 (15%)</th>
+    <th class="center" style="width:10%">P4 (15%)</th>
+    <th class="center" style="width:12%">Nota Final (100%)</th>
+    <th class="center" style="width:20%">Resultado</th>
+  </tr>
+  
+                <tr>
+                    <td><strong>1. Felipe</strong><br/><span style='font-size:8.5px;color:#64748b;'>Rel: 10/10 (8.0) • Aulas: 14/16 (6.1)</span></td>
+                    <td class="center">28.63</td>
+                    <td class="center">29.70</td>
+                    <td class="center">3.85</td>
+                    <td class="center">14.10</td>
+                    <td class="center"><strong>76.28%</strong></td>
+                    <td class="center"><span style='color:#b45309;font-weight:bold;'>[!] Nota Retida (2.3 Banco de Dados Físico (3.8/10.0), 2.5 GitHub & README (2.2/5.0))</span></td>
+                </tr>
+                
+                <tr>
+                    <td><strong>2. Nikolas</strong><br/><span style='font-size:8.5px;color:#64748b;'>Rel: 10/10 (8.0) • Aulas: 15/16 (6.6)</span></td>
+                    <td class="center">28.63</td>
+                    <td class="center">29.70</td>
+                    <td class="center">3.85</td>
+                    <td class="center">14.60</td>
+                    <td class="center"><strong>76.78%</strong></td>
+                    <td class="center"><span style='color:#b45309;font-weight:bold;'>[!] Nota Retida (2.3 Banco de Dados Físico (3.8/10.0), 2.5 GitHub & README (2.2/5.0))</span></td>
+                </tr>
+                
+                <tr>
+                    <td><strong>3. Miguel</strong><br/><span style='font-size:8.5px;color:#64748b;'>Rel: 7/10 (5.6) • Aulas: 14/16 (6.1)</span></td>
+                    <td class="center">28.63</td>
+                    <td class="center">29.70</td>
+                    <td class="center">3.85</td>
+                    <td class="center">11.70</td>
+                    <td class="center"><strong>73.88%</strong></td>
+                    <td class="center"><span style='color:#b45309;font-weight:bold;'>[!] Nota Retida (2.3 Banco de Dados Físico (3.8/10.0), 2.5 GitHub & README (2.2/5.0))</span></td>
+                </tr>
+                
+</table>
+
+<!-- PARECER TÉCNICO -->
+<div class="parecer-container">
+  <div style="font-weight:bold; color:#0f294a; margin-bottom:4px;">
+    PARECER TÉCNICO E OBSERVAÇÕES DA BANCA EXAMINADORA:
+  </div>
+  <div style="text-align:justify; color:#1e293b;">
+    <div style='margin-bottom:6px;'><strong style='color:#0f294a;'>• 1. Pacote Digital e Padronização (CTDS-2026-02):</strong> 7/7 entregáveis • 80.0% conforme</div><div style='margin-bottom:6px;'><strong style='color:#0f294a;'>• 2. Monografia ABNT, Engenharia de Requisitos e Modelagem:</strong> Nota Pilar 1: 28.63 / 30,00 pts • 13840 palavras (~69 págs.)</div><div style='margin-bottom:6px;'><strong style='color:#0f294a;'>• 3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação &amp; Consumo) e Deploy:</strong> Online: 6/8 • Grava: 6/8 • Consome (SELECT): 6/8</div><div style='margin-bottom:6px;'><strong style='color:#0f294a;'>• 4. Engenharia de Software (Frontend, Backend e Versionamento GitHub):</strong> Nota Pilar 2: 29.70 / 40,00 pts • Stack: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite</div><div style='margin-bottom:6px;'><strong style='color:#0f294a;'>• 5. Histórico Oficial de Sprints (8,0 pts) e Participação em Aula (7,0 pts):</strong> Extraído automaticamente dos PDFs oficiais de entregas e participação da turma</div><div style='margin-bottom:6px;'><strong style='color:#0f294a;'>• 6. Situação de Aprovação e Liberação da Nota Final:</strong> Nota Retida (Pendências)</div>
+  </div>
+  <div class="parecer-grid">
+    <div class="parecer-col">
+      <h4 style="color:#047857;">✓ Pontos Fortes Verificados</h4>
+      <ul><li>Monografia densa e bem desenvolvida (13840 palavras, ~69 páginas, 25 RFs e 15 RNFs).</li><li>Script SQL exemplar: 8 tabelas normalizadas com 176 registros válidos (&gt;= 20 por entidade).</li><li>Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 184 ms).</li></ul>
+    </div>
+    <div class="parecer-col">
+      <h4 style="color:#b91c1c;">⚠ Pontos de Atenção / Cobrança em Banca</h4>
+      <ul><li>Arquivo &#x27;CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).pdf&#x27;: Sufixo de cópia de download &#x27;(1)&#x27; presente no nome.</li><li>Arquivo &#x27;CTDS-2026-02-TCC-RiskZero-Felipe-Nikolas-Miguel.pdf (1).docx&#x27;: Sufixo de cópia de download &#x27;(1)&#x27; presente no nome.</li><li>Arquivo &#x27;CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf&#x27;: Extensão duplicada no nome do arquivo (&#x27;CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf&#x27;).</li><li>Arquivo &#x27;CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pdf&#x27;: Hífen sobrando antes da extensão (&#x27;-.&#x27;).</li><li>Arquivo &#x27;CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx&#x27;: Extensão duplicada no nome do arquivo (&#x27;CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx&#x27;).</li><li>Arquivo &#x27;CTDS-2026-02-Apresentação-RiskZero-Miguel-Nikolas-Felipe-.pdf.pptx&#x27;: Hífen sobrando antes da extensão (&#x27;-.&#x27;).</li><li>TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Google Firebase Cloud Firestore): A(s) tabela(s) [logs_auditoria, servidores_vpn] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.</li><li>PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas) possuem 6/8 ciclos completos no banco online, entidades centrais do tema [rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers).</li><li>Link do repositório GitHub foi deixado EM BRANCO no arquivo links.txt (Item 2.5 classificado como Insuficiente até entrega do link).</li></ul>
+    </div>
+  </div>
+</div>
+
+<table class="assinaturas">
+  <tr>
+    <td>________________________________________<br/><strong>Prof. William Devidé Komel</strong><br/>Docente Orientador — PSOF3</td>
+    <td>________________________________________<br/><strong>Avaliador Convidado 02</strong><br/>Banca Examinadora SENAI</td>
+    <td>________________________________________<br/><strong>Avaliador Convidado 03</strong><br/>Banca Examinadora SENAI</td>
+  </tr>
+</table>
+
+<div class="footer-bar" style="margin-top: 14px;">
+  Gerado pelo Agente Avaliador de Bancas TCC — Central de Agentes Inteligentes SENAI Ourinhos • 16/11/2026 12:10
+</div>
+
+</body>
+</html>

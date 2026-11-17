@@ -1,0 +1,2 @@
+GitHub: https://github.com/Antonio-augustos2/CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle.git
+Deploy: https://labwarenext.147.15.2.73.sslip.io/

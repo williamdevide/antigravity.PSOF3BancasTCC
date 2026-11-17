@@ -393,3 +393,27 @@ em [Auditoria & Bancas] os cards já estão exibindo se o tcc esta Aguardando ou
    - `https://bancas.147.15.2.73.sslip.io`: Respondendo HTTP 200 com o bundle mais recente (`assets/index-CZEURU9w.js`), contendo o bloqueio obrigatório de identificação de avaliador e o bloco da Ata da Banca Realizada.
    - `https://bancas.147.15.2.73.sslip.io/api/health`: Respondendo HTTP 200 (`{"status":"ok"}`).
 - Git: Commits sincronizados em ambos os repositórios remotos.
+
+
+---
+
+## Sessão 16 — 16/11/2026 (23:00)
+
+### Prompt 16 (16/11/2026 - 23:00)
+```text
+/agente-orquestrador /grill-me /goal coloquei os projetos de amanhã do I2DEV-A, suba pra o github e para nossa plataforma na vmoracle, para testarmos a leitura e processamento desse arquivo
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 16
+1. **Recepção e Validação dos Projetos da Turma I2DEV-A:**
+   - Adicionadas as 3 bancas entregues para as apresentações de 17/11/2026:
+     - `Banca01-Grupo05-LabwareNext-(Antonio, Isabelle, Nicolle)`
+     - `Banca02-Grupo12-BRIO-(Laura, Rayane)`
+     - `Banca03-Grupo03-Fitlink-(Cassiano, Gabriel)`
+   - Tratamento resiliente de arquivos de 0 bytes (slides PPTX/PDF vazios, DOCX vazios ou SQL vazios) e extração determinística de metadados, links de deploy/GitHub e rubricas MSEP.
+2. **Testes Automatizados:**
+   - Adicionado caso de teste no pytest (`test_auditoria_grupos_i2dev_a`) com cobertura total (5/5 testes aprovados).
+3. **Publicação no GitHub e Deploy na VM Oracle Cloud (`147.15.2.73`):**
+   - Sincronização dos novos arquivos da turma I2DEV-A nos repositórios GitHub (`origin` e `bancas_remote`).
+   - Transferência e sincronização dos arquivos para a VM Oracle Cloud em `/var/www/projects/bancas/tcc/I2DEV-A`.
+   - Reinício do backend FastAPI (`psof3-bancas.service`) e validação via endpoint HTTPS em `https://bancas.147.15.2.73.sslip.io/api/bancas`.

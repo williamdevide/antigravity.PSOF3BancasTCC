@@ -102,10 +102,36 @@ def test_auditoria_dos_3_grupos_entregues():
     assert "rz_welcome_dismissed" in g05["auditoria_tecnica"]["chaves_localstorage_permitidas_ui"]
     assert g05["auditoria_tecnica"]["sql_total_registros_inseridos"] == 176
     assert g05["auditoria_tecnica"]["sql_atende_min_20_por_tabela"] is True
-    assert g05["auditoria_tecnica"]["github_url"] == ""
+    assert "github.com" in g05["auditoria_tecnica"]["github_url"]
     assert "Firebase" in g05["auditoria_tecnica"]["banco_provedor_nuvem"]
     assert g05["status_liberacao_nota"] == "Nota Retida (Pendências)"
     assert len(g05["perguntas_arguicao"]) >= 3
+
+
+def test_auditoria_grupos_i2dev_a():
+    r_bancas = client.get("/api/bancas")
+    assert r_bancas.status_code == 200
+    mapa = {b["id"]: b for b in r_bancas.json()["bancas"]}
+
+    # Grupo 05 - LabwareNext
+    g_lab = mapa["I2DEV-A_Grupo05"]
+    assert g_lab["entregue_na_pasta"] is True
+    assert "LabWare" in g_lab["projeto"] or "Labware" in g_lab["projeto"]
+    assert len(g_lab["perguntas_arguicao"]) >= 3
+
+    # Grupo 12 - BRIO
+    g_brio = mapa["I2DEV-A_Grupo12"]
+    assert g_brio["entregue_na_pasta"] is True
+    assert g_brio["projeto"] == "BRIO"
+    assert "github.com" in g_brio["auditoria_tecnica"]["github_url"]
+    assert "brio.site.je" in g_brio["auditoria_tecnica"]["deploy_url"]
+
+    # Grupo 03 - Fitlink
+    g_fit = mapa["I2DEV-A_Grupo03"]
+    assert g_fit["entregue_na_pasta"] is True
+    assert g_fit["projeto"] == "Fitlink"
+    assert g_fit["auditoria_tecnica"]["sql_tabelas_qtd"] == 11
+    assert g_fit["auditoria_tecnica"]["sql_total_registros_inseridos"] == 403
 
 
 def test_exportar_relatorios_endpoints():
