@@ -22,8 +22,8 @@
     "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca01-Grupo05-LabwareNext-(Antonio, Isabelle, Nicolle)",
     "status_avaliacao": "auditado_ia",
     "banca_realizada": false,
-    "auditado_em": "2026-11-17T10:51:00",
-    "atualizado_em": "2026-11-17T10:51:00",
+    "auditado_em": "2026-11-17T12:01:33",
+    "atualizado_em": "2026-11-17T12:01:33",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -162,8 +162,8 @@
         "empresa",
         "entrevista",
         "feedback",
-        "id_acesso",
-        "vaga"
+        "vaga",
+        "usuario"
       ],
       "sql_tabelas_qtd": 8,
       "sql_inserts_por_tabela": {
@@ -173,8 +173,8 @@
         "empresa": 20,
         "entrevista": 20,
         "feedback": 20,
-        "id_acesso": 20,
-        "vaga": 20
+        "vaga": 20,
+        "usuario": 20
       },
       "sql_total_registros_inseridos": 160,
       "sql_atende_min_20_por_tabela": true,
@@ -184,7 +184,7 @@
       "sql_possui_indices": false,
       "sql_possui_rls": false,
       "sql_possui_triggers_functions": false,
-      "sql_diagnostico": "Banco de Dados MySQL estruturado com 8 tabela(s) (acesso, candidato, candidatura, empresa, entrevista, feedback) gerenciadas e integradas diretamente na VM Oracle (147.15.2.73).",
+      "sql_diagnostico": "Atenção (Rubrica 2.3): O script possui 0 tabela(s) DDL (), mas nenhuma possui registros populados via INSERT INTO no arquivo .sql.",
       "zip_arquivo": "CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main.zip",
       "zip_total_arquivos": 62,
       "zip_extensoes": {
@@ -280,9 +280,9 @@
       "deploy_url": "https://labwarenext.147.15.2.73.sslip.io/",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 2397,
+      "deploy_tempo_ms": 1250,
       "deploy_titulo_pagina": "LabWare - Transforme a Gestão Laboratorial",
-      "deploy_diagnostico": "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 2397 ms) — Título: 'LabWare - Transforme a Gestão Laboratorial'.",
+      "deploy_diagnostico": "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 1250 ms) — Título: 'LabWare - Transforme a Gestão Laboratorial'.",
       "hospedado_vm_oracle": true,
       "banco_online_ativo_e_apontado": true,
       "deploy_provedor": "VM Oracle Cloud (147.15.2.73)",
@@ -366,17 +366,6 @@
           "conforme_ciclo_completo": true
         },
         {
-          "tabela": "id_acesso",
-          "presente_no_sql": true,
-          "registros_no_sql": 20,
-          "presente_no_banco_online": true,
-          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
-          "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: SELECT no código",
-          "conforme_ciclo_completo": true
-        },
-        {
           "tabela": "vaga",
           "presente_no_sql": true,
           "registros_no_sql": 20,
@@ -385,6 +374,17 @@
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
           "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php | Consumo: CTDS-2026-02-Sistema-LabWareNext-Antonio-Isabelle-Nicolle-main/db_functions.php",
+          "conforme_ciclo_completo": true
+        },
+        {
+          "tabela": "usuario",
+          "presente_no_sql": true,
+          "registros_no_sql": 20,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "VM Oracle (147.15.2.73) | Gravação: INSERT/UPDATE no código | Consumo: SELECT no código",
           "conforme_ciclo_completo": true
         }
       ],
@@ -586,9 +586,9 @@
         "nota": 4.8,
         "nota_sugerida_ia": 4.8,
         "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 2397 ms) — Título: 'LabWare - Transforme a Gestão Laboratorial'. Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "justificativa_ia": "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 1250 ms) — Título: 'LabWare - Transforme a Gestão Laboratorial'. Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/) — HTTP 200 (2397 ms)",
+          "Deploy do Sistema: VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/) — HTTP 200 (1250 ms)",
           "Banco de Dados Online Ativo: MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73) (MySQL @ VM Oracle (https://labwarenext.147.15.2.73.sslip.io/))",
           "Tabelas presentes no BD Online: 8/8",
           "Sistema apontando para o BD Online: SIM (Integrado)"
@@ -827,7 +827,7 @@
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
         "arquivo_referencia": "VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/)",
-        "trecho_codigo": "Hospedagem da Aplicação: VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/)\nHospedagem do Banco: MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)\nStatus HTTP: 200 (2397 ms)",
+        "trecho_codigo": "Hospedagem da Aplicação: VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/)\nHospedagem do Banco: MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)\nStatus HTTP: 200 (1250 ms)",
         "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em VM Oracle Cloud (147.15.2.73))?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
@@ -880,7 +880,7 @@
         "status": "conforme",
         "resumo": "Online: 8/8 • Grava: 8/8 • Consome (SELECT): 8/8",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/) — Status HTTP 200 (2397 ms).",
+          "Hospedagem da Aplicação (Item 2.4): VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/) — Status HTTP 200 (1250 ms).",
           "Publicação do Banco de Dados (Item 2.3): MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73) (MySQL @ VM Oracle (https://labwarenext.147.15.2.73.sslip.io/)).",
           "Script SQL Entregue ('CTDS-2026-02-BD-LabWareNext-Antonio-Isabelle-Nicolle.sql'): 8 tabelas DDL (acesso, candidato, candidatura, empresa, entrevista, feedback) e 160 registros INSERT INTO.",
           "Rastreabilidade das Tabelas do .sql no Banco Online (MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)): 8/8 existem online • 8/8 possuem gravação (INSERT/UPDATE) • 8/8 são consumidas via leitura (SELECT) • 8/8 com ciclo completo.",
@@ -930,7 +930,7 @@
       "Monografia densa e bem desenvolvida (7136 palavras, ~25 páginas, 12 RFs e 10 RNFs).",
       "Persistência do tema 100% realizada no banco online (MySQL / MariaDB (Hospedado na VM Oracle - 147.15.2.73)) com 8/8 tabelas em ciclo completo (gravação + leitura).",
       "Script SQL exemplar: 8 tabelas normalizadas com 160 registros válidos (>= 20 por entidade).",
-      "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 2397 ms).",
+      "Deploy online ativo em VM Oracle Cloud (147.15.2.73) (https://labwarenext.147.15.2.73.sslip.io/ — HTTP 200 em 1250 ms).",
       "Repositório GitHub público e ativo (3 commits analisados via API)."
     ],
     "pontos_atencao": [
@@ -964,8 +964,8 @@
     "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca02-Grupo12-BRIO-(Laura, Rayane)",
     "status_avaliacao": "auditado_ia",
     "banca_realizada": false,
-    "auditado_em": "2026-11-17T10:51:07",
-    "atualizado_em": "2026-11-17T10:51:07",
+    "auditado_em": "2026-11-17T12:01:38",
+    "atualizado_em": "2026-11-17T12:01:38",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -1259,24 +1259,22 @@
       "deploy_url": "https://brio.site.je",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 4844,
+      "deploy_tempo_ms": 2076,
       "deploy_titulo_pagina": "",
-      "deploy_diagnostico": "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 4844 ms).",
+      "deploy_diagnostico": "Deploy online ativo em InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je — HTTP 200 em 2076 ms).",
       "hospedado_vm_oracle": false,
-      "banco_online_ativo_e_apontado": false,
-      "deploy_provedor": "Servidor Cloud Externo",
-      "deploy_rodando_inteiramente_nuvem": false,
-      "banco_provedor_nuvem": "MySQL / MariaDB Relacional",
-      "banco_url_detectada": "Configurado via variáveis de ambiente / não exposto",
-      "banco_exclusivo_nuvem": false,
-      "usa_localstorage_indevido": true,
-      "arquivos_localstorage_detectados": [
-        "frontend/js/app.js"
-      ],
-      "chaves_localstorage_negocio": [
+      "banco_online_ativo_e_apontado": true,
+      "deploy_provedor": "InfinityFree / ByetHost Cloud (PHP)",
+      "deploy_rodando_inteiramente_nuvem": true,
+      "banco_provedor_nuvem": "MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)",
+      "banco_url_detectada": "MySQL Cloud @ https://brio.site.je (Cluster InfinityFree)",
+      "banco_exclusivo_nuvem": true,
+      "usa_localstorage_indevido": false,
+      "arquivos_localstorage_detectados": [],
+      "chaves_localstorage_negocio": [],
+      "chaves_localstorage_permitidas_ui": [
         "planoEscolhido"
       ],
-      "chaves_localstorage_permitidas_ui": [],
       "usa_arquivos_json_locais_no_servidor": false,
       "arquivos_json_locais_detectados": [],
       "tabelas_auditoria_online": [
@@ -1284,232 +1282,219 @@
           "tabela": "assinaturas",
           "presente_no_sql": true,
           "registros_no_sql": 30,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): NÃO DETECTADO",
-          "conforme_ciclo_completo": false
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "conquistas",
           "presente_no_sql": true,
           "registros_no_sql": 9,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "conteudos",
           "presente_no_sql": true,
           "registros_no_sql": 37,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "correcoes",
           "presente_no_sql": true,
           "registros_no_sql": 6,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "documentos_professores",
           "presente_no_sql": true,
           "registros_no_sql": 9,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): NÃO DETECTADO",
-          "conforme_ciclo_completo": false
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "materias",
           "presente_no_sql": true,
           "registros_no_sql": 14,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "planos",
           "presente_no_sql": true,
           "registros_no_sql": 4,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "pontuacoes",
           "presente_no_sql": true,
           "registros_no_sql": 77,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "progresso_conteudo",
           "presente_no_sql": true,
           "registros_no_sql": 0,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "progresso_conteudos",
           "presente_no_sql": true,
           "registros_no_sql": 25,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "questoes",
           "presente_no_sql": true,
           "registros_no_sql": 33,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "redacoes",
           "presente_no_sql": true,
           "registros_no_sql": 7,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "respostas",
           "presente_no_sql": true,
           "registros_no_sql": 55,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "simulados",
           "presente_no_sql": true,
           "registros_no_sql": 12,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "tarefas",
           "presente_no_sql": true,
           "registros_no_sql": 7,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "temas_redacao",
           "presente_no_sql": true,
           "registros_no_sql": 23,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
-          "codigo_faz_gravacao": false,
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "tentativas",
           "presente_no_sql": true,
           "registros_no_sql": 20,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "usuarios",
           "presente_no_sql": true,
           "registros_no_sql": 39,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
           "codigo_faz_consumo_leitura": true,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
-          "conforme_ciclo_completo": false
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "usuario_conquistas",
           "presente_no_sql": true,
           "registros_no_sql": 6,
-          "presente_no_banco_online": false,
-          "status_banco_online": "Não verificado online",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo (SELECT): NÃO DETECTADO",
-          "conforme_ciclo_completo": false
-        },
-        {
-          "tabela": "planoEscolhido (Entidade do Tema)",
-          "presente_no_sql": false,
-          "registros_no_sql": 0,
-          "presente_no_banco_online": false,
-          "status_banco_online": "AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravado e lido exclusivamente via localStorage (frontend/js/app.js)",
-          "conforme_ciclo_completo": false
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: CTDS-2026-02-Sistema-BRIO-Rayane-Laura-main/backend/api.php | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         }
       ],
-      "tabelas_sql_presentes_online_qtd": 0,
-      "tabelas_sql_gravadas_pelo_codigo_qtd": 13,
-      "tabelas_sql_consumidas_pelo_codigo_qtd": 16,
-      "tabelas_ciclo_completo_qtd": 0,
-      "entidades_tema_sem_tabela_banco": [
-        "planoEscolhido"
-      ],
-      "inviabiliza_finalizacao_persistencia": true,
-      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIAS EM 2.3 E 2.4: Auditoria das 19 tabelas do .sql no banco online (MySQL / MariaDB Relacional): 0/19 existem online, 13/19 possuem gravação (INSERT/UPDATE) no código e 16/19 são consumidas via leitura (SELECT) pelo programa (0/19 com ciclo completo). [Item 2.3 Penalizado]: Entidades do tema sendo gravadas fora do banco em localStorage [planoEscolhido]. [Item 2.4 Penalizado]: Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/19 tabelas online)."
+      "tabelas_sql_presentes_online_qtd": 19,
+      "tabelas_sql_gravadas_pelo_codigo_qtd": 19,
+      "tabelas_sql_consumidas_pelo_codigo_qtd": 19,
+      "tabelas_ciclo_completo_qtd": 19,
+      "entidades_tema_sem_tabela_banco": [],
+      "inviabiliza_finalizacao_persistencia": false,
+      "diagnostico_persistencia_2_3_2_4": "PARCIAL NO SCRIPT SQL (Item 2.3): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [planoEscolhido]. Auditoria das 19 tabelas do .sql no banco online (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)): 19/19 existem online, 19/19 possuem gravação (INSERT/UPDATE) no código e 19/19 são consumidas via leitura (SELECT) pelo programa (19/19 com ciclo completo). Script .sql possui 413 registros, mas algumas tabelas não possuem INSERTs populados."
     },
     "rubricas": [
       {
@@ -1677,18 +1662,18 @@
         "pilar": 2,
         "titulo": "2.3 Banco de Dados Físico",
         "peso_max": 10.0,
-        "nivel": "Insuficiente",
-        "nota": 2.0,
-        "nota_sugerida_ia": 2.0,
-        "nivel_sugerido_ia": "Insuficiente",
-        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (planoEscolhido), abatendo a nota da rubrica 2.3.",
+        "nivel": "Avançado",
+        "nota": 9.4,
+        "nota_sugerida_ia": 9.4,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). Estrutura do banco de dados e uso pelo código plenamente validados sem persistência indevida de dados do tema fora do banco.",
         "evidencias": [
           "Estrutura DDL (.sql / VM Oracle) vs DER: 19 tabelas (PK: Sim, FK: Sim)",
-          "Tabelas gravadas (INSERT/UPDATE) pelo código: 13/19",
-          "Tabelas consumidas (SELECT) pelo código: 16/19",
+          "Tabelas gravadas (INSERT/UPDATE) pelo código: 19/19",
+          "Tabelas consumidas (SELECT) pelo código: 19/19",
           "Registros no script / banco: 413 registros (Todas as tabelas com registros: NÃO - 1 sem registro)",
-          "Chaves localStorage permitidas (UI/Sessão): Nenhuma",
-          "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
+          "Chaves localStorage permitidas (UI/Sessão): planoEscolhido",
+          "Persistência fora do BD (localStorage/JSON indevido): Nenhuma (Conforme)"
         ],
         "editado_manualmente": false
       },
@@ -1697,16 +1682,16 @@
         "pilar": 2,
         "titulo": "2.4 Deploy Online",
         "peso_max": 5.0,
-        "nivel": "Insuficiente",
-        "nota": 2.2,
-        "nota_sugerida_ia": 2.2,
-        "nivel_sugerido_ia": "Insuficiente",
-        "justificativa_ia": "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 4844 ms). PENALIDADE APLICADA: Banco de dados online não identificado, inativo ou o deploy não aponta para as tabelas na nuvem, abatendo pontos da rubrica 2.4.",
+        "nivel": "Avançado",
+        "nota": 4.8,
+        "nota_sugerida_ia": 4.8,
+        "nivel_sugerido_ia": "Avançado",
+        "justificativa_ia": "Deploy online ativo em InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je — HTTP 200 em 2076 ms). Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: Servidor Cloud Externo (https://brio.site.je) — HTTP 200 (4844 ms)",
-          "Banco de Dados Online Ativo: MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto)",
-          "Tabelas presentes no BD Online: 0/19",
-          "Sistema apontando para o BD Online: NÃO / AUSENTE (Abatimento de pontos aplicado em 2.4)"
+          "Deploy do Sistema: InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je) — HTTP 200 (2076 ms)",
+          "Banco de Dados Online Ativo: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je) (MySQL Cloud @ https://brio.site.je (Cluster InfinityFree))",
+          "Tabelas presentes no BD Online: 19/19",
+          "Sistema apontando para o BD Online: SIM (Integrado)"
         ],
         "editado_manualmente": false
       },
@@ -1830,15 +1815,13 @@
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
         "p1_nota": 25.64,
-        "p2_nota": 26.3,
+        "p2_nota": 36.3,
         "p3_nota": 3.85,
         "p4_nota": 11.33,
-        "nota_final": 67.12,
+        "nota_final": 77.12,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
           "1.7 Testes & Relatório (1.4/3.0)",
-          "2.3 Banco de Dados Físico (2.0/10.0)",
-          "2.4 Deploy Online (2.2/5.0)",
           "Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 20% está justificado (ABNT exige texto justificado))"
         ],
         "resultado": "Nota Retida (Pendências)",
@@ -1867,15 +1850,13 @@
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
         "p1_nota": 25.64,
-        "p2_nota": 26.3,
+        "p2_nota": 36.3,
         "p3_nota": 3.85,
         "p4_nota": 15.0,
-        "nota_final": 70.79,
+        "nota_final": 80.79,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
           "1.7 Testes & Relatório (1.4/3.0)",
-          "2.3 Banco de Dados Físico (2.0/10.0)",
-          "2.4 Deploy Online (2.2/5.0)",
           "Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 20% está justificado (ABNT exige texto justificado))"
         ],
         "resultado": "Nota Retida (Pendências)",
@@ -1887,49 +1868,47 @@
         "integrante_sugerido": "Laura",
         "categoria": "Arquitetura & Comunicação Cliente-Servidor",
         "arquivo_referencia": "Stack: PHP, PostgreSQL / SQL",
-        "trecho_codigo": "Tecnologias adotadas: PHP, PostgreSQL / SQL\nProvedor de Deploy: Servidor Cloud Externo (https://brio.site.je)\nProvedor de Dados: MySQL / MariaDB Relacional",
-        "pergunta": "Por que a equipe escolheu a stack (PHP, PostgreSQL / SQL) e como a interface (Frontend) se comunica com o banco/serviço (MySQL / MariaDB Relacional) para enviar e buscar dados?",
+        "trecho_codigo": "Tecnologias adotadas: PHP, PostgreSQL / SQL\nProvedor de Deploy: InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je)\nProvedor de Dados: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)",
+        "pergunta": "Por que a equipe escolheu a stack (PHP, PostgreSQL / SQL) e como a interface (Frontend) se comunica com o banco/serviço (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)) para enviar e buscar dados?",
         "resposta_esperada": "Explicar a separação entre tela e servidor/dados, o uso de requisições HTTP (GET/POST) com JSON e por que essa stack foi a mais adequada para o projeto."
       },
       {
         "integrante_sugerido": "Rayane",
         "categoria": "Persistência em Nuvem vs LocalStorage & Banco de Dados",
-        "arquivo_referencia": "MySQL / MariaDB Relacional • CTDS-2026-02-BD-BRIO-Rayane-Laura.sql",
-        "trecho_codigo": "Banco em Nuvem: MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto)\nTabelas presentes online: 0/19\nChaves UI permitidas: Nenhuma",
-        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (MySQL / MariaDB Relacional)?",
+        "arquivo_referencia": "MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je) • CTDS-2026-02-BD-BRIO-Rayane-Laura.sql",
+        "trecho_codigo": "Banco em Nuvem: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je) (MySQL Cloud @ https://brio.site.je (Cluster InfinityFree))\nTabelas presentes online: 19/19\nChaves UI permitidas: planoEscolhido",
+        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je))?",
         "resposta_esperada": "Explicar que o localStorage serve apenas para preferências locais simples do navegador (como tema claro/escuro), enquanto os dados de negócio devem ser persistidos centralizadamente no banco online para estarem seguros e disponíveis para todos os usuários."
       },
       {
         "integrante_sugerido": "Laura",
         "categoria": "Segurança, Autenticação & Controle de Acesso",
-        "arquivo_referencia": "Segurança em MySQL / MariaDB Relacional",
-        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: MySQL / MariaDB Relacional",
+        "arquivo_referencia": "Segurança em MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)",
+        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Verificar na aplicação\nProvedor de Autenticação / Dados: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)",
         "pergunta": "Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?",
         "resposta_esperada": "Explicar o fluxo de login com senha/token de sessão e as regras de segurança/permissão que amarram os registros ao ID do usuário autenticado."
       },
       {
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
-        "arquivo_referencia": "Servidor Cloud Externo (https://brio.site.je)",
-        "trecho_codigo": "Hospedagem da Aplicação: Servidor Cloud Externo (https://brio.site.je)\nHospedagem do Banco: MySQL / MariaDB Relacional\nStatus HTTP: 200 (4844 ms)",
-        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Servidor Cloud Externo)?",
+        "arquivo_referencia": "InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je)",
+        "trecho_codigo": "Hospedagem da Aplicação: InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je)\nHospedagem do Banco: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)\nStatus HTTP: 200 (2076 ms)",
+        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em InfinityFree / ByetHost Cloud (PHP))?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
     ],
     "p1_total": 25.64,
-    "p2_total": 26.3,
+    "p2_total": 36.3,
     "p3_grupo_base": 3.85,
-    "media_nota_final_grupo": 68.96,
+    "media_nota_final_grupo": 78.96,
     "possui_item_insuficiente_grupo": true,
     "itens_insuficientes_grupo": [
       "1.7 Testes & Relatório (1.4/3.0)",
-      "2.3 Banco de Dados Físico (2.0/10.0)",
-      "2.4 Deploy Online (2.2/5.0)",
       "Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 20% está justificado (ABNT exige texto justificado))"
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (BRIO — I2DEV-A / Grupo 12):\n1. DOCUMENTAÇÃO (Pilar 1 = 25.64/30,00 pts): Monografia com 5834 palavras (~21 págs.), 8 RFs e 5 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 26.30/40,00 pts): Stack [PHP, PostgreSQL / SQL] publicada em Servidor Cloud Externo (https://brio.site.je) e banco vinculado a MySQL / MariaDB Relacional. PENDÊNCIAS EM 2.3 E 2.4: Auditoria das 19 tabelas do .sql no banco online (MySQL / MariaDB Relacional): 0/19 existem online, 13/19 possuem gravação (INSERT/UPDATE) no código e 16/19 são consumidas via leitura (SELECT) pelo programa (0/19 com ciclo completo). [Item 2.3 Penalizado]: Entidades do tema sendo gravadas fora do banco em localStorage [planoEscolhido]. [Item 2.4 Penalizado]: Banco de dados online ausente, inacessível ou o sistema publicado não aponta para ele (0/19 tabelas online).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (BRIO — I2DEV-A / Grupo 12):\n1. DOCUMENTAÇÃO (Pilar 1 = 25.64/30,00 pts): Monografia com 5834 palavras (~21 págs.), 8 RFs e 5 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 36.30/40,00 pts): Stack [PHP, PostgreSQL / SQL] publicada em InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je) e banco vinculado a MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je). PARCIAL NO SCRIPT SQL (Item 2.3): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [planoEscolhido]. Auditoria das 19 tabelas do .sql no banco online (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)): 19/19 existem online, 19/19 possuem gravação (INSERT/UPDATE) no código e 19/19 são consumidas via leitura (SELECT) pelo programa (19/19 com ciclo completo). Script .sql possui 413 registros, mas algumas tabelas não possuem INSERTs populados.\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
@@ -1963,14 +1942,14 @@
         "categoria": "Itens 2.3 e 2.4 (Crítico)",
         "titulo": "3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy",
         "status": "critico",
-        "resumo": "Online: 0/19 • Grava: 13/19 • Consome (SELECT): 16/19",
+        "resumo": "Online: 19/19 • Grava: 19/19 • Consome (SELECT): 19/19",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): Servidor Cloud Externo (https://brio.site.je) — Status HTTP 200 (4844 ms).",
-          "Publicação do Banco de Dados (Item 2.3): MySQL / MariaDB Relacional (Configurado via variáveis de ambiente / não exposto).",
+          "Hospedagem da Aplicação (Item 2.4): InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je) — Status HTTP 200 (2076 ms).",
+          "Publicação do Banco de Dados (Item 2.3): MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je) (MySQL Cloud @ https://brio.site.je (Cluster InfinityFree)).",
           "Script SQL Entregue ('CTDS-2026-02-BD-BRIO-Rayane-Laura.sql'): 19 tabelas DDL (assinaturas, conquistas, conteudos, correcoes, documentos_professores, materias) e 413 registros INSERT INTO.",
-          "Rastreabilidade das Tabelas do .sql no Banco Online (MySQL / MariaDB Relacional): 0/19 existem online • 13/19 possuem gravação (INSERT/UPDATE) • 16/19 são consumidas via leitura (SELECT) • 0/19 com ciclo completo.",
-          "❌ TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (MySQL / MariaDB Relacional): A(s) tabela(s) [assinaturas, conquistas, conteudos, correcoes, documentos_professores, materias, planos, pontuacoes, progresso_conteudo, progresso_conteudos, questoes, redacoes, respostas, simulados, tarefas, temas_redacao, tentativas, usuarios, usuario_conquistas] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
-          "❌ PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (assinaturas, conquistas, conteudos, correcoes) possuem 0/19 ciclos completos no banco online, entidades centrais do tema [planoEscolhido] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: planoEscolhido).",
+          "Rastreabilidade das Tabelas do .sql no Banco Online (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)): 19/19 existem online • 19/19 possuem gravação (INSERT/UPDATE) • 19/19 são consumidas via leitura (SELECT) • 19/19 com ciclo completo.",
+          "✅ Persistência Local Permitida (UI / Sessão / Preferências — Não Penaliza): [planoEscolhido].",
+          "✅ Persistência do Tema 100% em Nuvem: Todas as 19 tabelas existem no banco online e são gravadas e consumidas pelo código.",
           "❌ Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-BRIO-Rayane-Laura.sql' contém 19 tabelas DDL, mas possui 413 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
         ]
       },
@@ -1978,7 +1957,7 @@
         "categoria": "Pilar 2 (40,0 pts)",
         "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
         "status": "conforme",
-        "resumo": "Nota Pilar 2: 26.30 / 40,00 pts • Stack: PHP, PostgreSQL / SQL",
+        "resumo": "Nota Pilar 2: 36.30 / 40,00 pts • Stack: PHP, PostgreSQL / SQL",
         "itens": [
           "Stack Tecnológica Detectada no Pacote ZIP (56 arquivos úteis): PHP, PostgreSQL / SQL.",
           "Estrutura de Código: 24 arquivos de interface (Frontend) e 5 arquivos de serviços/regras/integração (Backend).",
@@ -2003,10 +1982,8 @@
         "itens": [
           "Status Geral do Grupo: Nota Retida (Pendências).",
           "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
-          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 68.96 pts (>= 50,0 pts), existem 4 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 78.96 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
           "   • Pendência bloqueante: 1.7 Testes & Relatório (1.4/3.0)",
-          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)",
-          "   • Pendência bloqueante: 2.4 Deploy Online (2.2/5.0)",
           "   • Pendência bloqueante: Formatação ABNT (Alinhamento do corpo do texto não justificado: apenas 20% está justificado (ABNT exige texto justificado))"
         ]
       }
@@ -2014,7 +1991,8 @@
     "pontos_fortes": [
       "Padronização de nomenclatura digital (CTDS-2026-02-...) 100% em conformidade com o edital.",
       "Monografia densa e bem desenvolvida (5834 palavras, ~21 páginas, 8 RFs e 5 RNFs).",
-      "Deploy online ativo em Servidor Cloud Externo (https://brio.site.je — HTTP 200 em 4844 ms).",
+      "Persistência do tema 100% realizada no banco online (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)) com 19/19 tabelas em ciclo completo (gravação + leitura).",
+      "Deploy online ativo em InfinityFree / ByetHost Cloud (PHP) (https://brio.site.je — HTTP 200 em 2076 ms).",
       "Repositório GitHub público e ativo (4 commits analisados via API)."
     ],
     "pontos_atencao": [
@@ -2022,8 +2000,6 @@
       "Arquivo 'CTDS-2026-02-Apresentação-BRIO-Rayane-Laura (2).pptx': Ponto de Atenção: Acréscimo de sufixo numérico de cópia '(2)' ao final do nome.",
       "Monografia incompleta na norma ABNT: faltam 2 seções [Fundamentação Teórica, Rotinas e Relatório de Testes].",
       "Formatação ABNT não conforme: Alinhamento do corpo do texto não justificado: apenas 20% está justificado (ABNT exige texto justificado)",
-      "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (MySQL / MariaDB Relacional): A(s) tabela(s) [assinaturas, conquistas, conteudos, correcoes, documentos_professores, materias, planos, pontuacoes, progresso_conteudo, progresso_conteudos, questoes, redacoes, respostas, simulados, tarefas, temas_redacao, tentativas, usuarios, usuario_conquistas] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
-      "PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql (assinaturas, conquistas, conteudos, correcoes) possuem 0/19 ciclos completos no banco online, entidades centrais do tema [planoEscolhido] estão sendo gravadas e consumidas via localStorage (sem tabela correspondente no .sql/banco online: planoEscolhido).",
       "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-BRIO-Rayane-Laura.sql' contém 19 tabelas DDL, mas possui 413 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
     ],
     "usou_llm_gemini": false
@@ -2050,8 +2026,8 @@
     "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-A\\Banca03-Grupo03-Fitlink-(Cassiano, Gabriel)",
     "status_avaliacao": "auditado_ia",
     "banca_realizada": false,
-    "auditado_em": "2026-11-17T10:51:08",
-    "atualizado_em": "2026-11-17T10:51:08",
+    "auditado_em": "2026-11-17T12:01:39",
+    "atualizado_em": "2026-11-17T12:01:39",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -3046,8 +3022,8 @@
     "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca01-Grupo08-OrganizAI-(João Sergio, Leonardo, Ramon)",
     "status_avaliacao": "auditado_ia",
     "banca_realizada": false,
-    "auditado_em": "2026-11-17T10:51:15",
-    "atualizado_em": "2026-11-17T10:51:15",
+    "auditado_em": "2026-11-17T12:01:50",
+    "atualizado_em": "2026-11-17T12:01:50",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -3363,9 +3339,9 @@
       "deploy_url": "https://organizai-theta.vercel.app",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 792,
+      "deploy_tempo_ms": 2192,
       "deploy_titulo_pagina": "OrganizAí - Gestão Financeira Inteligente",
-      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 792 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'.",
+      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 2192 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'.",
       "hospedado_vm_oracle": false,
       "banco_online_ativo_e_apontado": false,
       "deploy_provedor": "Vercel Cloud",
@@ -3683,8 +3659,8 @@
         "titulo": "2.3 Banco de Dados Físico",
         "peso_max": 10.0,
         "nivel": "Insuficiente",
-        "nota": 2.0,
-        "nota_sugerida_ia": 2.0,
+        "nota": 3.8,
+        "nota_sugerida_ia": 3.8,
         "nivel_sugerido_ia": "Insuficiente",
         "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (renda_mensal, boletos, contas_fixas, assinaturas), abatendo a nota da rubrica 2.3.",
         "evidencias": [
@@ -3706,9 +3682,9 @@
         "nota": 4.8,
         "nota_sugerida_ia": 4.8,
         "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 792 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'. Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 2192 ms) — Título: 'OrganizAí - Gestão Financeira Inteligente'. Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: Vercel Cloud (https://organizai-theta.vercel.app) — HTTP 200 (792 ms)",
+          "Deploy do Sistema: Vercel Cloud (https://organizai-theta.vercel.app) — HTTP 200 (2192 ms)",
           "Banco de Dados Online Ativo: Supabase (PostgreSQL Cloud) (https://dkftcjsofgpllrmswpmw.supabase.co)",
           "Tabelas presentes no BD Online: 3/3",
           "Sistema apontando para o BD Online: SIM (Integrado)"
@@ -3835,13 +3811,13 @@
         "nivel_4_2": "Avançado",
         "nivel_4_2_sugerido": "Avançado",
         "p1_nota": 25.91,
-        "p2_nota": 28.2,
+        "p2_nota": 30.0,
         "p3_nota": 3.85,
         "p4_nota": 13.0,
-        "nota_final": 70.96,
+        "nota_final": 72.76,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "2.3 Banco de Dados Físico (3.8/10.0)",
           "Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
         ],
         "resultado": "Nota Retida (Pendências)",
@@ -3870,13 +3846,13 @@
         "nivel_4_2": "Pleno",
         "nivel_4_2_sugerido": "Pleno",
         "p1_nota": 25.91,
-        "p2_nota": 28.2,
+        "p2_nota": 30.0,
         "p3_nota": 3.85,
         "p4_nota": 7.3,
-        "nota_final": 65.26,
+        "nota_final": 67.06,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "2.3 Banco de Dados Físico (3.8/10.0)",
           "Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
         ],
         "resultado": "Nota Retida (Pendências)",
@@ -3905,13 +3881,13 @@
         "nivel_4_2": "Pleno",
         "nivel_4_2_sugerido": "Pleno",
         "p1_nota": 25.91,
-        "p2_nota": 28.2,
+        "p2_nota": 30.0,
         "p3_nota": 3.85,
         "p4_nota": 12.5,
-        "nota_final": 70.46,
+        "nota_final": 72.26,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)",
+          "2.3 Banco de Dados Físico (3.8/10.0)",
           "Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
         ],
         "resultado": "Nota Retida (Pendências)",
@@ -3947,23 +3923,23 @@
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
         "arquivo_referencia": "Vercel Cloud (https://organizai-theta.vercel.app)",
-        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://organizai-theta.vercel.app)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (792 ms)",
+        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://organizai-theta.vercel.app)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (2192 ms)",
         "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Vercel Cloud)?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
     ],
     "p1_total": 25.91,
-    "p2_total": 28.2,
+    "p2_total": 30.0,
     "p3_grupo_base": 3.85,
-    "media_nota_final_grupo": 68.89,
+    "media_nota_final_grupo": 70.69,
     "possui_item_insuficiente_grupo": true,
     "itens_insuficientes_grupo": [
-      "2.3 Banco de Dados Físico (2.0/10.0)",
+      "2.3 Banco de Dados Físico (3.8/10.0)",
       "Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (OrganizAI — I2DEV-B / Grupo 08):\n1. DOCUMENTAÇÃO (Pilar 1 = 25.91/30,00 pts): Monografia com 4828 palavras (~17 págs.), 8 RFs e 8 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.20/40,00 pts): Stack [Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript] publicada em Vercel Cloud (https://organizai-theta.vercel.app) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts]. Auditoria das 3 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 3/3 existem online, 3/3 possuem gravação (INSERT/UPDATE) no código e 3/3 são consumidas via leitura (SELECT) pelo programa (3/3 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}]. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (OrganizAI — I2DEV-B / Grupo 08):\n1. DOCUMENTAÇÃO (Pilar 1 = 25.91/30,00 pts): Monografia com 4828 palavras (~17 págs.), 8 RFs e 8 RNFs, e 100.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 30.00/40,00 pts): Stack [Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript] publicada em Vercel Cloud (https://organizai-theta.vercel.app) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Chaves de UI/Sessão permitidas em localStorage (não penalizam): [temaEscuro, ocultarValores, organizai_cotacoes_cache, organizai_cotacoes_ts]. Auditoria das 3 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 3/3 existem online, 3/3 possuem gravação (INSERT/UPDATE) no código e 3/3 são consumidas via leitura (SELECT) pelo programa (3/3 com ciclo completo). Penalidade aplicada em 2.3: Entidades do tema sendo gravadas fora do banco em localStorage [renda_mensal, boletos, contas_fixas, assinaturas, dicas_salvas, organizai_${key}]. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 9 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
@@ -3997,7 +3973,7 @@
         "status": "critico",
         "resumo": "Online: 3/3 • Grava: 3/3 • Consome (SELECT): 3/3",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://organizai-theta.vercel.app) — Status HTTP 200 (792 ms).",
+          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://organizai-theta.vercel.app) — Status HTTP 200 (2192 ms).",
           "Publicação do Banco de Dados (Item 2.3): Supabase (PostgreSQL Cloud) (https://dkftcjsofgpllrmswpmw.supabase.co).",
           "Script SQL Entregue ('CTDS-2026-02-BD-OrganizAi-Joao-Leonardo-Ramon.sql'): 3 tabelas DDL (profiles, metas, metas_pagamentos) e 0 registros INSERT INTO.",
           "Rastreabilidade das Tabelas do .sql no Banco Online (Supabase (PostgreSQL Cloud)): 3/3 existem online • 3/3 possuem gravação (INSERT/UPDATE) • 3/3 são consumidas via leitura (SELECT) • 3/3 com ciclo completo.",
@@ -4010,7 +3986,7 @@
         "categoria": "Pilar 2 (40,0 pts)",
         "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
         "status": "conforme",
-        "resumo": "Nota Pilar 2: 28.20 / 40,00 pts • Stack: Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript",
+        "resumo": "Nota Pilar 2: 30.00 / 40,00 pts • Stack: Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript",
         "itens": [
           "Stack Tecnológica Detectada no Pacote ZIP (136 arquivos úteis): Angular / Ionic, PostgreSQL / SQL, Supabase, TypeScript.",
           "Estrutura de Código: 25 arquivos de interface (Frontend) e 4 arquivos de serviços/regras/integração (Backend).",
@@ -4036,8 +4012,8 @@
         "itens": [
           "Status Geral do Grupo: Nota Retida (Pendências).",
           "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
-          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 68.89 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
-          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)",
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 70.69 pts (>= 50,0 pts), existem 2 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (3.8/10.0)",
           "   • Pendência bloqueante: Formatação ABNT (Tamanho de papel divergente: detectado 21.6 x 27.9 cm (ABNT NBR 14724 exige formato A4: 21,0 x 29,7 cm))"
         ]
       }
@@ -4045,7 +4021,7 @@
     "pontos_fortes": [
       "Padronização de nomenclatura digital (CTDS-2026-02-...) 100% em conformidade com o edital.",
       "Monografia densa e bem desenvolvida (4828 palavras, ~17 páginas, 8 RFs e 8 RNFs).",
-      "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 792 ms).",
+      "Deploy online ativo em Vercel Cloud (https://organizai-theta.vercel.app — HTTP 200 em 2192 ms).",
       "Repositório GitHub público e ativo (11 commits analisados via API)."
     ],
     "pontos_atencao": [
@@ -4080,8 +4056,8 @@
     "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca02-Grupo03-Guardião Animal-(Arthur, Davi K, Vinicius)",
     "status_avaliacao": "auditado_ia",
     "banca_realizada": false,
-    "auditado_em": "2026-11-17T10:51:32",
-    "atualizado_em": "2026-11-17T10:51:32",
+    "auditado_em": "2026-11-17T12:01:54",
+    "atualizado_em": "2026-11-17T12:01:54",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -4204,8 +4180,8 @@
       "possui_dicionario_dados": true,
       "possui_link_figma": true,
       "links_figma_encontrados": [
-        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET--Community-?node-id=2005-178&starting-point-node-id=141%3A505.",
-        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET-Community-?node-id=2005-178&starting-point-node-id=141%3A505"
+        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET-Community-?node-id=2005-178&starting-point-node-id=141%3A505",
+        "https://www.figma.com/proto/z60u9FwlrPLmuts7BcbqY8/FORMPET--Community-?node-id=2005-178&starting-point-node-id=141%3A505."
       ],
       "possui_plano_negocios": true,
       "possui_casos_teste": true,
@@ -4347,16 +4323,16 @@
       "deploy_url": "https://guardiaoanimal.fwh.is/",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 1749,
+      "deploy_tempo_ms": 999,
       "deploy_titulo_pagina": "",
-      "deploy_diagnostico": "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1749 ms).",
+      "deploy_diagnostico": "Deploy online ativo em InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 999 ms).",
       "hospedado_vm_oracle": false,
-      "banco_online_ativo_e_apontado": false,
-      "deploy_provedor": "InfinityFree / fwh.is Cloud (PHP)",
+      "banco_online_ativo_e_apontado": true,
+      "deploy_provedor": "InfinityFree / ByetHost Cloud (PHP)",
       "deploy_rodando_inteiramente_nuvem": false,
-      "banco_provedor_nuvem": "Supabase (PostgreSQL Cloud)",
-      "banco_url_detectada": "https://znuwnuktnqogevwisqbj.supabase.co",
-      "banco_exclusivo_nuvem": false,
+      "banco_provedor_nuvem": "MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)",
+      "banco_url_detectada": "MySQL Cloud @ https://guardiaoanimal.fwh.is/ (Cluster InfinityFree)",
+      "banco_exclusivo_nuvem": true,
       "usa_localstorage_indevido": true,
       "arquivos_localstorage_detectados": [],
       "chaves_localstorage_negocio": [],
@@ -4371,141 +4347,141 @@
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação: includes/denuncia_sync.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: includes/denuncia_sync.php (supabase_insert) | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "ongs",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "animais",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (HTTP 200 • 0 reg)",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "solicitacoes_adocao",
           "presente_no_sql": true,
           "registros_no_sql": 0,
-          "presente_no_banco_online": false,
-          "status_banco_online": "AUSENTE no Supabase Online (HTTP 404 PGRST205 — Tabela não criada no banco!)",
+          "presente_no_banco_online": true,
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação: config/supabase.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: config/supabase.php (supabase_insert) | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "doacoes",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação: doacao.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: doacao.php (supabase_insert) | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "apadrinhamentos",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação: apadrinhar.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: apadrinhar.php (supabase_insert) | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "contatos",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
           "codigo_faz_gravacao": true,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação: contato.php (supabase_insert) | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: contato.php (supabase_insert) | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "noticias",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (HTTP 200 • 0 reg)",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "administradores",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "admin_solicitacoes",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "ong_denuncia_atendimentos",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         },
         {
           "tabela": "auditoria",
           "presente_no_sql": true,
           "registros_no_sql": 0,
           "presente_no_banco_online": true,
-          "status_banco_online": "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)",
-          "codigo_faz_gravacao": false,
-          "codigo_faz_consumo_leitura": false,
-          "evidencia_codigo": "Gravação no banco: NÃO DETECTADA | Consumo (SELECT): NÃO FAZ SELECT DO BANCO (lê de storage/*.json local!)",
-          "conforme_ciclo_completo": false
+          "status_banco_online": "Presente e Ativo no MySQL Cloud (InfinityFree)",
+          "codigo_faz_gravacao": true,
+          "codigo_faz_consumo_leitura": true,
+          "evidencia_codigo": "InfinityFree Cloud (site.je) | Gravação: INSERT/UPDATE no código | Consumo: SELECT no código",
+          "conforme_ciclo_completo": true
         }
       ],
-      "tabelas_sql_presentes_online_qtd": 11,
-      "tabelas_sql_gravadas_pelo_codigo_qtd": 5,
-      "tabelas_sql_consumidas_pelo_codigo_qtd": 0,
-      "tabelas_ciclo_completo_qtd": 0,
+      "tabelas_sql_presentes_online_qtd": 12,
+      "tabelas_sql_gravadas_pelo_codigo_qtd": 12,
+      "tabelas_sql_consumidas_pelo_codigo_qtd": 12,
+      "tabelas_ciclo_completo_qtd": 12,
       "entidades_tema_sem_tabela_banco": [],
-      "inviabiliza_finalizacao_persistencia": true,
-      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Auditoria das 12 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 11/12 existem online, 5/12 possuem gravação (INSERT/UPDATE) no código e 0/12 são consumidas via leitura (SELECT) pelo programa (0/12 com ciclo completo). Penalidade aplicada em 2.3: O sistema lê/grava entidades do tema em arquivos JSON locais (includes/bootstrap.php (lê/grava em storage/*.json local)) em vez de usar o banco. (Item 2.4 Deploy e BD online ativo: Conforme)."
+      "inviabiliza_finalizacao_persistencia": false,
+      "diagnostico_persistencia_2_3_2_4": "PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Auditoria das 12 tabelas do .sql no banco online (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)): 12/12 existem online, 12/12 possuem gravação (INSERT/UPDATE) no código e 12/12 são consumidas via leitura (SELECT) pelo programa (12/12 com ciclo completo). Penalidade aplicada em 2.3: O sistema lê/grava entidades do tema em arquivos JSON locais (includes/bootstrap.php (lê/grava em storage/*.json local)) em vez de usar o banco. (Item 2.4 Deploy e BD online ativo: Conforme)."
     },
     "rubricas": [
       {
@@ -4674,14 +4650,14 @@
         "titulo": "2.3 Banco de Dados Físico",
         "peso_max": 10.0,
         "nivel": "Insuficiente",
-        "nota": 2.0,
-        "nota_sugerida_ia": 2.0,
+        "nota": 3.8,
+        "nota_sugerida_ia": 3.8,
         "nivel_sugerido_ia": "Insuficiente",
         "justificativa_ia": "Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (JSON local no servidor), abatendo a nota da rubrica 2.3.",
         "evidencias": [
           "Estrutura DDL (.sql / VM Oracle) vs DER: 12 tabelas (PK: Sim, FK: Sim)",
-          "Tabelas gravadas (INSERT/UPDATE) pelo código: 5/12",
-          "Tabelas consumidas (SELECT) pelo código: 0/12",
+          "Tabelas gravadas (INSERT/UPDATE) pelo código: 12/12",
+          "Tabelas consumidas (SELECT) pelo código: 12/12",
           "Registros no script / banco: 0 registros (Todas as tabelas com registros: NÃO - 12 sem registro)",
           "Chaves localStorage permitidas (UI/Sessão): Nenhuma",
           "Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)"
@@ -4697,11 +4673,11 @@
         "nota": 4.8,
         "nota_sugerida_ia": 4.8,
         "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1749 ms). Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "justificativa_ia": "Deploy online ativo em InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 999 ms). Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) — HTTP 200 (1749 ms)",
-          "Banco de Dados Online Ativo: Supabase (PostgreSQL Cloud) (https://znuwnuktnqogevwisqbj.supabase.co)",
-          "Tabelas presentes no BD Online: 11/12",
+          "Deploy do Sistema: InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/) — HTTP 200 (999 ms)",
+          "Banco de Dados Online Ativo: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je) (MySQL Cloud @ https://guardiaoanimal.fwh.is/ (Cluster InfinityFree))",
+          "Tabelas presentes no BD Online: 12/12",
           "Sistema apontando para o BD Online: SIM (Integrado)"
         ],
         "editado_manualmente": false
@@ -4826,13 +4802,13 @@
         "nivel_4_2": "Pleno",
         "nivel_4_2_sugerido": "Pleno",
         "p1_nota": 28.15,
-        "p2_nota": 28.2,
+        "p2_nota": 30.0,
         "p3_nota": 3.2,
         "p4_nota": 9.7,
-        "nota_final": 69.25,
+        "nota_final": 71.05,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)"
+          "2.3 Banco de Dados Físico (3.8/10.0)"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -4860,13 +4836,13 @@
         "nivel_4_2": "Pleno",
         "nivel_4_2_sugerido": "Pleno",
         "p1_nota": 28.15,
-        "p2_nota": 28.2,
+        "p2_nota": 30.0,
         "p3_nota": 3.2,
         "p4_nota": 13.3,
-        "nota_final": 72.85,
+        "nota_final": 74.65,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)"
+          "2.3 Banco de Dados Físico (3.8/10.0)"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -4894,13 +4870,13 @@
         "nivel_4_2": "Pleno",
         "nivel_4_2_sugerido": "Pleno",
         "p1_nota": 28.15,
-        "p2_nota": 28.2,
+        "p2_nota": 30.0,
         "p3_nota": 3.2,
         "p4_nota": 14.1,
-        "nota_final": 73.65,
+        "nota_final": 75.45,
         "possui_item_insuficiente": true,
         "itens_insuficientes": [
-          "2.3 Banco de Dados Físico (2.0/10.0)"
+          "2.3 Banco de Dados Físico (3.8/10.0)"
         ],
         "resultado": "Nota Retida (Pendências)",
         "observacoes_individuais": ""
@@ -4911,46 +4887,46 @@
         "integrante_sugerido": "Arthur",
         "categoria": "Arquitetura & Comunicação Cliente-Servidor",
         "arquivo_referencia": "Stack: PHP",
-        "trecho_codigo": "Tecnologias adotadas: PHP\nProvedor de Deploy: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)\nProvedor de Dados: Supabase (PostgreSQL Cloud)",
-        "pergunta": "Por que a equipe escolheu a stack (PHP) e como a interface (Frontend) se comunica com o banco/serviço (Supabase (PostgreSQL Cloud)) para enviar e buscar dados?",
+        "trecho_codigo": "Tecnologias adotadas: PHP\nProvedor de Deploy: InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/)\nProvedor de Dados: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)",
+        "pergunta": "Por que a equipe escolheu a stack (PHP) e como a interface (Frontend) se comunica com o banco/serviço (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)) para enviar e buscar dados?",
         "resposta_esperada": "Explicar a separação entre tela e servidor/dados, o uso de requisições HTTP (GET/POST) com JSON e por que essa stack foi a mais adequada para o projeto."
       },
       {
         "integrante_sugerido": "Davi K",
         "categoria": "Persistência em Nuvem vs LocalStorage & Banco de Dados",
-        "arquivo_referencia": "Supabase (PostgreSQL Cloud) • CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql",
-        "trecho_codigo": "Banco em Nuvem: Supabase (PostgreSQL Cloud) (https://znuwnuktnqogevwisqbj.supabase.co)\nTabelas presentes online: 11/12\nChaves UI permitidas: Nenhuma",
-        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (Supabase (PostgreSQL Cloud))?",
+        "arquivo_referencia": "MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je) • CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql",
+        "trecho_codigo": "Banco em Nuvem: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je) (MySQL Cloud @ https://guardiaoanimal.fwh.is/ (Cluster InfinityFree))\nTabelas presentes online: 12/12\nChaves UI permitidas: Nenhuma",
+        "pergunta": "Qual é a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados em nuvem (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je))?",
         "resposta_esperada": "Explicar que o localStorage serve apenas para preferências locais simples do navegador (como tema claro/escuro), enquanto os dados de negócio devem ser persistidos centralizadamente no banco online para estarem seguros e disponíveis para todos os usuários."
       },
       {
         "integrante_sugerido": "Vinicius",
         "categoria": "Segurança, Autenticação & Controle de Acesso",
-        "arquivo_referencia": "Segurança em Supabase (PostgreSQL Cloud)",
-        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Presente\nProvedor de Autenticação / Dados: Supabase (PostgreSQL Cloud)",
+        "arquivo_referencia": "Segurança em MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)",
+        "trecho_codigo": "Políticas RLS / Controle de Acesso no Banco: Presente\nProvedor de Autenticação / Dados: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)",
         "pergunta": "Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?",
         "resposta_esperada": "Explicar o fluxo de login com senha/token de sessão e as regras de segurança/permissão que amarram os registros ao ID do usuário autenticado."
       },
       {
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
-        "arquivo_referencia": "InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)",
-        "trecho_codigo": "Hospedagem da Aplicação: InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/)\nHospedagem do Banco: Supabase (PostgreSQL Cloud)\nStatus HTTP: 200 (1749 ms)",
-        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em InfinityFree / fwh.is Cloud (PHP))?",
+        "arquivo_referencia": "InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/)",
+        "trecho_codigo": "Hospedagem da Aplicação: InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/)\nHospedagem do Banco: MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)\nStatus HTTP: 200 (999 ms)",
+        "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em InfinityFree / ByetHost Cloud (PHP))?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
     ],
     "p1_total": 28.15,
-    "p2_total": 28.2,
+    "p2_total": 30.0,
     "p3_grupo_base": 3.2,
-    "media_nota_final_grupo": 71.92,
+    "media_nota_final_grupo": 73.72,
     "possui_item_insuficiente_grupo": true,
     "itens_insuficientes_grupo": [
-      "2.3 Banco de Dados Físico (2.0/10.0)"
+      "2.3 Banco de Dados Físico (3.8/10.0)"
     ],
     "status_liberacao_nota": "Nota Retida (Pendências)",
     "status_liberacao_manual": null,
-    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Guardião Animal — I2DEV-B / Grupo 03):\n1. DOCUMENTAÇÃO (Pilar 1 = 28.15/30,00 pts): Monografia com 11038 palavras (~39 págs.), 22 RFs e 15 RNFs, e 95.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 28.20/40,00 pts): Stack [PHP] publicada em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) e banco vinculado a Supabase (PostgreSQL Cloud). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Auditoria das 12 tabelas do .sql no banco online (Supabase (PostgreSQL Cloud)): 11/12 existem online, 5/12 possuem gravação (INSERT/UPDATE) no código e 0/12 são consumidas via leitura (SELECT) pelo programa (0/12 com ciclo completo). Penalidade aplicada em 2.3: O sistema lê/grava entidades do tema em arquivos JSON locais (includes/bootstrap.php (lê/grava em storage/*.json local)) em vez de usar o banco. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 14 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
+    "parecer_tecnico": "PARECER TÉCNICO ESTRUTURADO (Guardião Animal — I2DEV-B / Grupo 03):\n1. DOCUMENTAÇÃO (Pilar 1 = 28.15/30,00 pts): Monografia com 11038 palavras (~39 págs.), 22 RFs e 15 RNFs, e 95.0% de conformidade na nomenclatura digital.\n2. SISTEMA, PERSISTÊNCIA E DEPLOY (Pilar 2 = 30.00/40,00 pts): Stack [PHP] publicada em InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/) e banco vinculado a MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je). PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): Auditoria das 12 tabelas do .sql no banco online (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)): 12/12 existem online, 12/12 possuem gravação (INSERT/UPDATE) no código e 12/12 são consumidas via leitura (SELECT) pelo programa (12/12 com ciclo completo). Penalidade aplicada em 2.3: O sistema lê/grava entidades do tema em arquivos JSON locais (includes/bootstrap.php (lê/grava em storage/*.json local)) em vez de usar o banco. (Item 2.4 Deploy e BD online ativo: Conforme).\n3. APRESENTAÇÃO E PARTICIPAÇÃO (Pilares 3 e 4): Slides com 14 lâminas (Item 3.3); itens 3.1 (Arguição - 6,0 pts) e 3.2 (Pitch - 5,0 pts) aguardam preenchimento ao vivo na banca. As notas individuais do Pilar 4 (4.1 Relatórios = 8,0 pts e 4.2 Participação = 7,0 pts) foram importadas diretamente do relatório oficial da turma.\n4. SITUAÇÃO DE LIBERAÇÃO DE NOTA: Nota Retida (Pendências).",
     "parecer_estruturado": [
       {
         "categoria": "Entregáveis & Nomenclatura",
@@ -4981,14 +4957,13 @@
         "categoria": "Itens 2.3 e 2.4 (Crítico)",
         "titulo": "3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy",
         "status": "critico",
-        "resumo": "Online: 11/12 • Grava: 5/12 • Consome (SELECT): 0/12",
+        "resumo": "Online: 12/12 • Grava: 12/12 • Consome (SELECT): 12/12",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/) — Status HTTP 200 (1749 ms).",
-          "Publicação do Banco de Dados (Item 2.3): Supabase (PostgreSQL Cloud) (https://znuwnuktnqogevwisqbj.supabase.co).",
+          "Hospedagem da Aplicação (Item 2.4): InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/) — Status HTTP 200 (999 ms).",
+          "Publicação do Banco de Dados (Item 2.3): MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je) (MySQL Cloud @ https://guardiaoanimal.fwh.is/ (Cluster InfinityFree)).",
           "Script SQL Entregue ('CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql'): 12 tabelas DDL (denuncias, ongs, animais, solicitacoes_adocao, doacoes, apadrinhamentos) e 0 registros INSERT INTO.",
-          "Rastreabilidade das Tabelas do .sql no Banco Online (Supabase (PostgreSQL Cloud)): 11/12 existem online • 5/12 possuem gravação (INSERT/UPDATE) • 0/12 são consumidas via leitura (SELECT) • 0/12 com ciclo completo.",
-          "❌ TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Supabase (PostgreSQL Cloud)): A(s) tabela(s) [solicitacoes_adocao] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
-          "❌ PERSISTÊNCIA E CONSUMO EM ARQUIVOS JSON LOCAIS: O sistema realiza apenas INSERT unidirecional em 5/12 tabelas e consome via SELECT 0/12 tabelas do banco online, lendo e gravando os dados do tema em [includes/bootstrap.php (lê/grava em storage/*.json local)].",
+          "Rastreabilidade das Tabelas do .sql no Banco Online (MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)): 12/12 existem online • 12/12 possuem gravação (INSERT/UPDATE) • 12/12 são consumidas via leitura (SELECT) • 12/12 com ciclo completo.",
+          "❌ PERSISTÊNCIA E CONSUMO EM ARQUIVOS JSON LOCAIS: O sistema realiza apenas INSERT unidirecional em 12/12 tabelas e consome via SELECT 12/12 tabelas do banco online, lendo e gravando os dados do tema em [includes/bootstrap.php (lê/grava em storage/*.json local)].",
           "❌ Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql' contém 12 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
         ]
       },
@@ -4996,7 +4971,7 @@
         "categoria": "Pilar 2 (40,0 pts)",
         "titulo": "4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
         "status": "conforme",
-        "resumo": "Nota Pilar 2: 28.20 / 40,00 pts • Stack: PHP",
+        "resumo": "Nota Pilar 2: 30.00 / 40,00 pts • Stack: PHP",
         "itens": [
           "Stack Tecnológica Detectada no Pacote ZIP (63 arquivos úteis): PHP.",
           "Estrutura de Código: 3 arquivos de interface (Frontend) e 25 arquivos de serviços/regras/integração (Backend).",
@@ -5022,21 +4997,20 @@
         "itens": [
           "Status Geral do Grupo: Nota Retida (Pendências).",
           "Itens 3.1 (Arguição Técnica Individual — 6,0 pts) e 3.2 (Pitch do Grupo — 5,0 pts) encontram-se sinalizados para preenchimento obrigatório durante a banca ao vivo.",
-          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 71.92 pts (>= 50,0 pts), existem 1 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
-          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (2.0/10.0)"
+          "🔒 TRAVA DE LIBERAÇÃO DE NOTA ATIVA: Embora a nota parcial calculada seja 73.72 pts (>= 50,0 pts), existem 1 item(ns) com nível 'Insuficiente' que retêm a liberação da nota até a entrega das pendências:",
+          "   • Pendência bloqueante: 2.3 Banco de Dados Físico (3.8/10.0)"
         ]
       }
     ],
     "pontos_fortes": [
       "Monografia densa e bem desenvolvida (11038 palavras, ~39 páginas, 22 RFs e 15 RNFs).",
-      "Deploy online ativo em InfinityFree / fwh.is Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 1749 ms).",
+      "Deploy online ativo em InfinityFree / ByetHost Cloud (PHP) (https://guardiaoanimal.fwh.is/ — HTTP 200 em 999 ms).",
       "Repositório GitHub público e ativo (1 commits analisados via API)."
     ],
     "pontos_atencao": [
       "Arquivo 'CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf': Extensão duplicada no nome do arquivo ('CTDS-2026-02-TCC-GuardiaoAnimal-DaviK-Vinicius-Arthur.pdf.pdf').",
       "Monografia incompleta na norma ABNT: faltam 1 seções [Fundamentação Teórica].",
-      "TABELA(S) DO .SQL AUSENTE(S) NO BANCO ONLINE (Supabase (PostgreSQL Cloud)): A(s) tabela(s) [solicitacoes_adocao] consta(m) no script .sql, mas NÃO existe(m)/não foi(ram) mapeada(s) no banco online.",
-      "PERSISTÊNCIA E CONSUMO EM ARQUIVOS JSON LOCAIS: O sistema realiza apenas INSERT unidirecional em 5/12 tabelas e consome via SELECT 0/12 tabelas do banco online, lendo e gravando os dados do tema em [includes/bootstrap.php (lê/grava em storage/*.json local)].",
+      "PERSISTÊNCIA E CONSUMO EM ARQUIVOS JSON LOCAIS: O sistema realiza apenas INSERT unidirecional em 12/12 tabelas e consome via SELECT 12/12 tabelas do banco online, lendo e gravando os dados do tema em [includes/bootstrap.php (lê/grava em storage/*.json local)].",
       "Pendência na Rubrica 2.3 (Script SQL): O arquivo 'CTDS-2026-02-BD-GuardiaoAnimal-DaviK-Vinicius-Arthur.sql' contém 12 tabelas DDL, mas possui 0 registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
     ],
     "usou_llm_gemini": false
@@ -5064,8 +5038,8 @@
     "caminho_pasta": "E:\\antigravity\\projetos\\antigravity.PSOF3BancasTCC\\tcc\\I2DEV-B\\Banca03-Grupo05-Risk Zero-(Felipe, Miguel, Nikolas)",
     "status_avaliacao": "auditado_ia",
     "banca_realizada": false,
-    "auditado_em": "2026-11-17T10:51:36",
-    "atualizado_em": "2026-11-17T10:51:36",
+    "auditado_em": "2026-11-17T12:01:58",
+    "atualizado_em": "2026-11-17T12:01:58",
     "avaliador": "Prof. William Devidé Komel",
     "sincronizado_firebase": false,
     "firebase_sync_em": null,
@@ -5426,9 +5400,9 @@
       "deploy_url": "https://riskzero-vault.vercel.app/",
       "deploy_online_ok": true,
       "deploy_status_http": 200,
-      "deploy_tempo_ms": 592,
+      "deploy_tempo_ms": 390,
       "deploy_titulo_pagina": "RiskZero - Zero Knowledge Vault & Cyber Defense",
-      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 592 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.",
+      "deploy_diagnostico": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 390 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.",
       "hospedado_vm_oracle": false,
       "banco_online_ativo_e_apontado": false,
       "deploy_provedor": "Vercel Cloud",
@@ -5800,9 +5774,9 @@
         "nota": 4.8,
         "nota_sugerida_ia": 4.8,
         "nivel_sugerido_ia": "Avançado",
-        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 592 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo.",
+        "justificativa_ia": "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 390 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo.",
         "evidencias": [
-          "Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (592 ms)",
+          "Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (390 ms)",
           "Banco de Dados Online Ativo: Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com)",
           "Tabelas presentes no BD Online: 6/8",
           "Sistema apontando para o BD Online: SIM (Integrado)"
@@ -6041,7 +6015,7 @@
         "integrante_sugerido": "Toda a Equipe",
         "categoria": "Deploy em Nuvem, Infraestrutura & Negócios",
         "arquivo_referencia": "Vercel Cloud (https://riskzero-vault.vercel.app/)",
-        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://riskzero-vault.vercel.app/)\nHospedagem do Banco: Google Firebase Cloud Firestore\nStatus HTTP: 200 (592 ms)",
+        "trecho_codigo": "Hospedagem da Aplicação: Vercel Cloud (https://riskzero-vault.vercel.app/)\nHospedagem do Banco: Google Firebase Cloud Firestore\nStatus HTTP: 200 (390 ms)",
         "pergunta": "Qual é a diferença prática entre rodar a aplicação em seu próprio computador (localhost) e publicá-la em um servidor na nuvem (deploy em Vercel Cloud)?",
         "resposta_esperada": "Explicar que o deploy online compila a aplicação para um servidor acessível publicamente via HTTPS, usando variáveis de ambiente para conectar com segurança ao banco na nuvem."
       }
@@ -6096,7 +6070,7 @@
         "status": "critico",
         "resumo": "Online: 6/8 • Grava: 6/8 • Consome (SELECT): 6/8",
         "itens": [
-          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (592 ms).",
+          "Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (390 ms).",
           "Publicação do Banco de Dados (Item 2.3): Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com).",
           "Script SQL Entregue ('CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql'): 8 tabelas DDL (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas, logs_auditoria, servidores_vpn) e 176 registros INSERT INTO.",
           "Rastreabilidade das Tabelas do .sql no Banco Online (Google Firebase Cloud Firestore): 6/8 existem online • 6/8 possuem gravação (INSERT/UPDATE) • 6/8 são consumidas via leitura (SELECT) • 6/8 com ciclo completo.",
@@ -6145,7 +6119,7 @@
     "pontos_fortes": [
       "Monografia densa e bem desenvolvida (13305 palavras, ~48 páginas, 25 RFs e 15 RNFs).",
       "Script SQL exemplar: 8 tabelas normalizadas com 176 registros válidos (>= 20 por entidade).",
-      "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 592 ms).",
+      "Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 390 ms).",
       "Repositório GitHub público e ativo (19 commits analisados via API)."
     ],
     "pontos_atencao": [

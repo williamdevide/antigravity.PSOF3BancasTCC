@@ -6,7 +6,7 @@
 - **Integrantes:** Felipe, Nikolas, Miguel
 - **Tema Oficial:** Boas práticas de segurança na era da informação
 - **Avaliador Responsável:** Prof. William Devidé Komel
-- **Auditado em:** `2026-11-17T09:41:09`
+- **Auditado em:** `2026-11-17T10:51:36`
 
 ---
 
@@ -93,7 +93,7 @@
 - **GitHub URL (`links.txt`):** https://github.com/MeloozXz/RiskZero.git
 - **Diagnóstico GitHub:** Repositório 'MeloozXz/RiskZero' ativo (HTTP 200). 19 commit(s) inspecionado(s) (MeloozXz: 17, nikolasmelo: 2). README online: Não.
 - **Deploy URL (`links.txt`):** https://riskzero-vault.vercel.app/ (Provedor: `Vercel Cloud`)
-- **Diagnóstico Deploy (2.4):** Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 824 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.
+- **Diagnóstico Deploy (2.4):** Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 592 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'.
 - **Banco de Dados em Nuvem Publicado (2.3):** `Google Firebase Cloud Firestore` (securityproject-67800.firebaseapp.com)
 - **Chaves `localStorage` de UI/Sessão Permitidas (Não Penalizam):** `rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey}, rz_privacy_screen_enabled, riskzero.realIpBaseline, riskzero_client_wg_pubkey, riskzero_client_private_key, riskzero_warp_active_credentials`
 - **Persistência Local Indevida do Tema do Projeto:** `rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers`
@@ -148,7 +148,7 @@
 | **2.1** | 2.1 Backend (APIs) | `Avançado` | **9.40** | 10.00 | Camada de serviços, autenticação, regras de negócio e persistência estruturada (25 arquivos principais). (Módulos de Backend/Serviços/Integrações no ZIP: 25 • Alertas de segurança: 0) |
 | **2.2** | 2.2 Frontend (UI/UX) | `Avançado` | **9.50** | 10.00 | Interface estruturada com 25 arquivos de visualização/componentes responsivos. (Componentes/Telas Frontend no ZIP: 25 • Tecnologias UI: Firebase, PostgreSQL / SQL, Python, React, Tailwind CSS, Testes Automatizados, TypeScript, Vite) |
 | **2.3** | 2.3 Banco de Dados Físico | `Insuficiente` | **3.80** | 10.00 | Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados (rz_hardening_checklist_v1, riskzero_link_detector_history_v2, seguranapp_custom_vpn_servers, riskzero_custom_vpn_servers), abatendo a nota da rubrica 2.3. (Estrutura DDL (.sql / VM Oracle) vs DER: 8 tabelas (PK: Sim, FK: Sim) • Tabelas gravadas (INSERT/UPDATE) pelo código: 6/8 • Tabelas consumidas (SELECT) pelo código: 6/8 • Registros no script / banco: 176 registros (Todas as tabelas com registros: SIM) • Chaves localStorage permitidas (UI/Sessão): rz_welcome_dismissed, rz_autolock_minutes, rz_clipboard_seconds, rz_privacy_screen, ${BIOMETRIC_CONFIG_PREFIX}${emailKey}, ${BIOMETRIC_KEY_PREFIX}${emailKey} • Persistência fora do BD (localStorage/JSON indevido): DETECTADA (Abatimento de pontos aplicado em 2.3)) |
-| **2.4** | 2.4 Deploy Online | `Avançado` | **4.80** | 5.00 | Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 824 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo. (Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (824 ms) • Banco de Dados Online Ativo: Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com) • Tabelas presentes no BD Online: 6/8 • Sistema apontando para o BD Online: SIM (Integrado)) |
+| **2.4** | 2.4 Deploy Online | `Avançado` | **4.80** | 5.00 | Deploy online ativo em Vercel Cloud (https://riskzero-vault.vercel.app/ — HTTP 200 em 592 ms) — Título: 'RiskZero - Zero Knowledge Vault & Cyber Defense'. Sistema publicado e funcional apontando para banco de dados online ativo. (Deploy do Sistema: Vercel Cloud (https://riskzero-vault.vercel.app/) — HTTP 200 (592 ms) • Banco de Dados Online Ativo: Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com) • Tabelas presentes no BD Online: 6/8 • Sistema apontando para o BD Online: SIM (Integrado)) |
 | **2.5** | 2.5 GitHub & README | `Avançado` | **4.80** | 5.00 | Repositório 'MeloozXz/RiskZero' ativo (HTTP 200). 19 commit(s) inspecionado(s) (MeloozXz: 17, nikolasmelo: 2). README online: Não. (URL GitHub em links.txt: https://github.com/MeloozXz/RiskZero.git • README.md no projeto: Sim (4625 bytes) • Commits inspecionados na API: 19) |
 | **3.1** | 3.1 Arguição do Código | `Pendente` | **0.00** | 6.00 | Item presencial obrigatório (6,0 pts): Inicia VAZIO (Pendente). Selecione o nível (Insuficiente, Pleno ou Avançado) para cada integrante durante a sabatina técnica. (PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie o domínio tecnológico individual de cada aluno na tabela abaixo.) |
 | **3.2** | 3.2 Pitch do Grupo | `Pendente` | **0.00** | 5.00 | Item presencial obrigatório (5,0 pts): Inicia VAZIO (Pendente). Preencha durante/após a apresentação ao vivo da equipe. (PREENCHIMENTO OBRIGATÓRIO NA BANCA AO VIVO: Avalie coesão da equipe, síntese, postura e tempo de apresentação (15-20 min).) |
@@ -196,7 +196,7 @@ Provedor de Autenticação / Dados: Google Firebase Cloud Firestore
 ```
 Hospedagem da Aplicação: Vercel Cloud (https://riskzero-vault.vercel.app/)
 Hospedagem do Banco: Google Firebase Cloud Firestore
-Status HTTP: 200 (824 ms)
+Status HTTP: 200 (592 ms)
 ```
 
 ---
@@ -226,7 +226,7 @@ Nota Pilar 1: 28.63 / 30,00 pts • 13305 palavras (~48 págs.) • ⚠️ Pend�
 
 ### 3. Rastreabilidade das Tabelas (.sql ↔ Banco Online ↔ Gravação & Consumo) e Deploy (`CRITICO`)
 Online: 6/8 • Grava: 6/8 • Consome (SELECT): 6/8
-- Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (824 ms).
+- Hospedagem da Aplicação (Item 2.4): Vercel Cloud (https://riskzero-vault.vercel.app/) — Status HTTP 200 (592 ms).
 - Publicação do Banco de Dados (Item 2.3): Google Firebase Cloud Firestore (securityproject-67800.firebaseapp.com).
 - Script SQL Entregue ('CTDS-2026-02-BD-RiskZero-Felipe-Miguel-Nikolas.sql'): 8 tabelas DDL (usuarios_perfil, cofre_envelope, cofre_itens, historico_senhas, logs_auditoria, servidores_vpn) e 176 registros INSERT INTO.
 - Rastreabilidade das Tabelas do .sql no Banco Online (Google Firebase Cloud Firestore): 6/8 existem online • 6/8 possuem gravação (INSERT/UPDATE) • 6/8 são consumidas via leitura (SELECT) • 6/8 com ciclo completo.
