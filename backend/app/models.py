@@ -93,6 +93,22 @@ class BlocoParecerTecnico(BaseModel):
     itens: list[str] = Field(default_factory=list)
 
 
+class SecaoAbntEvidencia(BaseModel):
+    secao: str
+    presente: bool
+    titulo_encontrado: str = ""
+    evidencia: str = ""
+    origem: Literal["heading", "sumario", "conteudo", "ia", "ausente"] = "ausente"
+
+
+class ItemChecklistAbnt(BaseModel):
+    regra: str
+    conforme: bool
+    valor_detectado: str
+    esperado: str
+    gravidade: Literal["conforme", "recomendacao", "critico"] = "conforme"
+
+
 class AuditoriaTabelaBanco(BaseModel):
     tabela: str
     presente_no_sql: bool = True
@@ -101,6 +117,14 @@ class AuditoriaTabelaBanco(BaseModel):
     status_banco_online: str = "Não verificado"
     codigo_faz_gravacao: bool = False
     codigo_faz_consumo_leitura: bool = False
+    codigo_faz_insert: bool = False
+    codigo_faz_update: bool = False
+    codigo_faz_select: bool = False
+    codigo_faz_delete: bool = False
+    colunas_qtd: int = 0
+    possui_pk: bool = False
+    possui_fk: bool = False
+    presente_no_der: bool = False
     evidencia_codigo: str = ""
     conforme_ciclo_completo: bool = False
 
@@ -123,9 +147,15 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     monografia_palavras: int = 0
     monografia_caracteres: int = 0
     secoes_abnt_detectadas: dict[str, bool] = Field(default_factory=dict)
+    secoes_abnt_presentes: list[str] = Field(default_factory=list)
     secoes_abnt_faltantes: list[str] = Field(default_factory=list)
+    secoes_abnt_evidencias: list[SecaoAbntEvidencia] = Field(default_factory=list)
     pendencias_formatacao_abnt: list[str] = Field(default_factory=list)
     detalhes_formatacao_abnt: dict[str, str] = Field(default_factory=dict)
+    checklist_abnt: list[ItemChecklistAbnt] = Field(default_factory=list)
+    abnt_score_pct: float = 0.0
+    docx_somente_imagens: bool = False
+    fonte_texto_monografia: str = ""
     rfs_detectados_qtd: int = 0
     rnfs_detectados_qtd: int = 0
     possui_mer_der: bool = False
@@ -153,7 +183,7 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     sql_possui_triggers_functions: bool = False
     sql_diagnostico: str = ""
 
-    # Código-Fonte (.zip)
+    # Código-Fonte (.zip) + Análise Profunda Frontend/Backend
     zip_arquivo: str = ""
     zip_total_arquivos: int = 0
     zip_extensoes: dict[str, int] = Field(default_factory=dict)
@@ -166,12 +196,30 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     zip_arquivos_frontend: list[str] = Field(default_factory=list)
     zip_arquivos_teste: list[str] = Field(default_factory=list)
     zip_alertas_seguranca: list[str] = Field(default_factory=list)
+    backend_rotas_detectadas: list[str] = Field(default_factory=list)
+    backend_possui_auth: bool = False
+    backend_possui_validacao: bool = False
+    backend_possui_tratamento_erro: bool = False
+    backend_crud_resumo: dict[str, int] = Field(default_factory=dict)
+    frontend_paginas_detectadas: list[str] = Field(default_factory=list)
+    frontend_possui_responsividade: bool = False
+    frontend_possui_chamadas_api: bool = False
+    sistema_aderencia_proposto_resumo: str = ""
+    sistema_aderencia_proposto_pct: float = 0.0
 
     # Apresentação (Slides .pptx / .pdf)
     slides_arquivo: str = ""
     slides_qtd: int = 0
     slides_etapas_roteiro: dict[str, bool] = Field(default_factory=dict)
+    slides_etapas_faltantes: list[str] = Field(default_factory=list)
     slides_titulos: list[str] = Field(default_factory=list)
+    slides_palavras_total: int = 0
+    slides_media_palavras_por_slide: float = 0.0
+    slides_imagens_qtd: int = 0
+    slides_com_excesso_texto: list[str] = Field(default_factory=list)
+    slides_objetividade_nivel: str = ""
+    slides_qualidade_resumo: str = ""
+    slides_fonte_texto: str = ""
 
     # Links Online (GitHub & Deploy)
     github_url: str = ""
@@ -183,6 +231,13 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     github_readme_online: bool = False
     github_linguagens: list[str] = Field(default_factory=list)
     github_diagnostico: str = ""
+    github_branch_padrao: str = ""
+    github_ultimo_commit_sha: str = ""
+    github_ultimo_commit_msg: str = ""
+    github_total_arquivos_arvore: int = 0
+    github_sistema_funcional: bool = False
+    github_estrutura_diagnostico: str = ""
+    github_rate_limited: bool = False
 
     deploy_url: str = ""
     deploy_online_ok: bool = False
@@ -190,8 +245,14 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     deploy_tempo_ms: int = 0
     deploy_titulo_pagina: str = ""
     deploy_diagnostico: str = ""
+    deploy_versao_compativel_github: Literal[
+        "sincronizado", "possivelmente_desatualizado", "divergente", "nao_verificavel"
+    ] = "nao_verificavel"
+    deploy_versao_diagnostico: str = ""
+    deploy_protegido_antibot_host: bool = False
+    deploy_erros_runtime_detectados: list[str] = Field(default_factory=list)
 
-    # Persistência em Banco Nuvem vs LocalStorage/SessionStorage & Deploy (Itens 2.3 e 2.4)
+    # Persistência em Banco Nuvem vs LocalStorage/SessionStorage, DER & Deploy BD (Itens 2.3 e 2.4)
     hospedado_vm_oracle: bool = False
     banco_online_ativo_e_apontado: bool = False
     deploy_provedor: str = ""
@@ -211,8 +272,19 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     tabelas_sql_consumidas_pelo_codigo_qtd: int = 0
     tabelas_ciclo_completo_qtd: int = 0
     entidades_tema_sem_tabela_banco: list[str] = Field(default_factory=list)
+    der_entidades_documentadas: list[str] = Field(default_factory=list)
+    der_tabelas_correspondentes: list[str] = Field(default_factory=list)
+    der_entidades_ausentes_no_sql: list[str] = Field(default_factory=list)
+    sql_tabelas_ausentes_no_der: list[str] = Field(default_factory=list)
+    sql_correspondencia_der_pct: float = 0.0
+    bd_config_host_detectado: str = ""
+    bd_host_localhost_valido_em_nuvem: bool = False
+    bd_diagnostico_deploy_online: str = ""
     inviabiliza_finalizacao_persistencia: bool = False
     diagnostico_persistencia_2_3_2_4: str = ""
+
+    # Enriquecimento qualitativo opcional (Camada 2 Gemini)
+    analise_qualitativa_gemini: dict[str, str] = Field(default_factory=dict)
 
 
 class AvaliacaoGrupoModel(BaseModel):

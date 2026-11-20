@@ -630,6 +630,40 @@ o arquivo .sql na pasta da labwarenext estava errado, atualizei ele, faça as pu
    - Git commit e push executados nas branches `master` e `main` de `origin` e `bancas_remote`.
    - Disparado o webhook de auto-deploy na VM Oracle Cloud (`147.15.2.73`) com validação online e integridade dos endpoints.
 
+---
+
+## Sessão 25 — 20/11/2026 (12:45)
+
+### Prompt 25 (20/11/2026 - 12:45)
+```text
+/agente-orquestrador /grill-me /goal preciso que melhore a analise dos tcc escritos, das apresentações e principalmente dos sistemas (analisando o deploy do sistema e do banco de dados). algumas inconsistencias estão acontecendo nas analises:
+- tcc: indicação de que tem determinado capitulo e não tem, ou que não tem e tem. quando listar por exemplo que o tcc tem 12/14 capitulos, deve deixar bem claro os que estão faltando e os que foram analisados. deve focar tambem na analise daformatação de acordo com as normas da abnt
+- apresentação: analisar a qualidade e objetividade do material.
+- sistema frontend e backend: analisar profundamente o funcionamento e se corresponde ao proposto. 
+- banco de dados: se as tabelas correspondem ao DER, se existem os dados e se as estruturas estão correstas, e se o sistema consome algo do localstorage (é permitido consumos pontuais como tema ou outros que não impactam em dados).
+- github: se o repositorio contem o sistema funcional
+- deploy sistema: se esta funcionando e se contem a ultima versão presente no repositorio do github
+- deploy bd: se corresponde a estrutura do arquivo .sql e se o sistema esta acessando e consumindo (gravando, alterando, consultado e excluindo) do banco online, ou se esta consumindo funções importantes no localstorage. importante, validar onde esta o deploy do bd, pois por exemplo na minha vm ou no infinityfree as configurações de bd online ficam iguais ao localhost, mas estão funcionando normalmente online.
+
+melhore esse pontos, trace um plano de ação que deixe nosso processo cada vez mais funcional.
+depois, quero uma landingpage em que os alunos vejam cada apresentação (ordenada por turma e pela ordem das apresentações), as que ainda vão ocorrer exibem os dados e se já foram entregues os arquivos. as já realizadas exibem as notas individuais dos alunos e a média do grupo com as parciais. exibe o status, se ainda tem pendências, se já foram cumpridas as pendencias e se as notas estão liberadas, retidas ou nova apresentação.
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 25
+1. **Arquitetura do Motor de Auditoria:**
+   - Pipeline **Híbrido em 2 Camadas**: parser determinístico avançado em Python (XML nativo de DOCX com herança de estilos, PDF fallback, PPTX/mídia, árvore de código CRUD/rotas/telas/DER, GitHub REST + git ls-remote + comparação com Deploy) combinado com enriquecimento qualitativo estruturado via **Gemini API** (com fallback determinístico).
+2. **Validação Contextual de Deploy de Banco de Dados (VM Oracle, InfinityFree, Supabase, Firebase):**
+   - Validação contextual por provedor + auditoria real de CRUD (`INSERT`, `UPDATE`, `SELECT`, `DELETE`) no código + sondagem HTTP do deploy (sem acoplar credenciais root da VM). Configurações `localhost`/host interno em apps publicados na VM Oracle ou InfinityFree são reconhecidas como bancos online legítimos.
+3. **Rigor da Formatação ABNT:**
+   - Desvios de formatação ABNT impactam diretamente a nota sugerida da **Rubrica 1.1 (Monografia ABNT)** e são detalhados no parecer item a item, sem trava automática paralela (só retém se 1.1 ficar Insuficiente `< 50%` ou decisão manual do professor).
+4. **Roteamento & Acesso da Landing Page dos Alunos:**
+   - Rota raiz (`/`) passa a exibir a **Landing Page Pública dos Alunos** (sem exigir login), com acesso à **Área do Professor / Banca** na rota `/professor` protegido por Firebase Authentication.
+5. **Gestão de Pendências por Grupo:**
+   - Controle simplificado por grupo (campo de texto livre editável + botão alternador `Pendências em Aberto` / `Pendências Cumpridas` vinculado ao status de liberação da nota), salvo em `psof3_sessoes_banca/{grupoId}`.
+6. **Visibilidade de Notas quando Retida:**
+   - Exibir sempre as notas numéricas (parciais P1–P4, média do grupo e individuais) assim que a banca for concluída, destacando o selo oficial (`Nota Liberada`, `Nota Retida`, `Nova Apresentação`), o texto das pendências e se já foram cumpridas.
+
+
 
 
 

@@ -83,6 +83,22 @@ export interface BlocoParecerTecnico {
   itens: string[];
 }
 
+export interface SecaoAbntEvidencia {
+  secao: string;
+  presente: boolean;
+  titulo_encontrado: string;
+  evidencia: string;
+  origem: 'heading' | 'sumario' | 'conteudo' | 'ia' | 'ausente';
+}
+
+export interface ItemChecklistAbnt {
+  regra: string;
+  conforme: boolean;
+  valor_detectado: string;
+  esperado: string;
+  gravidade: 'conforme' | 'recomendacao' | 'critico';
+}
+
 export interface AuditoriaArquivoItem {
   tipo: string;
   obrigatorio: boolean;
@@ -103,6 +119,14 @@ export interface AuditoriaTabelaBanco {
   status_banco_online: string;
   codigo_faz_gravacao: boolean;
   codigo_faz_consumo_leitura: boolean;
+  codigo_faz_insert?: boolean;
+  codigo_faz_update?: boolean;
+  codigo_faz_select?: boolean;
+  codigo_faz_delete?: boolean;
+  colunas_qtd?: number;
+  possui_pk?: boolean;
+  possui_fk?: boolean;
+  presente_no_der?: boolean;
   evidencia_codigo: string;
   conforme_ciclo_completo: boolean;
 }
@@ -112,9 +136,15 @@ export interface AuditoriaTecnicaDetalhada {
   monografia_palavras: number;
   monografia_caracteres: number;
   secoes_abnt_detectadas: Record<string, boolean>;
+  secoes_abnt_presentes?: string[];
   secoes_abnt_faltantes?: string[];
+  secoes_abnt_evidencias?: SecaoAbntEvidencia[];
   pendencias_formatacao_abnt?: string[];
   detalhes_formatacao_abnt?: Record<string, string>;
+  checklist_abnt?: ItemChecklistAbnt[];
+  abnt_score_pct?: number;
+  docx_somente_imagens?: boolean;
+  fonte_texto_monografia?: string;
   rfs_detectados_qtd: number;
   rnfs_detectados_qtd: number;
   possui_mer_der: boolean;
@@ -153,11 +183,29 @@ export interface AuditoriaTecnicaDetalhada {
   zip_arquivos_frontend: string[];
   zip_arquivos_teste: string[];
   zip_alertas_seguranca: string[];
+  backend_rotas_detectadas?: string[];
+  backend_possui_auth?: boolean;
+  backend_possui_validacao?: boolean;
+  backend_possui_tratamento_erro?: boolean;
+  backend_crud_resumo?: Record<string, number>;
+  frontend_paginas_detectadas?: string[];
+  frontend_possui_responsividade?: boolean;
+  frontend_possui_chamadas_api?: boolean;
+  sistema_aderencia_proposto_resumo?: string;
+  sistema_aderencia_proposto_pct?: number;
 
   slides_arquivo: string;
   slides_qtd: number;
   slides_etapas_roteiro: Record<string, boolean>;
+  slides_etapas_faltantes?: string[];
   slides_titulos: string[];
+  slides_palavras_total?: number;
+  slides_media_palavras_por_slide?: number;
+  slides_imagens_qtd?: number;
+  slides_com_excesso_texto?: string[];
+  slides_objetividade_nivel?: string;
+  slides_qualidade_resumo?: string;
+  slides_fonte_texto?: string;
 
   github_url: string;
   github_online_ok: boolean;
@@ -168,6 +216,13 @@ export interface AuditoriaTecnicaDetalhada {
   github_readme_online: boolean;
   github_linguagens: string[];
   github_diagnostico: string;
+  github_branch_padrao?: string;
+  github_ultimo_commit_sha?: string;
+  github_ultimo_commit_msg?: string;
+  github_total_arquivos_arvore?: number;
+  github_sistema_funcional?: boolean;
+  github_estrutura_diagnostico?: string;
+  github_rate_limited?: boolean;
 
   deploy_url: string;
   deploy_online_ok: boolean;
@@ -179,6 +234,10 @@ export interface AuditoriaTecnicaDetalhada {
   banco_online_ativo_e_apontado?: boolean;
   deploy_rodando_inteiramente_nuvem: boolean;
   deploy_diagnostico: string;
+  deploy_versao_compativel_github?: 'sincronizado' | 'possivelmente_desatualizado' | 'divergente' | 'nao_verificavel';
+  deploy_versao_diagnostico?: string;
+  deploy_protegido_antibot_host?: boolean;
+  deploy_erros_runtime_detectados?: string[];
 
   banco_provedor_nuvem: string;
   banco_url_detectada: string;
@@ -195,8 +254,17 @@ export interface AuditoriaTecnicaDetalhada {
   tabelas_sql_consumidas_pelo_codigo_qtd: number;
   tabelas_ciclo_completo_qtd: number;
   entidades_tema_sem_tabela_banco: string[];
+  der_entidades_documentadas?: string[];
+  der_tabelas_correspondentes?: string[];
+  der_entidades_ausentes_no_sql?: string[];
+  sql_tabelas_ausentes_no_der?: string[];
+  sql_correspondencia_der_pct?: number;
+  bd_config_host_detectado?: string;
+  bd_host_localhost_valido_em_nuvem?: boolean;
+  bd_diagnostico_deploy_online?: string;
   inviabiliza_finalizacao_persistencia: boolean;
   diagnostico_persistencia_2_3_2_4: string;
+  analise_qualitativa_gemini?: Record<string, string>;
 }
 
 export interface AvaliacaoGrupo {
@@ -341,6 +409,11 @@ export interface SessaoBancaAoVivo {
   media_final_consolidada?: number;
   status_liberacao_final?: ResultadoFinalTipo;
   banca_consolidada?: BancaConsolidada;
+  possui_pendencias?: boolean;
+  pendencias_descricao?: string;
+  pendencias_cumpridas?: boolean;
+  pendencias_cumpridas_em?: string | null;
+  pendencias_atualizado_por?: string;
   atualizado_em: string;
 }
 

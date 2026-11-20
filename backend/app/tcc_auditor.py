@@ -47,6 +47,14 @@ from .regras_msep import (
     RUBRICAS_MSEP_OFICIAIS,
     obter_pontuacao_pilar4_aluno,
 )
+from .auditoria_profunda import (
+    analisar_correspondencia_der_e_crud_zip,
+    auditar_github_e_deploy_profundo,
+    auditar_monografia_e_abnt,
+    auditar_slides_profundo,
+    enriquecer_auditoria_gemini,
+    extrair_ddl_detalhes_sql,
+)
 
 
 def _data_br_para_iso(data_br: str) -> str:
@@ -106,19 +114,14 @@ def recalcular_totais_avaliacao(avaliacao: AvaliacaoGrupoModel) -> AvaliacaoGrup
     avaliacao.p3_grupo_base = round(nota_3_2 + nota_3_3, 2)
 
     # Identificar itens insuficientes coletivos do grupo (Pilares 1, 2 e itens 3.2/3.3)
+    # Decisão ABNT (Sessão 25): desvios de formatação ABNT reduzem a nota da rubrica 1.1 e são
+    # listados no relatório, retendo apenas se 1.1 ficar Insuficiente (< 50%) ou decisão manual.
     itens_insuf_coletivos: list[str] = []
     for r in avaliacao.rubricas:
         if r.codigo in ("3.1", "4.1", "4.2"):
             continue
         if r.nivel == "Insuficiente":
             itens_insuf_coletivos.append(f"{r.titulo} ({r.nota:.1f}/{r.peso_max:.1f})")
-
-    # Regra SENAI (Sessão 18): Não conformidades estruturais de formatação ABNT retêm a nota
-    if getattr(avaliacao, "auditoria_tecnica", None) and avaliacao.auditoria_tecnica.pendencias_formatacao_abnt:
-        for pend in avaliacao.auditoria_tecnica.pendencias_formatacao_abnt:
-            item_pend = f"Formatação ABNT ({pend})"
-            if item_pend not in itens_insuf_coletivos:
-                itens_insuf_coletivos.append(item_pend)
 
     notas_finais: list[float] = []
     todos_insuf_grupo: list[str] = list(itens_insuf_coletivos)
@@ -324,12 +327,12 @@ def _contar_tuplas_values_sql(bloco_values: str) -> int:
     return max(1, tuplas)
 
 
-def _analisar_script_sql(caminho_sql: Path, det: AuditoriaTecnicaDetalhada) -> None:
+def _analisar_script_sql(caminho_sql: Path, det: AuditoriaTecnicaDetalhada) -> dict[str, dict[str, Any]]:
     det.sql_arquivo = caminho_sql.name
     try:
         conteudo = caminho_sql.read_text(encoding="utf-8", errors="replace")
     except Exception:
-        return
+        return {}
 
     det.sql_linhas = len(conteudo.splitlines())
 
@@ -410,6 +413,7 @@ def _analisar_script_sql(caminho_sql: Path, det: AuditoriaTecnicaDetalhada) -> N
             f"Excelente: {det.sql_tabelas_qtd} tabela(s) modeladas e 100% povoadas com registros no script .sql "
             f"(Total: {det.sql_total_registros_inseridos} registros válidos. A sugestão de 20 reg/tabela foi atendida ou bem exemplificada)."
         )
+    return extrair_ddl_detalhes_sql(sql_limpo)
 
 
 def _analisar_arquivo_zip(
@@ -693,11 +697,11 @@ def _analisar_arquivo_zip(
                             if nome_curto not in mapa_leitura_cod[tab]:
                                 mapa_leitura_cod[tab].append(f"{nome_curto} (supabase_select)")
 
-                        # Padrão SQL tradicional / MySQL / PDO / mysqli: INSERT INTO `tab` / UPDATE `tab` / FROM `tab`
+                        # Padrão SQL tradicional / MySQL / PDO / mysqli: INSERT INTO `tab` / UPDATE `tab` / FROM|JOIN `tab`
                         if re.search(rf"\bINTO\s+[\`\"]?{re.escape(tab)}[\`\"]?", codigo_txt, re.IGNORECASE) or re.search(rf"\bUPDATE\s+[\`\"]?{re.escape(tab)}[\`\"]?", codigo_txt, re.IGNORECASE):
                             if nome_curto not in mapa_gravacao_cod[tab]:
                                 mapa_gravacao_cod[tab].append(nome_curto)
-                        if re.search(rf"\bFROM\s+[\`\"]?{re.escape(tab)}[\`\"]?", codigo_txt, re.IGNORECASE):
+                        if re.search(rf"\b(?:FROM|JOIN)\s+[\`\"]?{re.escape(tab)}[\`\"]?", codigo_txt, re.IGNORECASE):
                             if nome_curto not in mapa_leitura_cod[tab]:
                                 mapa_leitura_cod[tab].append(nome_curto)
 
@@ -842,15 +846,12 @@ def _analisar_arquivo_zip(
         if det.hospedado_vm_oracle:
             presente_online = True
             status_online = "Presente no MySQL da VM Oracle (147.15.2.73)"
-            faz_gravacao = len(arqs_grav) > 0 or True
-            faz_leitura = len(arqs_leit) > 0 or True
-            evidencia_str = f"VM Oracle (147.15.2.73) | Gravação: {', '.join(arqs_grav[:2]) or 'INSERT/UPDATE no código'} | Consumo: {', '.join(arqs_leit[:2]) or 'SELECT no código'}"
+            # Para tabelas presentes e consultadas/referenciadas no sistema na VM Oracle sem JSON local
+            evidencia_str = f"VM Oracle (147.15.2.73) | Gravação: {', '.join(arqs_grav[:2]) or 'INSERT/UPDATE/FK no código'} | Consumo: {', '.join(arqs_leit[:2]) or 'SELECT no código'}"
         elif is_php_cloud_bd:
             presente_online = True
             status_online = "Presente e Ativo no MySQL Cloud (InfinityFree / site.je)"
-            faz_gravacao = len(arqs_grav) > 0 or True
-            faz_leitura = len(arqs_leit) > 0 or True
-            evidencia_str = f"InfinityFree Cloud (site.je) | Gravação: {', '.join(arqs_grav[:2]) or 'INSERT/UPDATE no código'} | Consumo: {', '.join(arqs_leit[:2]) or 'SELECT no código'}"
+            evidencia_str = f"InfinityFree Cloud (site.je) | Gravação: {', '.join(arqs_grav[:2]) or 'INSERT/UPDATE/FK no código'} | Consumo: {', '.join(arqs_leit[:2]) or 'SELECT no código'}"
         elif supa_url_encontrada and supa_key_encontrada:
             try:
                 with httpx.Client(timeout=6.0) as client:
@@ -905,7 +906,13 @@ def _analisar_arquivo_zip(
                 partes_ev.append("Consumo (SELECT): NÃO DETECTADO")
             evidencia_str = " | ".join(partes_ev)
 
-        ciclo_ok = bool(presente_online and faz_gravacao and faz_leitura)
+        ciclo_ok = bool(
+            presente_online
+            and (
+                (faz_gravacao and faz_leitura)
+                or ((det.hospedado_vm_oracle or is_php_cloud_bd) and (faz_gravacao or faz_leitura) and not det.usa_arquivos_json_locais_no_servidor)
+            )
+        )
         tabelas_auditadas.append(
             AuditoriaTabelaBanco(
                 tabela=tab,
@@ -1217,63 +1224,7 @@ def _analisar_monografia(
     arq_pdf: Path | None,
     det: AuditoriaTecnicaDetalhada,
 ) -> str:
-    texto_docx = _extrair_texto_docx(arq_docx) if arq_docx else ""
-    texto_pdf, paginas_pdf = _extrair_texto_pdf(arq_pdf) if arq_pdf else ("", 0)
-
-    texto_base = texto_docx if len(texto_docx) >= len(texto_pdf) else texto_pdf
-    palavras = texto_base.split()
-    det.monografia_caracteres = len(texto_base)
-    det.monografia_palavras = len(palavras)
-    det.monografia_paginas_estimadas = paginas_pdf if paginas_pdf > 0 else max(1, round(len(palavras) / 280))
-
-    txt_norm = _remover_acentos(texto_base.lower())
-
-    secoes = {
-        "Capa & Folha de Rosto": any(k in txt_norm for k in ("senai ourinhos", "trabalho de conclusao", "folha de rosto", "desenvolvimento de sistemas")),
-        "Resumo & Abstract": "resumo" in txt_norm and "palavras-chave" in txt_norm,
-        "Sumário": "sumario" in txt_norm,
-        "Introdução & Justificativa": "introducao" in txt_norm or "justificativa" in txt_norm,
-        "Fundamentação Teórica": any(k in txt_norm for k in ("fundamentacao teorica", "referencial teorico", "revisao bibliografica")),
-        "Metodologia": any(k in txt_norm for k in ("metodologia", "como o sistema esta sendo desenvolvido", "procedimentos metodologicos", "materiais e metodos", "desenvolvimento do sistema")),
-        "Requisitos (RF / RNF)": any(k in txt_norm for k in ("requisitos funcionais", "rf01", "rf-01", "rf 01", "requisitos nao funcionais")),
-        "Modelagem de BD (MER/DER & Dicionário)": any(k in txt_norm for k in ("dicionario de dados", "modelo entidade", "diagrama entidade", "mer", "der", "chave primaria")),
-        "Prototipação & Wireframes (Figma)": any(k in txt_norm for k in ("figma", "prototipo", "wireframe", "interface", "telas")),
-        "Arquitetura & Stack": any(k in txt_norm for k in ("arquitetura", "stack", "front-end", "frontend", "back-end", "backend", "supabase", "mvc", "rest")),
-        "Plano de Negócios & Viabilidade": any(k in txt_norm for k in ("plano de negocio", "viabilidade", "precificacao", "monetizacao", "publico-alvo", "custos")),
-        "Rotinas e Relatório de Testes": any(k in txt_norm for k in ("plano de testes", "casos de teste", "relatorio de testes", "testes realizados", "ct01", "ct-01", "teste funcional")),
-        "Backlog & Cronograma Ágil": any(k in txt_norm for k in ("backlog", "cronograma", "kanban", "trello", "sprint", " historias de usuario", "estoria")),
-        "Conclusão & Referências ABNT": ("conclusao" in txt_norm or "consideracoes finais" in txt_norm) and "referencias" in txt_norm,
-    }
-    det.secoes_abnt_detectadas = secoes
-    det.secoes_abnt_faltantes = [sec for sec, ok in secoes.items() if not ok]
-
-    # Auditoria aprofundada de formatação ABNT (NBR 14724)
-    pend_form, det_form, avisos_form = _auditar_formatacao_abnt_docx(arq_docx)
-    det.pendencias_formatacao_abnt = pend_form
-    det.detalhes_formatacao_abnt = det_form
-
-    rfs = set(re.findall(r"\brf[\s\-_]*0*\d+\b", txt_norm))
-    rnfs = set(re.findall(r"\brnf[\s\-_]*0*\d+\b", txt_norm))
-    det.rfs_detectados_qtd = len(rfs) if rfs else (8 if secoes["Requisitos (RF / RNF)"] else 0)
-    det.rnfs_detectados_qtd = len(rnfs) if rnfs else (5 if secoes["Requisitos (RF / RNF)"] else 0)
-
-    det.possui_mer_der = secoes["Modelagem de BD (MER/DER & Dicionário)"]
-    det.possui_dicionario_dados = "dicionario de dados" in txt_norm or "chave primaria" in txt_norm
-    links_figma = list(set(re.findall(r"https?://(?:www\.)?figma\.com/[^\s\)\"'>]+", texto_base, re.IGNORECASE)))
-    det.links_figma_encontrados = links_figma[:5]
-    det.possui_link_figma = bool(links_figma) or "figma" in txt_norm
-    det.possui_plano_negocios = secoes["Plano de Negócios & Viabilidade"]
-    det.possui_casos_teste = secoes["Rotinas e Relatório de Testes"]
-    det.possui_backlog_cronograma = secoes["Backlog & Cronograma Ágil"]
-
-    # Extrair pequeno resumo limpo
-    linhas_significativas = [
-        ln.strip()
-        for ln in texto_base.splitlines()
-        if len(ln.strip()) > 60 and not ln.strip().isupper()
-    ]
-    det.resumo_monografia = " ".join(linhas_significativas[:4])[:650]
-    return texto_base
+    return auditar_monografia_e_abnt(arq_docx, arq_pdf, det)
 
 
 def _analisar_slides(
@@ -1281,33 +1232,7 @@ def _analisar_slides(
     arq_pdf: Path | None,
     det: AuditoriaTecnicaDetalhada,
 ) -> None:
-    slides_qtd = 0
-    titulos: list[str] = []
-    texto_slides = ""
-
-    if arq_pptx:
-        det.slides_arquivo = arq_pptx.name
-        slides_qtd, titulos, texto_slides = _extrair_slides_pptx(arq_pptx)
-
-    if slides_qtd == 0 and arq_pdf:
-        det.slides_arquivo = arq_pdf.name
-        texto_slides, slides_qtd = _extrair_texto_pdf(arq_pdf)
-        for idx, ln in enumerate([l.strip() for l in texto_slides.splitlines() if len(l.strip()) > 5][:12], start=1):
-            titulos.append(f"Slide {idx:02d}: {ln[:70]}")
-
-    det.slides_qtd = slides_qtd
-    det.slides_titulos = titulos[:15]
-    txt_norm = _remover_acentos(texto_slides.lower())
-
-    det.slides_etapas_roteiro = {
-        "1. Capa & Identificação (1 min)": slides_qtd > 0,
-        "2. Contexto & Dor (1.5 min)": any(k in txt_norm for k in ("problema", "dor", "contexto", "desafio", "cenario", "justificativa")),
-        "3. Solução & Proposta (1.5 min)": any(k in txt_norm for k in ("solucao", "proposta", "objetivo", "diferencia", "plataforma", "sistema")),
-        "4. Arquitetura, Stack & BD (1.5 min)": any(k in txt_norm for k in ("arquitetura", "stack", "banco", "tecnologia", "react", "supabase", "php", "front")),
-        "5. Plano de Negócio (2.5 min)": any(k in txt_norm for k in ("negocio", "monetiza", "plano", "preco", "mercado", "sustentabilidade", "custo", "viabilidade")),
-        "6. Demonstração / Protótipo (5-8 min)": any(k in txt_norm for k in ("demo", "sistema", "tela", "fluxo", "acesso", "deploy", "funcionalidade")),
-        "7. Conclusão & Encerramento (1 min)": any(k in txt_norm for k in ("conclusao", "resultado", "futuro", "obrigado", "consideracoes", "aprendizado")),
-    }
+    auditar_slides_profundo(arq_pptx, arq_pdf, det)
 
 
 def _ler_links_txt(arq_links: Path | None) -> tuple[str, str]:
@@ -1489,30 +1414,37 @@ def _auditar_online_github_e_deploy(
         det.banco_url_detectada = f"MySQL @ VM Oracle ({det.deploy_url or '147.15.2.73'})"
         det.banco_online_ativo_e_apontado = True
         det.tabelas_sql_presentes_online_qtd = len(det.sql_tabelas) if det.sql_tabelas else 8
-        det.tabelas_ciclo_completo_qtd = len(det.sql_tabelas) if det.sql_tabelas else 8
-        det.deploy_rodando_inteiramente_nuvem = True
-        det.banco_exclusivo_nuvem = True
-        det.inviabiliza_finalizacao_persistencia = False
         for t in det.tabelas_auditoria_online:
             if t.presente_no_sql:
                 t.presente_no_banco_online = True
                 t.status_banco_online = "Presente e Ativo no MySQL da VM Oracle (147.15.2.73)"
-                t.conforme_ciclo_completo = True
+                t.conforme_ciclo_completo = bool(t.codigo_faz_gravacao or t.codigo_faz_consumo_leitura)
+        det.tabelas_ciclo_completo_qtd = sum(
+            1 for t in det.tabelas_auditoria_online if t.presente_no_sql and t.conforme_ciclo_completo
+        ) or len(det.sql_tabelas)
+        det.deploy_rodando_inteiramente_nuvem = not det.usa_localstorage_indevido and not det.usa_arquivos_json_locais_no_servidor
+        det.banco_exclusivo_nuvem = det.deploy_rodando_inteiramente_nuvem
+        det.inviabiliza_finalizacao_persistencia = not det.banco_exclusivo_nuvem
 
     elif is_infinityfree_ou_php_cloud and det.deploy_online_ok:
         det.banco_provedor_nuvem = "MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)"
         det.banco_url_detectada = f"MySQL Cloud @ {det.deploy_url} (Cluster InfinityFree)"
         det.banco_online_ativo_e_apontado = True
         det.tabelas_sql_presentes_online_qtd = len(det.sql_tabelas)
-        det.tabelas_ciclo_completo_qtd = len([t for t in det.tabelas_auditoria_online if t.conforme_ciclo_completo]) or len(det.sql_tabelas)
-        det.deploy_rodando_inteiramente_nuvem = True
-        det.banco_exclusivo_nuvem = True
-        det.inviabiliza_finalizacao_persistencia = False
         for t in det.tabelas_auditoria_online:
             if t.presente_no_sql:
                 t.presente_no_banco_online = True
                 t.status_banco_online = "Presente e Ativo no MySQL Cloud (InfinityFree)"
-                t.conforme_ciclo_completo = True
+                t.conforme_ciclo_completo = bool(t.codigo_faz_gravacao or t.codigo_faz_consumo_leitura)
+        det.tabelas_ciclo_completo_qtd = sum(
+            1 for t in det.tabelas_auditoria_online if t.presente_no_sql and t.conforme_ciclo_completo
+        ) or len(det.sql_tabelas)
+        det.deploy_rodando_inteiramente_nuvem = not det.usa_localstorage_indevido and not det.usa_arquivos_json_locais_no_servidor
+        det.banco_exclusivo_nuvem = det.deploy_rodando_inteiramente_nuvem
+        det.inviabiliza_finalizacao_persistencia = not det.banco_exclusivo_nuvem
+
+    # Análise profunda GitHub (fallback 403/ls-remote + árvore funcional) & Deploy <-> GitHub + Contexto BD
+    auditar_github_e_deploy_profundo(gh_url, deploy_url, det, gh_token=gh_token)
 
     banco_online_ativo_e_apontado = bool(
         (det.banco_provedor_nuvem and det.banco_url_detectada and det.tabelas_sql_presentes_online_qtd > 0)
@@ -1608,18 +1540,23 @@ def _calcular_rubricas_deterministicas(
         justificativa = ""
 
         if cod == "1.1":  # Monografia ABNT (8.0)
-            fator = min(1.0, (ratio_secoes * 0.75) + (0.25 if det.monografia_palavras >= 3500 else 0.12))
+            ratio_abnt = (det.abnt_score_pct / 100.0) if det.checklist_abnt else 0.85
+            peso_texto = 0.15 if det.monografia_palavras >= 3500 else (0.08 if det.monografia_palavras >= 1500 else 0.0)
+            fator = min(1.0, (ratio_secoes * 0.55) + (ratio_abnt * 0.30) + peso_texto)
+            if det.docx_somente_imagens:
+                fator = max(0.55, fator - 0.10)
             if conformidade_nomenclatura_pct < 100:
-                fator = max(0.55, fator - 0.04)
+                fator = max(0.50, fator - 0.03)
             nota = round(peso * fator, 2)
+            falt_txt = ", ".join(det.secoes_abnt_faltantes) if det.secoes_abnt_faltantes else "Nenhuma"
             evidencias = [
-                f"{det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} páginas)",
-                f"{secoes_ok}/{total_secoes} seções estruturais ABNT identificadas",
-                f"Conformidade de nomenclatura digital: {conformidade_nomenclatura_pct}%",
+                f"{det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} páginas) • Fonte: {det.fonte_texto_monografia or 'DOCX/PDF'}",
+                f"Capítulos/Seções ABNT: {secoes_ok}/{total_secoes} presentes | Faltantes: {falt_txt}",
+                f"Checklist Formatação ABNT (NBR 14724): {det.abnt_score_pct:.0f}% ({len([c for c in det.checklist_abnt if c.conforme])}/{len(det.checklist_abnt)} itens conformes)",
             ]
             justificativa = (
-                f"Monografia com {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} págs) "
-                f"e {secoes_ok}/{total_secoes} elementos obrigatórios ABNT identificados."
+                f"Monografia com {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} págs), "
+                f"{secoes_ok}/{total_secoes} capítulos identificados e {det.abnt_score_pct:.0f}% de conformidade nas normas ABNT."
             )
 
         elif cod == "1.2":  # Requisitos RF/RNF (3.0)
@@ -1718,33 +1655,47 @@ def _calcular_rubricas_deterministicas(
 
         elif cod == "2.1":  # Backend (APIs) (10.0)
             qtd_back = len(det.zip_arquivos_backend)
-            if qtd_back >= 6 and not det.zip_alertas_seguranca:
-                nota = 9.4
-            elif qtd_back >= 3:
-                nota = 8.4
-            else:
-                nota = 6.5
+            qtd_rotas = len(det.backend_rotas_detectadas)
+            pts_b = 5.2
+            if qtd_back >= 3 or qtd_rotas >= 3:
+                pts_b += 1.6
+            if det.backend_possui_auth:
+                pts_b += 1.2
+            if det.backend_possui_validacao:
+                pts_b += 0.8
+            if det.backend_possui_tratamento_erro:
+                pts_b += 0.7
+            if det.zip_alertas_seguranca:
+                pts_b = max(4.5, pts_b - 1.5)
+            nota = round(min(10.0, pts_b), 2)
             evidencias = [
-                f"Módulos de Backend/Serviços/Integrações no ZIP: {qtd_back}",
+                f"Módulos Backend/Serviços: {qtd_back} | Rotas/Ações API detectadas: {qtd_rotas}",
+                f"Auth={'Sim' if det.backend_possui_auth else 'Não'} | Validação={'Sim' if det.backend_possui_validacao else 'Não'} | Erros={'Sim' if det.backend_possui_tratamento_erro else 'Não'}",
                 f"Alertas de segurança: {len(det.zip_alertas_seguranca)}",
             ]
             justificativa = (
-                f"Camada de serviços, autenticação, regras de negócio e persistência estruturada ({qtd_back} arquivos principais)."
+                f"Arquitetura backend analisada ({det.sistema_aderencia_proposto_resumo or f'{qtd_back} módulos principais'})."
             )
 
         elif cod == "2.2":  # Frontend (UI/UX) (10.0)
             qtd_front = len(det.zip_arquivos_frontend)
-            if qtd_front >= 8:
-                nota = 9.5
-            elif qtd_front >= 3:
-                nota = 8.5
-            else:
-                nota = 6.5
+            qtd_pags = len(det.frontend_paginas_detectadas)
+            pts_f = 5.5
+            if qtd_front >= 6 or qtd_pags >= 4:
+                pts_f += 2.0
+            elif qtd_front >= 2 or qtd_pags >= 2:
+                pts_f += 1.2
+            if det.frontend_possui_responsividade:
+                pts_f += 1.0
+            if det.frontend_possui_chamadas_api:
+                pts_f += 1.0
+            nota = round(min(10.0, pts_f), 2)
             evidencias = [
-                f"Componentes/Telas Frontend no ZIP: {qtd_front}",
-                f"Tecnologias UI: {', '.join(det.zip_stack_detectada)}",
+                f"Telas/Páginas UI: {qtd_pags} ({', '.join(det.frontend_paginas_detectadas[:5]) or 'N/A'})",
+                f"Responsividade={'Sim' if det.frontend_possui_responsividade else 'Não'} | Integração API/BD={'Sim' if det.frontend_possui_chamadas_api else 'Não'}",
+                f"Stack Frontend: {', '.join(det.zip_stack_detectada)}",
             ]
-            justificativa = f"Interface estruturada com {qtd_front} arquivos de visualização/componentes responsivos."
+            justificativa = f"Interface com {qtd_pags} páginas/telas e integração à camada de dados/APIs verificada."
 
         elif cod == "2.3":  # Banco de Dados Físico (10.0)
             # Avalia:
@@ -1782,10 +1733,10 @@ def _calcular_rubricas_deterministicas(
                 nota = nota_base
 
             evidencias = [
-                f"Estrutura DDL (.sql / VM Oracle) vs DER: {det.sql_tabelas_qtd} tabelas (PK: {'Sim' if det.sql_possui_pk else 'Não'}, FK: {'Sim' if det.sql_possui_fk else 'Não'})",
-                f"Tabelas gravadas (INSERT/UPDATE) pelo código: {det.tabelas_sql_gravadas_pelo_codigo_qtd}/{det.sql_tabelas_qtd}",
-                f"Tabelas consumidas (SELECT) pelo código: {det.tabelas_sql_consumidas_pelo_codigo_qtd}/{det.sql_tabelas_qtd}",
-                f"Registros no script / banco: {det.sql_total_registros_inseridos} registros (Todas as tabelas com registros: {'SIM' if (tem_todas_tabelas_com_reg or det.hospedado_vm_oracle) else f'NÃO - {len(tabelas_sem_reg)} sem registro'})",
+                f"Correspondência DER ↔ DDL (.sql): {det.sql_correspondencia_der_pct:.0f}% ({len(det.der_tabelas_correspondentes)}/{det.sql_tabelas_qtd} tabelas mapeadas; PK={'Sim' if det.sql_possui_pk else 'Não'}, FK={'Sim' if det.sql_possui_fk else 'Não'})",
+                f"CRUD no Código-Fonte: INSERT={det.backend_crud_resumo.get('insert', 0)}/{det.sql_tabelas_qtd}, UPDATE={det.backend_crud_resumo.get('update', 0)}/{det.sql_tabelas_qtd}, SELECT={det.backend_crud_resumo.get('select', 0)}/{det.sql_tabelas_qtd}, DELETE={det.backend_crud_resumo.get('delete', 0)}/{det.sql_tabelas_qtd}",
+                f"Deploy BD & Host: {det.bd_diagnostico_deploy_online or det.banco_provedor_nuvem}",
+                f"Registros no script .sql: {det.sql_total_registros_inseridos} registros (Todas as tabelas com registros: {'SIM' if (tem_todas_tabelas_com_reg or det.hospedado_vm_oracle) else f'NÃO - {len(tabelas_sem_reg)} sem registro'})",
                 f"Chaves localStorage permitidas (UI/Sessão): {', '.join(det.chaves_localstorage_permitidas_ui[:6]) or 'Nenhuma'}",
                 f"Persistência fora do BD (localStorage/JSON indevido): {'DETECTADA (Abatimento de pontos aplicado em 2.3)' if grava_fora_do_bd else 'Nenhuma (Conforme)'}",
             ]
@@ -1838,20 +1789,22 @@ def _calcular_rubricas_deterministicas(
             )
 
         elif cod == "2.5":  # GitHub & README (5.0)
-            if det.github_online_ok and (det.zip_possui_readme or det.github_readme_online):
-                nota = 4.8 if det.zip_readme_tamanho > 1200 else 4.2
+            if det.github_online_ok and det.github_sistema_funcional and (det.zip_possui_readme or det.github_readme_online):
+                nota = 4.85 if det.zip_readme_tamanho > 1000 else 4.4
+            elif det.github_online_ok and (det.zip_possui_readme or det.github_readme_online):
+                nota = 4.3
             elif det.zip_possui_readme and not det.github_url:
-                nota = 2.2  # Insuficiente — Esqueceu link do GitHub em branco no links.txt
+                nota = 2.2  # Insuficiente — Link do GitHub ausente no links.txt
             elif det.github_online_ok:
-                nota = 3.5
+                nota = 3.7
             else:
                 nota = 1.8
             evidencias = [
-                f"URL GitHub em links.txt: {det.github_url or 'EM BRANCO / AUSENTE'}",
+                f"URL GitHub: {det.github_url or 'EM BRANCO / AUSENTE'}",
+                f"Sistema funcional no repositório: {'Sim' if det.github_sistema_funcional else 'Verificar'} | SHA: {det.github_ultimo_commit_sha or 'N/A'}",
                 f"README.md no projeto: {'Sim' if det.zip_possui_readme else 'Não'} ({det.zip_readme_tamanho} bytes)",
-                f"Commits inspecionados na API: {det.github_commits_total}",
             ]
-            justificativa = det.github_diagnostico
+            justificativa = det.github_estrutura_diagnostico or det.github_diagnostico
 
         elif cod == "3.1":  # Arguição do Código / Sabatina Técnica (6.0 - Individual — Inicia Vazio/Pendente!)
             nota = 0.0
@@ -1877,17 +1830,21 @@ def _calcular_rubricas_deterministicas(
         elif cod == "3.3":  # Material de Slides (4.0)
             etapas_ok = sum(1 for v in det.slides_etapas_roteiro.values() if v)
             total_etapas = max(1, len(det.slides_etapas_roteiro))
-            if det.slides_qtd >= 7 and etapas_ok >= 6:
-                nota = 3.85
-            elif det.slides_qtd >= 5:
-                nota = 3.2
+            obj = (det.slides_objetividade_nivel or "").lower()
+            if det.slides_qtd >= 7 and etapas_ok >= 6 and ("excelente" in obj or "boa" in obj):
+                nota = 3.9 if "excelente" in obj else 3.65
+            elif det.slides_qtd >= 7 and etapas_ok >= 5:
+                nota = 3.35
+            elif det.slides_qtd >= 5 and "insuficiente" not in obj:
+                nota = 2.95
             else:
                 nota = 1.8
             evidencias = [
-                f"Total de slides na apresentação: {det.slides_qtd}",
-                f"Etapas do roteiro oficial cobertas: {etapas_ok}/{total_etapas}",
+                f"Total de slides: {det.slides_qtd} (Fonte: {det.slides_fonte_texto or 'PPTX/PDF'})",
+                f"Qualidade & Objetividade: {det.slides_objetividade_nivel or 'N/A'} ({det.slides_media_palavras_por_slide:.1f} palavras/slide, {det.slides_imagens_qtd} imagens)",
+                f"Etapas do roteiro cobertas: {etapas_ok}/{total_etapas}" + (f" | Faltantes: {', '.join(det.slides_etapas_faltantes)}" if det.slides_etapas_faltantes else " (Todas cobertas)"),
             ]
-            justificativa = (
+            justificativa = det.slides_qualidade_resumo or (
                 f"Apresentação com {det.slides_qtd} slides cobrindo {etapas_ok}/{total_etapas} tópicos exigidos no Roteiro de Banca."
             )
 
@@ -2079,43 +2036,42 @@ def _sintetizar_parecer_deterministico(
     # 2. Bloco: Documentação Técnica & Monografia ABNT (Pilar 1 — 30%)
     secoes_ok = sum(1 for v in det.secoes_abnt_detectadas.values() if v)
     total_secoes = max(1, len(det.secoes_abnt_detectadas))
+    secoes_pres = det.secoes_abnt_presentes or [sec for sec, ok in det.secoes_abnt_detectadas.items() if ok]
     secoes_faltando = det.secoes_abnt_faltantes or [sec for sec, ok in det.secoes_abnt_detectadas.items() if not ok]
 
+    itens_bloco_doc = [
+        f"Fonte Textual & Extensão: {det.fonte_texto_monografia or 'DOCX/PDF'} • {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} páginas).",
+        f"✅ Capítulos Analisados ({secoes_ok}/{total_secoes}): {', '.join(secoes_pres) if secoes_pres else 'Nenhum identificado'}.",
+    ]
     if secoes_faltando:
-        item_secoes_abnt = (
-            f"Estrutura de Seções ABNT: {secoes_ok}/{total_secoes} identificadas. "
-            f"⚠️ SEÇÕES FALTANTES ({len(secoes_faltando)}): [{', '.join(secoes_faltando)}]."
+        itens_bloco_doc.append(
+            f"❌ Capítulos / Seções Faltantes ({len(secoes_faltando)}/{total_secoes}): {', '.join(secoes_faltando)}."
         )
-        atencao.append(f"Monografia incompleta na norma ABNT: faltam {len(secoes_faltando)} seções [{', '.join(secoes_faltando)}].")
+        atencao.append(f"Monografia ({secoes_ok}/{total_secoes} capítulos): faltam {len(secoes_faltando)} seções [{', '.join(secoes_faltando)}].")
     else:
-        item_secoes_abnt = f"Estrutura de Seções ABNT: {secoes_ok}/{total_secoes} identificadas. ✅ Todas as 14 seções presentes."
+        fortes.append(f"Monografia completa com todos os {total_secoes}/{total_secoes} capítulos/seções ABNT identificados.")
 
     det_form = det.detalhes_formatacao_abnt or {}
-    item_formatacao_abnt = (
-        f"Auditoria de Formatação (NBR 14724): Papel: {det_form.get('papel', 'A4')} • "
-        f"Margens: {det_form.get('margens', 'Sup 3 / Esq 3 / Inf 2 / Dir 2 cm')} • "
-        f"Tipografia: {det_form.get('tipografia', 'Padrão')} • "
-        f"Espaçamento: {det_form.get('espacamento', '1,5')} • "
+    itens_ok_abnt = len([c for c in det.checklist_abnt if c.conforme])
+    itens_bloco_doc.append(
+        f"Checklist Formatação ABNT (NBR 14724/6024/6023): {det.abnt_score_pct:.0f}% ({itens_ok_abnt}/{len(det.checklist_abnt)} conformes) — "
+        f"Papel: {det_form.get('papel', 'A4')} • Margens: {det_form.get('margens', '3/3/2/2 cm')} • "
+        f"Fonte: {det_form.get('tipografia', 'Padrão')} • Espaçamento: {det_form.get('espacamento', '1,5')} • "
         f"Alinhamento: {det_form.get('alinhamento', 'Justificado')}."
     )
-
-    itens_bloco_doc = [
-        f"Extensão textual: {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} páginas estimadas).",
-        item_secoes_abnt,
-        item_formatacao_abnt,
-        f"Engenharia de Requisitos: {det.rfs_detectados_qtd} Requisitos Funcionais (RF) e {det.rnfs_detectados_qtd} Requisitos Não Funcionais (RNF) mapeados.",
-        f"Modelagem de Dados e Prototipação: MER/DER={'Sim' if det.possui_mer_der else 'Não'}, Dicionário de Dados={'Sim' if det.possui_dicionario_dados else 'Não'}, Protótipo/Figma={'Sim' if det.possui_link_figma else 'Não'}.",
-        f"Plano de Negócios, Testes e Gestão Ágil: Plano de Negócio={'Sim' if det.possui_plano_negocios else 'Não'}, Casos de Teste={'Sim' if det.possui_casos_teste else 'Não'}, Backlog/Cronograma={'Sim' if det.possui_backlog_cronograma else 'Não'}.",
-    ]
+    itens_bloco_doc.extend([
+        f"Engenharia de Requisitos: {det.rfs_detectados_qtd} RFs e {det.rnfs_detectados_qtd} RNFs mapeados.",
+        f"Modelagem, Prototipação & Gestão: MER/DER={'Sim' if det.possui_mer_der else 'Não'}, Dicionário={'Sim' if det.possui_dicionario_dados else 'Não'}, Figma={'Sim' if det.possui_link_figma else 'Não'}, Plano Negócio={'Sim' if det.possui_plano_negocios else 'Não'}, Testes={'Sim' if det.possui_casos_teste else 'Não'}, Backlog={'Sim' if det.possui_backlog_cronograma else 'Não'}.",
+    ])
 
     if det.pendencias_formatacao_abnt:
         for pend in det.pendencias_formatacao_abnt:
-            itens_bloco_doc.append(f"⚠️ PENDÊNCIA DE FORMATAÇÃO (Nota Retida até envio corrigido): {pend}")
-            atencao.append(f"Formatação ABNT não conforme: {pend}")
+            itens_bloco_doc.append(f"⚠️ Desvio ABNT (impacta Rubrica 1.1): {pend}")
+            atencao.append(f"Formatação ABNT (Rubrica 1.1): {pend}")
 
     if det.monografia_palavras >= 4000:
         fortes.append(
-            f"Monografia densa e bem desenvolvida ({det.monografia_palavras} palavras, ~{det.monografia_paginas_estimadas} páginas, {det.rfs_detectados_qtd} RFs e {det.rnfs_detectados_qtd} RNFs)."
+            f"Monografia bem desenvolvida ({det.monografia_palavras} palavras, ~{det.monografia_paginas_estimadas} páginas, {det.rfs_detectados_qtd} RFs e {det.rnfs_detectados_qtd} RNFs)."
         )
     else:
         atencao.append(
@@ -2125,26 +2081,27 @@ def _sintetizar_parecer_deterministico(
     blocos.append(
         BlocoParecerTecnico(
             categoria="Pilar 1 (30,0 pts)",
-            titulo="2. Monografia ABNT, Engenharia de Requisitos e Modelagem",
-            status="critico" if det.pendencias_formatacao_abnt else ("conforme" if avaliacao.p1_total >= 24.0 and not secoes_faltando else "alerta"),
-            resumo=f"Nota Pilar 1: {avaliacao.p1_total:.2f} / 30,00 pts • {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} págs.)" + (" • ⚠️ Pendência ABNT" if det.pendencias_formatacao_abnt else ""),
+            titulo="2. Monografia ABNT (Capítulos Analisados vs Faltantes & Normas)",
+            status="conforme" if avaliacao.p1_total >= 24.0 and not secoes_faltando and not det.pendencias_formatacao_abnt else "alerta",
+            resumo=f"Nota P1: {avaliacao.p1_total:.2f}/30 pts • Capítulos: {secoes_ok}/{total_secoes} • ABNT: {det.abnt_score_pct:.0f}%",
             itens=itens_bloco_doc,
         )
     )
 
-    # 3. Bloco: Persistência em Banco de Dados & Deploy Online (Itens 2.3 e 2.4 — Regra Crítica)
+    # 3. Bloco: Banco de Dados (DER <-> SQL + CRUD C/R/U/D) & Deploy Online (Sistema + BD)
     itens_bd_deploy: list[str] = [
-        f"Hospedagem da Aplicação (Item 2.4): {det.deploy_provedor} ({det.deploy_url or 'URL ausente'}) — Status HTTP {det.deploy_status_http} ({det.deploy_tempo_ms} ms).",
-        f"Publicação do Banco de Dados (Item 2.3): {det.banco_provedor_nuvem} ({det.banco_url_detectada}).",
-        f"Script SQL Entregue ('{det.sql_arquivo or 'Ausente'}'): {det.sql_tabelas_qtd} tabelas DDL ({', '.join(det.sql_tabelas[:6])}) e {det.sql_total_registros_inseridos} registros INSERT INTO.",
-        (
-            f"Rastreabilidade das Tabelas do .sql no Banco Online ({det.banco_provedor_nuvem}): "
-            f"{det.tabelas_sql_presentes_online_qtd}/{det.sql_tabelas_qtd} existem online • "
-            f"{det.tabelas_sql_gravadas_pelo_codigo_qtd}/{det.sql_tabelas_qtd} possuem gravação (INSERT/UPDATE) • "
-            f"{det.tabelas_sql_consumidas_pelo_codigo_qtd}/{det.sql_tabelas_qtd} são consumidas via leitura (SELECT) • "
-            f"{det.tabelas_ciclo_completo_qtd}/{det.sql_tabelas_qtd} com ciclo completo."
-        ),
+        f"Hospedagem do Sistema (Item 2.4): {det.deploy_provedor} ({det.deploy_url or 'URL ausente'}) — HTTP {det.deploy_status_http} ({det.deploy_tempo_ms} ms).",
+        f"Versão Deploy ↔ GitHub: [{det.deploy_versao_compativel_github}] {det.deploy_versao_diagnostico or 'Verificação realizada.'}",
+        f"Deploy do Banco de Dados: {det.banco_provedor_nuvem} • Host no código: '{det.bd_config_host_detectado or det.banco_url_detectada}'" + (" (localhost válido na VM/host cloud)" if det.bd_host_localhost_valido_em_nuvem else ""),
+        f"Correspondência DER (TCC) ↔ DDL (.sql '{det.sql_arquivo or 'Ausente'}'): {det.sql_correspondencia_der_pct:.0f}% ({len(det.der_tabelas_correspondentes)}/{det.sql_tabelas_qtd} tabelas mapeadas no DER; PK={'Sim' if det.sql_possui_pk else 'Não'}, FK={'Sim' if det.sql_possui_fk else 'Não'}).",
+        f"Auditoria CRUD Real no Código-Fonte: INSERT={det.backend_crud_resumo.get('insert', 0)}/{det.sql_tabelas_qtd} • UPDATE={det.backend_crud_resumo.get('update', 0)}/{det.sql_tabelas_qtd} • SELECT={det.backend_crud_resumo.get('select', 0)}/{det.sql_tabelas_qtd} • DELETE={det.backend_crud_resumo.get('delete', 0)}/{det.sql_tabelas_qtd}.",
     ]
+    if det.der_entidades_ausentes_no_sql:
+        itens_bd_deploy.append(f"⚠️ Entidade(s) citadas no TCC não encontradas no .sql: {', '.join(det.der_entidades_ausentes_no_sql[:5])}.")
+    if det.deploy_erros_runtime_detectados:
+        msg_rt = f"Erros detectados no deploy publicado: {', '.join(det.deploy_erros_runtime_detectados)}."
+        atencao.append(msg_rt)
+        itens_bd_deploy.append(f"❌ {msg_rt}")
 
     if det.chaves_localstorage_permitidas_ui:
         itens_bd_deploy.append(
@@ -2229,14 +2186,21 @@ def _sintetizar_parecer_deterministico(
         )
     )
 
-    # 4. Bloco: Arquitetura de Código & Repositório GitHub (Itens 2.1, 2.2 e 2.5)
+    # 4. Bloco: Arquitetura de Código (Frontend/Backend), Slides & Repositório GitHub (Itens 2.1, 2.2, 2.5 e 3.3)
     itens_cod_gh: list[str] = [
-        f"Stack Tecnológica Detectada no Pacote ZIP ({det.zip_total_arquivos} arquivos úteis): {', '.join(det.zip_stack_detectada) or 'Web'}.",
-        f"Estrutura de Código: {len(det.zip_arquivos_frontend)} arquivos de interface (Frontend) e {len(det.zip_arquivos_backend)} arquivos de serviços/regras/integração (Backend).",
+        f"Stack & Arquitetura ({det.zip_total_arquivos} arquivos úteis): {', '.join(det.zip_stack_detectada) or 'Web'} • {det.sistema_aderencia_proposto_resumo}",
+        f"Backend & APIs: {len(det.zip_arquivos_backend)} módulos • {len(det.backend_rotas_detectadas)} rotas/endpoints • Auth={'Sim' if det.backend_possui_auth else 'Não'} • Validação={'Sim' if det.backend_possui_validacao else 'Não'} • Tratamento Erros={'Sim' if det.backend_possui_tratamento_erro else 'Não'}.",
+        f"Frontend & UI/UX: {len(det.frontend_paginas_detectadas)} telas/páginas ({', '.join(det.frontend_paginas_detectadas[:5]) or 'N/A'}) • Responsividade={'Sim' if det.frontend_possui_responsividade else 'Não'} • Integração BD/API={'Sim' if det.frontend_possui_chamadas_api else 'Não'}.",
+        f"Apresentação / Slides ({det.slides_qtd} slides via {det.slides_fonte_texto or 'PPTX/PDF'}): Objetividade = {det.slides_objetividade_nivel or 'N/A'} ({det.slides_media_palavras_por_slide:.1f} palavras/slide, {det.slides_imagens_qtd} imagens). {det.slides_qualidade_resumo}",
     ]
+    if det.slides_etapas_faltantes:
+        itens_cod_gh.append(f"⚠️ Etapas do roteiro ausentes nos slides: {', '.join(det.slides_etapas_faltantes)}.")
+    if det.slides_com_excesso_texto:
+        itens_cod_gh.append(f"⚠️ Slides carregados (>110 palavras): {', '.join(det.slides_com_excesso_texto)}.")
+        atencao.append(f"Apresentação com excesso textual em {', '.join(det.slides_com_excesso_texto[:3])}.")
     if det.github_online_ok:
-        fortes.append(f"Repositório GitHub público e ativo ({det.github_commits_total} commits analisados via API).")
-        itens_cod_gh.append(f"✅ GitHub Ativo: {det.github_diagnostico}")
+        fortes.append(f"Repositório GitHub público e funcional ({det.github_estrutura_diagnostico or det.github_diagnostico}).")
+        itens_cod_gh.append(f"✅ GitHub Funcional: {det.github_estrutura_diagnostico or det.github_diagnostico}")
     elif not det.github_url:
         msg_gh = "Link do repositório GitHub foi deixado EM BRANCO no arquivo links.txt (Item 2.5 classificado como Insuficiente até entrega do link)."
         atencao.append(msg_gh)
@@ -2247,10 +2211,10 @@ def _sintetizar_parecer_deterministico(
 
     blocos.append(
         BlocoParecerTecnico(
-            categoria="Pilar 2 (40,0 pts)",
-            titulo="4. Engenharia de Software (Frontend, Backend e Versionamento GitHub)",
-            status="conforme" if det.github_online_ok else "critico",
-            resumo=f"Nota Pilar 2: {avaliacao.p2_total:.2f} / 40,00 pts • Stack: {', '.join(det.zip_stack_detectada)}",
+            categoria="Pilar 2 (40,0 pts) + Slides",
+            titulo="4. Sistema (Frontend/Backend), Slides (Objetividade) & GitHub Funcional",
+            status="conforme" if det.github_online_ok and det.sistema_aderencia_proposto_pct >= 70 else ("alerta" if det.github_online_ok else "critico"),
+            resumo=f"P2: {avaliacao.p2_total:.2f}/40 pts • Aderência Sistema: {det.sistema_aderencia_proposto_pct:.0f}% • Slides: {det.slides_objetividade_nivel or 'N/A'}",
             itens=itens_cod_gh,
         )
     )
@@ -2524,11 +2488,11 @@ def auditar_grupo_individual(
     det = AuditoriaTecnicaDetalhada()
 
     # 2. Monografia (DOCX / PDF)
-    _analisar_monografia(mapa_arq.get("TCC_DOCX"), mapa_arq.get("TCC_PDF"), det)
+    texto_monografia = _analisar_monografia(mapa_arq.get("TCC_DOCX"), mapa_arq.get("TCC_PDF"), det)
     if log_cb:
         log_cb(
-            f"   ├─ Monografia analisada: {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} págs) • "
-            f"RFs: {det.rfs_detectados_qtd} | RNFs: {det.rnfs_detectados_qtd}"
+            f"   ├─ Monografia ({det.fonte_texto_monografia}): {det.monografia_palavras} palavras (~{det.monografia_paginas_estimadas} págs) • "
+            f"Capítulos: {len(det.secoes_abnt_presentes)}/14 • ABNT: {det.abnt_score_pct:.0f}% • RFs: {det.rfs_detectados_qtd}"
         )
 
     # 3. Links Online preliminares (GitHub, Deploy & VM Oracle)
@@ -2543,37 +2507,37 @@ def auditar_grupo_individual(
         det.deploy_provedor = "InfinityFree / ByetHost Cloud (PHP)"
 
     # 4. Banco de Dados (.sql)
+    ddl_detalhes_sql: dict[str, dict[str, Any]] = {}
     if "BD_SQL" in mapa_arq:
-        _analisar_script_sql(mapa_arq["BD_SQL"], det)
-        if det.hospedado_vm_oracle and det.sql_tabelas_qtd == 0:
-            det.sql_tabelas = ["acesso", "candidato", "candidatura", "empresa", "entrevista", "feedback", "vaga", "usuario"]
-            det.sql_tabelas_qtd = 8
-            det.sql_inserts_por_tabela = {t: 20 for t in det.sql_tabelas}
-            det.sql_total_registros_inseridos = 160
-            det.sql_atende_min_20_por_tabela = True
-            det.sql_possui_pk = True
+        ddl_detalhes_sql = _analisar_script_sql(mapa_arq["BD_SQL"], det) or {}
         if log_cb:
             log_cb(
                 f"   ├─ Script SQL ({det.sql_arquivo}): {det.sql_tabelas_qtd} tabelas | "
-                f"{det.sql_total_registros_inseridos} registros INSERT INTO | >=20/tab: {det.sql_atende_min_20_por_tabela}"
+                f"{det.sql_total_registros_inseridos} registros INSERT INTO | Povoado: {det.sql_atende_min_20_por_tabela}"
             )
 
     # 5. Código-Fonte (.zip) e Auditoria de Persistência LocalStorage vs Banco em Nuvem / VM Oracle
     snippets: list[tuple[str, str]] = []
     if "SISTEMA_ZIP" in mapa_arq:
         snippets = _analisar_arquivo_zip(mapa_arq["SISTEMA_ZIP"], det)
+        analisar_correspondencia_der_e_crud_zip(mapa_arq["SISTEMA_ZIP"], texto_monografia, det, ddl_detalhes_sql)
         if log_cb:
             log_cb(
-                f"   ├─ Sistema ZIP ({det.zip_arquivo}): {det.zip_total_arquivos} arquivos úteis | "
-                f"Stack: {', '.join(det.zip_stack_detectada)} | Banco: {det.banco_provedor_nuvem}"
+                f"   ├─ Sistema ZIP ({det.zip_arquivo}): {det.zip_total_arquivos} arquivos • "
+                f"DER↔SQL: {det.sql_correspondencia_der_pct:.0f}% • CRUD={det.backend_crud_resumo} • Host={det.bd_config_host_detectado or det.banco_provedor_nuvem}"
             )
+    else:
+        analisar_correspondencia_der_e_crud_zip(None, texto_monografia, det, ddl_detalhes_sql)
 
     # 6. Slides (.pptx / .pdf)
     _analisar_slides(mapa_arq.get("SLIDES_PPTX"), mapa_arq.get("SLIDES_PDF"), det)
     if log_cb:
-        log_cb(f"   ├─ Apresentação: {det.slides_qtd} slides inspecionados.")
+        log_cb(
+            f"   ├─ Apresentação ({det.slides_fonte_texto}): {det.slides_qtd} slides • "
+            f"Objetividade: {det.slides_objetividade_nivel} ({det.slides_media_palavras_por_slide:.1f} palavras/slide)"
+        )
 
-    # 7. Links Online (GitHub, Deploy & VM Oracle)
+    # 7. Links Online (GitHub, Deploy & VM Oracle) + Comparação Versão Deploy <-> GitHub
     _auditar_online_github_e_deploy(
         gh_url,
         deploy_url,
@@ -2581,8 +2545,8 @@ def auditar_grupo_individual(
         auditar_online=cfg.auditar_online_github_deploy,
     )
     if log_cb:
-        log_cb(f"   ├─ GitHub: {det.github_diagnostico}")
-        log_cb(f"   ├─ Deploy & Persistência: {det.diagnostico_persistencia_2_3_2_4}")
+        log_cb(f"   ├─ GitHub & Deploy: {det.deploy_versao_diagnostico or det.github_diagnostico}")
+        log_cb(f"   ├─ Persistência & Deploy BD: {det.bd_diagnostico_deploy_online or det.diagnostico_persistencia_2_3_2_4}")
 
     avaliacao.auditoria_tecnica = det
 
@@ -2650,9 +2614,9 @@ def auditar_grupo_individual(
     avaliacao.pontos_fortes = fortes
     avaliacao.pontos_atencao = atencao
 
-    # 11. Enriquecimento opcional com Gemini API
+    # 11. Enriquecimento opcional com Gemini API (Camada 2 estruturada por dimensão)
     if cfg.gemini_api_key:
-        _enriquecer_com_gemini_opcional(avaliacao, cfg.gemini_api_key, cfg.gemini_model, log_cb=log_cb)
+        enriquecer_auditoria_gemini(avaliacao, cfg.gemini_api_key, cfg.gemini_model, log_cb=log_cb)
 
     # Preservar edições manuais da banca se já houver avaliação manual salva anteriormente
     if avaliacao_anterior and avaliacao_anterior.get("status_avaliacao") == "avaliado_banca":

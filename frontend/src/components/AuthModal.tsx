@@ -7,12 +7,13 @@ import {
   loginComGoogle,
   type User,
 } from '../services/firebase';
-import { LogIn, UserPlus, X, Shield, CheckCircle, AlertCircle } from 'lucide-react';
+import { LogIn, UserPlus, X, Shield, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 
 interface AuthModalProps {
   aberto: boolean;
   onClose?: () => void;
   onFechar?: () => void;
+  onVoltarPortal?: () => void;
   usuarioAtual?: User | null;
   onSucesso?: (user: User) => void;
   onLoginSucesso?: (user: User) => void;
@@ -23,6 +24,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   aberto,
   onClose,
   onFechar,
+  onVoltarPortal,
   onSucesso,
   onLoginSucesso,
   obrigatorio = false,
@@ -300,6 +302,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </button>
             </div>
           </form>
+
+          {onVoltarPortal && (
+            <div className="border-t border-slate-800 pt-3 text-center">
+              <button
+                type="button"
+                onClick={onVoltarPortal}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-white transition cursor-pointer"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Voltar para o Portal Público dos Alunos
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

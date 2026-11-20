@@ -71,25 +71,31 @@ Automatizar a auditoria técnica, documental e estrutural dos Trabalhos de Concl
 ## 4. Delimitação das Rubricas 2.3 e 2.4, Sabatina Técnica e Regras Finais
 1. **Delimitação da Rubrica 2.3 (Banco de Dados Físico — 10,0 pts):**
    - **Critérios de Avaliação:**
-     1. Estrutura do arquivo `.sql` corresponde à modelagem / DER (DDL de tabelas, tipos de dados, chaves primárias e relacionamentos FK).
-     2. A estrutura está sendo usada efetivamente pelo programa (leitura via `SELECT` e gravação via `INSERT`/`UPDATE`).
+     1. Estrutura do arquivo `.sql` corresponde à modelagem / DER (DDL de tabelas, entidades documentadas, tipos de dados, chaves primárias e relacionamentos FK).
+     2. A estrutura está sendo usada efetivamente pelo programa com auditoria CRUD separada (`INSERT`, `UPDATE`, `SELECT`, `DELETE`) no código-fonte.
      3. O script possui registros em todas as tabelas (não é obrigatório atingir 20 registros por tabela, os 20 eram apenas uma sugestão/recomendação de boas práticas; ter registros em todas as tabelas povoadas já atende plenamente ao povoamento).
    - **Penalidade / Abatimento de 2.3:** Se existirem dados de negócio do tema do projeto sendo gravados fora do banco de dados (em `localStorage`, `sessionStorage` ou arquivos JSON locais como `storage/*.json`), **abate pontos diretamente da rubrica 2.3**, tornando-a Insuficiente. Preferências efêmeras de UI (tema claro/escuro, ocultar valores, preferências de tela) continuam permitidas localmente e não geram penalidade.
 2. **Delimitação da Rubrica 2.4 (Deploy Online & Execução em Nuvem — 5,0 pts):**
    - **Critérios de Avaliação:**
-     1. O deploy online do sistema foi realizado e está funcional (resposta HTTP 200).
-     2. Existe banco de dados online ativo (Supabase, Firebase, Railway, etc.), e o sistema publicado aponta para ele.
+     1. O deploy online do sistema foi realizado e está funcional (resposta HTTP 200 sem erros críticos de runtime/BD; detectando desafios anti-bot de provedores como InfinityFree).
+     2. Existe banco de dados online ativo e o sistema publicado aponta para ele. **Validação Contextual:** hospedagens na **VM Oracle (`147.15.2.73`)** e **InfinityFree / ByetHost** utilizam `DB_HOST=localhost`/`127.0.0.1` ou host interno legítimo no código em produção; em Supabase/Firebase validam-se endpoints e projetos em nuvem.
+     3. Verificação do **Repositório GitHub** (sistema funcional na árvore + commits com fallback para rate limit via `git ls-remote`) e comparação entre a versão publicada no Deploy e o último estado do GitHub.
    - **Penalidade / Abatimento de 2.4:** Se **não existir banco de dados online** ou **o sistema publicado não apontar para ele** (ou se o deploy estiver inacessível), **abate pontos diretamente da rubrica 2.4**. (Nota: persistência local de dados é penalizada no item 2.3, desacoplando perfeitamente os dois critérios).
-3. **Sabatina Técnica (`3.1`) — Perguntas Simples e Diretas:**
+3. **Motor Híbrido v2 — Monografia (ABNT) e Slides (Objetividade):**
+   - **TCC Escrito (Rubrica 1.1):** Extração combinada DOCX XML nativo (resolvendo cadeia completa de estilos `Normal` → `basedOn` → `docDefaults` → `theme1`) + fallback automático PDF (`pypdf`) para documentos baseados em imagens/caixas de texto. Detecção rigorosa dos 14 capítulos (word boundaries `\b` + headings estruturais + citações ABNT), listando **explicitamente os analisados (com título encontrado) e os faltantes**, além de checklist de 9 itens ABNT (NBR 14724/6024/10520/6023). Desvios ABNT impactam diretamente a nota sugerida da Rubrica `1.1` sem trava automática paralela.
+   - **Apresentação (Rubrica 3.3):** Extração PPTX + fallback automático no PDF de slides, avaliando as 7 etapas do roteiro e métricas de **qualidade e objetividade** (palavras/slide, imagens, slides com excesso de texto > 110 palavras).
+   - **Camada Qualitativa (Gemini opcional):** Quando `GEMINI_API_KEY` estiver configurada, produz análises qualitativas estruturadas por dimensão com fallback determinístico completo.
+4. **Sabatina Técnica (`3.1`) — Perguntas Simples e Diretas:**
    - Perguntas formuladas em linguagem acessível e direta (1 a 2 frases), focando no entendimento fundamental da tecnologia:
      1. *Arquitetura:* Por que escolheram essa stack e como o Frontend se comunica com o Backend/Banco de Dados?
      2. *Persistência:* Qual a diferença prática entre guardar informações no navegador (localStorage) e gravar de fato em um banco de dados na nuvem?
      3. *Segurança:* Como o sistema sabe quem é o usuário logado e como ele impede que um usuário acesse ou altere os dados de outro?
      4. *Deploy:* Qual a diferença prática entre rodar o sistema no computador (localhost) e publicá-lo em um servidor na nuvem (deploy)?
-4. **Regras Finais de Aprovação e Liberação da Nota:**
+5. **Regras Finais de Aprovação e Liberação da Nota:**
    - **Média >= 50,0 pontos E nenhum item `Insuficiente`:** Status **`Aprovado`** (Nota Liberada).
    - **Média >= 50,0 pontos PORÉM com qualquer item `Insuficiente`:** A nota final é calculada normalmente, mas o aluno/grupo fica com **`Nota Retida (Pendências)`** até a entrega/regularização das pendências (nota: itens `3.1` e `3.2` em estado `Pendente` antes da banca ao vivo não acionam trava de `Insuficiente`).
    - **Média < 50,0 pontos:** Status **`Nova Chance (Data Futura)`** (nova apresentação agendada em data futura).
+   - **Landing Page Pública (`/`) vs Área do Professor (`/professor`):** A rota raiz (`/`) exibe o Portal Público dos Alunos (sem login), ordenado por turma e ordem das apresentações, mostrando entregas futuras, médias/parciais/notas individuais das bancas realizadas, pendências em aberto ou já cumpridas e situação de liberação. A gestão de pendências fica na Área do Professor (`/professor`).
 
 ---
 

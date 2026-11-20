@@ -492,6 +492,15 @@ export async function encerrarEConsolidarBanca(
     const segs = duracaoSegundos % 60;
     const duracaoFormatada = `${mins}m ${segs.toString().padStart(2, '0')}s`;
 
+    // Inicializar controle de pendências a partir das médias consolidadas
+    const itensPendenciaAuto = Array.from(
+      new Set(
+        bancaConsolidada.integrantes_medias.flatMap((ind) => ind.itens_insuficientes || []),
+      ),
+    );
+    const possuiPendenciasInit =
+      bancaConsolidada.status_liberacao_final !== 'Aprovado' || itensPendenciaAuto.length > 0;
+
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
     const dadosConsolidacao: Partial<SessaoBancaAoVivo> & Record<string, unknown> = {
       status: 'concluida',
@@ -505,6 +514,11 @@ export async function encerrarEConsolidarBanca(
       media_final_consolidada: bancaConsolidada.media_final,
       status_liberacao_final: bancaConsolidada.status_liberacao_final,
       banca_consolidada: bancaConsolidada,
+      possui_pendencias: possuiPendenciasInit,
+      pendencias_descricao: itensPendenciaAuto.join('\n'),
+      pendencias_cumpridas: false,
+      pendencias_cumpridas_em: null,
+      pendencias_atualizado_por: titular.displayName || titular.email || 'Prof. Titular',
       atualizado_em: encerradoEm,
     };
 
@@ -663,5 +677,77 @@ export async function recalcularEConsolidarBancaAposEdicao(
     };
   } catch (err: unknown) {
     return { ok: false, mensagem: formatarErroFirestore(err, 'recalcular e consolidar banca após edição') };
+  }
+}
+
+/**
+ * Atualiza a descrição e o cumprimento das pendências de uma banca já concluída,
+ * sincronizando o status de liberação da nota para exibição no Portal dos Alunos.
+ */
+export async function atualizarPendenciasBanca(
+  grupoId: string,
+  sessaoAtual: SessaoBancaAoVivo | null,
+  consolidadaAtual: BancaConsolidada | null,
+  professor: User,
+  dados: {
+    possui_pendencias: boolean;
+    pendencias_descricao: string;
+    pendencias_cumpridas: boolean;
+    novo_status_liberacao: ResultadoFinalTipo;
+  },
+): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    const agora = new Date().toISOString();
+    const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
+
+    const bancaAtualizada: BancaConsolidada | undefined = consolidadaAtual
+      ? {
+          ...consolidadaAtual,
+          status_liberacao_final: dados.novo_status_liberacao,
+          status_liberacao_manual: dados.novo_status_liberacao,
+          integrantes_medias: consolidadaAtual.integrantes_medias.map((ind) => ({
+            ...ind,
+            resultado: dados.novo_status_liberacao,
+          })),
+        }
+      : sessaoAtual?.banca_consolidada
+      ? {
+          ...sessaoAtual.banca_consolidada,
+          status_liberacao_final: dados.novo_status_liberacao,
+          status_liberacao_manual: dados.novo_status_liberacao,
+          integrantes_medias: sessaoAtual.banca_consolidada.integrantes_medias.map((ind) => ({
+            ...ind,
+            resultado: dados.novo_status_liberacao,
+          })),
+        }
+      : undefined;
+
+    const payload: Record<string, unknown> = {
+      status: sessaoAtual?.status || 'concluida',
+      possui_pendencias: dados.possui_pendencias,
+      pendencias_descricao: dados.pendencias_descricao.trim(),
+      pendencias_cumpridas: dados.pendencias_cumpridas,
+      pendencias_cumpridas_em: dados.pendencias_cumpridas
+        ? sessaoAtual?.pendencias_cumpridas_em || agora
+        : null,
+      pendencias_atualizado_por: professor.displayName || professor.email || 'Docente',
+      status_liberacao_final: dados.novo_status_liberacao,
+      atualizado_em: agora,
+    };
+
+    if (bancaAtualizada) {
+      payload.banca_consolidada = bancaAtualizada;
+    }
+
+    await setDoc(docSessaoRef, payload, { merge: true });
+
+    return {
+      ok: true,
+      mensagem: dados.pendencias_cumpridas
+        ? 'Pendências marcadas como cumpridas e status atualizado no Portal dos Alunos!'
+        : 'Registro de pendências e status da nota salvos no Firebase!',
+    };
+  } catch (err: unknown) {
+    return { ok: false, mensagem: formatarErroFirestore(err, 'atualizar pendências da banca') };
   }
 }

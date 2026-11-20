@@ -149,8 +149,6 @@ def test_auditoria_grupos_i2dev_a():
 
 
 def test_exportar_relatorios_endpoints():
-    import fitz  # PyMuPDF
-
     r_ficha = client.post("/api/bancas/I2DEV-A_Grupo05/exportar/ficha-pdf")
     assert r_ficha.status_code == 200
     dados_ficha = r_ficha.json()
@@ -162,9 +160,17 @@ def test_exportar_relatorios_endpoints():
     assert conteudo_ficha.startswith(b"%PDF-1.")
 
     # Validar que a Ficha MSEP respeita rigorosamente o limite de 2 páginas
-    doc = fitz.open(str(p_ficha))
-    assert len(doc) == 2, f"Ficha MSEP deve ter exatamente 2 páginas, mas tem {len(doc)}"
-    doc.close()
+    try:
+        import fitz  # PyMuPDF
+
+        doc = fitz.open(str(p_ficha))
+        num_paginas = len(doc)
+        doc.close()
+    except ImportError:
+        from pypdf import PdfReader
+
+        num_paginas = len(PdfReader(str(p_ficha)).pages)
+    assert num_paginas == 2, f"Ficha MSEP deve ter exatamente 2 páginas, mas tem {num_paginas}"
 
     # Testar download do arquivo gerado via GET
     r_dl = client.get(dados_ficha["url_download"])
@@ -225,4 +231,56 @@ def test_protecao_bancas_ja_realizadas_e_escopo_reauditoria():
     # Restaurar avaliação original
     salvas[gid] = original
     salvar_avaliacoes_salvas(salvas)
+
+
+def test_auditoria_profunda_v2():
+    res = client.get("/api/bancas")
+    assert res.status_code == 200
+    mapa = {g["id"]: g for g in res.json()["bancas"]}
+
+    # 1. Fitlink (I2DEV-A_Grupo03): DOCX somente imagens com fallback PDF + 13/14 capítulos + DER 100%
+    g_fit = mapa["I2DEV-A_Grupo03"]
+    aud_fit = g_fit["auditoria_tecnica"]
+    assert aud_fit["docx_somente_imagens"] is True
+    assert len(aud_fit["secoes_abnt_presentes"]) + len(aud_fit["secoes_abnt_faltantes"]) == 14
+    assert "Fundamentação Teórica" in aud_fit["secoes_abnt_faltantes"]
+    assert aud_fit["sql_correspondencia_der_pct"] == 100.0
+
+    # 2. LabWareNext (I2DEV-A_Grupo05): 14/14 capítulos, checklist ABNT, GitHub funcional, VM Oracle co-host e CRUD separado
+    g_lab = mapa["I2DEV-A_Grupo05"]
+    aud_lab = g_lab["auditoria_tecnica"]
+    assert len(aud_lab["secoes_abnt_presentes"]) == 14
+    assert len(aud_lab["secoes_abnt_faltantes"]) == 0
+    assert len(aud_lab["checklist_abnt"]) >= 8
+    assert aud_lab["github_sistema_funcional"] is True
+    assert aud_lab["bd_host_localhost_valido_em_nuvem"] is True
+    assert len(aud_lab["tabelas_auditoria_online"]) > 0
+    for tab in aud_lab["tabelas_auditoria_online"]:
+        assert "codigo_faz_insert" in tab
+        assert "codigo_faz_update" in tab
+        assert "codigo_faz_select" in tab
+        assert "codigo_faz_delete" in tab
+
+    # 3. Guardião Animal (I2DEV-B_Grupo03): fallback PDF de slides + objetividade
+    g_guard = mapa["I2DEV-B_Grupo03"]
+    aud_guard = g_guard["auditoria_tecnica"]
+    assert "PDF" in aud_guard["slides_fonte_texto"].upper()
+    assert aud_guard["slides_qtd"] >= 10
+    assert aud_guard["slides_objetividade_nivel"] != ""
+
+    # 4. OrganizAI (I2DEV-B_Grupo08): capítulos faltantes explícitos + localStorage indevido
+    g_org = mapa["I2DEV-B_Grupo08"]
+    aud_org = g_org["auditoria_tecnica"]
+    assert "Metodologia" in aud_org["secoes_abnt_faltantes"]
+    assert "Backlog & Cronograma Ágil" in aud_org["secoes_abnt_faltantes"]
+    assert aud_org["usa_localstorage_indevido"] is True
+
+    # 5. Sem trava paralela automática exclusiva de formatação ABNT quando rubrica 1.1 >= 50%
+    for g in mapa.values():
+        if not g.get("entregue_na_pasta"):
+            continue
+        r11 = next((r for r in g.get("rubricas", []) if r.get("codigo") == "1.1"), None)
+        if r11 and r11["nota"] >= r11["peso_max"] * 0.5:
+            assert not any("Formatação ABNT" in item for item in g.get("itens_insuficientes_grupo", []))
+
 

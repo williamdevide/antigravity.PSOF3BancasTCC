@@ -21,6 +21,7 @@ import {
   FolderOpen,
   GitBranch,
   Globe,
+  GraduationCap,
   HelpCircle,
   Info,
   LayoutGrid,
@@ -47,6 +48,7 @@ import { AuthModal } from './components/AuthModal';
 import { BannerBancaAoVivo } from './components/BannerBancaAoVivo';
 import { ModalReauditoria } from './components/ModalReauditoria';
 import { PainelBancaConsolidada } from './components/PainelBancaConsolidada';
+import { StudentLandingPage } from './components/StudentLandingPage';
 import { APP_VERSION } from './config/version';
 import { api } from './services/api';
 import { auth, onAuthStateChanged, signOut, type User } from './services/firebase';
@@ -60,6 +62,7 @@ import {
   escutarTodasSessoesBanca,
   encerrarMinhaAvaliacao,
   encerrarEConsolidarBanca,
+  atualizarPendenciasBanca,
   resetarBancaGrupo,
   recalcularEConsolidarBancaAposEdicao,
   salvarAnaliseAutomaticaFirestore,
@@ -146,7 +149,14 @@ function compararBancasTurmaDataHorario(a: AvaliacaoGrupo, b: AvaliacaoGrupo): n
   return (a.ordem_apresentacao || 999) - (b.ordem_apresentacao || 999);
 }
 
+function detectarRotaInicial(): 'alunos' | 'professor' {
+  if (typeof window === 'undefined') return 'alunos';
+  const caminho = window.location.pathname.toLowerCase();
+  return caminho.startsWith('/professor') || caminho.startsWith('/admin') ? 'professor' : 'alunos';
+}
+
 export function App() {
+  const [rotaAtual, setRotaAtual] = useState<'alunos' | 'professor'>(detectarRotaInicial);
   const [agenteAtivo, setAgenteAtivo] = useState<string | null>(null);
   const [exibirSobre, setExibirSobre] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState<AbaAgente>('bancas');
@@ -245,14 +255,34 @@ export function App() {
     void carregarTudo();
   }, []);
 
-  // Monitorar estado de autenticação Firebase dos Professores Avaliadores (Identificação Obrigatória)
+  const navegarPara = (destino: 'alunos' | 'professor') => {
+    const alvoUrl = destino === 'professor' ? '/professor' : '/';
+    if (typeof window !== 'undefined' && window.location.pathname !== alvoUrl) {
+      window.history.pushState({}, '', alvoUrl);
+    }
+    setRotaAtual(destino);
+    if (destino === 'professor' && !usuarioAuth) {
+      setAuthModalAberto(true);
+    } else if (destino === 'alunos') {
+      setAuthModalAberto(false);
+    }
+  };
+
+  // Sincronizar botão voltar/avançar do navegador entre Portal dos Alunos (/) e Área do Professor (/professor)
+  useEffect(() => {
+    const aoNavegarHistorico = () => {
+      setRotaAtual(detectarRotaInicial());
+    };
+    window.addEventListener('popstate', aoNavegarHistorico);
+    return () => window.removeEventListener('popstate', aoNavegarHistorico);
+  }, []);
+
+  // Monitorar estado de autenticação Firebase dos Professores Avaliadores (Identificação Obrigatória na rota /professor)
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setUsuarioAuth(user);
       setAuthPronto(true);
-      if (!user) {
-        setAuthModalAberto(true);
-      } else {
+      if (user) {
         setAuthModalAberto(false);
         if (user.displayName) {
           setAvaliadorEdit(user.displayName);
@@ -332,7 +362,7 @@ export function App() {
 
   // Escutar a sessão ao vivo da banca do grupo selecionado no Firestore
   useEffect(() => {
-    if (!grupoAtual?.id) {
+    if (rotaAtual !== 'professor' || !grupoAtual?.id) {
       setSessaoAoVivo(null);
       return;
     }
@@ -340,14 +370,14 @@ export function App() {
       setSessaoAoVivo(sessao);
     });
     return () => unsub();
-  }, [grupoAtual?.id]);
+  }, [rotaAtual, grupoAtual?.id]);
 
-  // Persistir a análise prévia automática no Firebase Firestore assim que o grupo é selecionado
+  // Persistir a análise prévia automática no Firebase Firestore apenas quando professor autenticado na área docente
   useEffect(() => {
-    if (grupoAtual && grupoAtual.entregue_na_pasta) {
+    if (rotaAtual === 'professor' && usuarioAuth && grupoAtual && grupoAtual.entregue_na_pasta) {
       void salvarAnaliseAutomaticaFirestore(grupoAtual);
     }
-  }, [grupoAtual?.id, grupoAtual?.media_nota_final_grupo]);
+  }, [rotaAtual, usuarioAuth?.uid, grupoAtual?.id, grupoAtual?.media_nota_final_grupo]);
 
   // Sincronizar estados editáveis com draft de localStorage ou dados originais
   useEffect(() => {
@@ -392,7 +422,7 @@ export function App() {
 
   // Escutar avaliações dos 2 professores no Firestore em tempo real
   useEffect(() => {
-    if (!grupoAtual?.id) {
+    if (rotaAtual !== 'professor' || !grupoAtual?.id) {
       setBancaConsolidada(null);
       return;
     }
@@ -401,7 +431,7 @@ export function App() {
       setBancaConsolidada(consolidada);
     });
     return () => unsub();
-  }, [grupoAtual?.id]);
+  }, [rotaAtual, grupoAtual?.id]);
 
   // Recalcular notas em tempo real na Ficha MSEP
   const p1TotalEdit = Number(
@@ -794,6 +824,38 @@ export function App() {
     }
   };
 
+  const handleAtualizarPendencias = async (dados: {
+    possui_pendencias: boolean;
+    pendencias_descricao: string;
+    pendencias_cumpridas: boolean;
+    novo_status_liberacao: ResultadoFinalTipo;
+  }) => {
+    if (!grupoAtual) return;
+    if (!usuarioAuth) {
+      setAuthModalAberto(true);
+      return;
+    }
+    setSalvandoFicha(true);
+    setAviso(null);
+    try {
+      const res = await atualizarPendenciasBanca(
+        grupoAtual.id,
+        sessaoAtual || null,
+        consolidadaAtual || null,
+        usuarioAuth,
+        dados,
+      );
+      setAviso({ tipo: res.ok ? 'ok' : 'erro', texto: res.mensagem });
+    } catch (err) {
+      setAviso({
+        tipo: 'erro',
+        texto: err instanceof Error ? err.message : 'Erro ao atualizar pendências no portal.',
+      });
+    } finally {
+      setSalvandoFicha(false);
+    }
+  };
+
   const handleResetarBanca = async () => {
     if (!grupoAtual) return;
     if (!usuarioAuth) {
@@ -1103,6 +1165,19 @@ export function App() {
     });
   }
 
+  // Rota pública raiz (/): Landing Page dos Alunos sem obrigatoriedade de login
+  if (rotaAtual === 'alunos') {
+    return (
+      <StudentLandingPage
+        bancas={bancas}
+        mapaSessoesBanca={mapaSessoesBanca}
+        carregando={carregando}
+        usuarioAutenticado={Boolean(usuarioAuth)}
+        onIrParaProfessor={() => navegarPara('professor')}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Cabeçalho Institucional SENAI Ourinhos */}
@@ -1252,6 +1327,16 @@ export function App() {
             >
               <Info className="h-4 w-4 text-amber-400" />
               <span>Sobre</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navegarPara('alunos')}
+              className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-sky-400/50 hover:bg-slate-700 hover:text-white cursor-pointer"
+              title="Visualizar a Landing Page pública dos alunos (/)"
+            >
+              <GraduationCap className="h-4 w-4 text-sky-400" />
+              <span>Portal dos Alunos</span>
             </button>
 
             {/* Identificação do Professor Avaliador (Firebase Auth com Google e E-mail) */}
@@ -2395,6 +2480,36 @@ export function App() {
                                     ? '100% Nuvem'
                                     : 'Dependência local'}
                                 </p>
+                                {grupoAtual.auditoria_tecnica.deploy_versao_compativel_github && (
+                                  <p
+                                    className="mt-1 text-[11px]"
+                                    title={grupoAtual.auditoria_tecnica.deploy_versao_diagnostico || ''}
+                                  >
+                                    Versão vs GitHub:{' '}
+                                    <span
+                                      className={`font-bold ${
+                                        grupoAtual.auditoria_tecnica.deploy_versao_compativel_github ===
+                                        'sincronizado'
+                                          ? 'text-emerald-700'
+                                          : grupoAtual.auditoria_tecnica.deploy_versao_compativel_github ===
+                                            'divergente'
+                                          ? 'text-red-700'
+                                          : 'text-amber-700'
+                                      }`}
+                                    >
+                                      {grupoAtual.auditoria_tecnica.deploy_versao_compativel_github ===
+                                      'sincronizado'
+                                        ? 'Sincronizado'
+                                        : grupoAtual.auditoria_tecnica.deploy_versao_compativel_github ===
+                                          'divergente'
+                                        ? 'Divergente'
+                                        : grupoAtual.auditoria_tecnica.deploy_versao_compativel_github ===
+                                          'possivelmente_desatualizado'
+                                        ? 'Possível Defasagem'
+                                        : 'Não Verificável'}
+                                    </span>
+                                  </p>
+                                )}
                               </div>
 
                               {/* Card 2: Banco de Dados em Nuvem (Item 2.3) */}
@@ -2433,17 +2548,33 @@ export function App() {
                                     Endpoint não detectado explicitamente
                                   </p>
                                 )}
+                                {grupoAtual.auditoria_tecnica.bd_config_host_detectado && (
+                                  <p className="mt-0.5 text-[11px] text-slate-600">
+                                    Host DB: <strong>{grupoAtual.auditoria_tecnica.bd_config_host_detectado}</strong>
+                                    {grupoAtual.auditoria_tecnica.bd_host_localhost_valido_em_nuvem && (
+                                      <span className="ml-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                                        Co-hospedado OK
+                                      </span>
+                                    )}
+                                  </p>
+                                )}
                                 <p className="mt-1 text-[11px] text-slate-500">
                                   Tabelas Online:{' '}
                                   <strong>
                                     {grupoAtual.auditoria_tecnica.tabelas_sql_presentes_online_qtd}/
                                     {grupoAtual.auditoria_tecnica.sql_tabelas_qtd}
                                   </strong>{' '}
-                                  • Ciclo Completo:{' '}
+                                  • Ciclo:{' '}
                                   <strong>
                                     {grupoAtual.auditoria_tecnica.tabelas_ciclo_completo_qtd}/
                                     {grupoAtual.auditoria_tecnica.sql_tabelas_qtd}
                                   </strong>
+                                  {grupoAtual.auditoria_tecnica.sql_correspondencia_der_pct !== undefined && (
+                                    <>
+                                      {' '}• DER:{' '}
+                                      <strong>{grupoAtual.auditoria_tecnica.sql_correspondencia_der_pct}%</strong>
+                                    </>
+                                  )}
                                 </p>
                               </div>
 
@@ -2498,6 +2629,25 @@ export function App() {
                                     ? 'Sim'
                                     : 'Não detectado'}
                                 </p>
+                                <p className="mt-0.5 text-[11px] text-slate-600">
+                                  Status código:{' '}
+                                  <strong
+                                    className={
+                                      grupoAtual.auditoria_tecnica.github_sistema_funcional
+                                        ? 'text-emerald-700'
+                                        : 'text-amber-700'
+                                    }
+                                  >
+                                    {grupoAtual.auditoria_tecnica.github_sistema_funcional
+                                      ? 'Sistema Funcional'
+                                      : 'Verificar Estrutura'}
+                                  </strong>
+                                  {grupoAtual.auditoria_tecnica.github_ultimo_commit_sha && (
+                                    <span className="ml-1 font-mono text-[10px] text-slate-500">
+                                      ({grupoAtual.auditoria_tecnica.github_ultimo_commit_sha.slice(0, 7)})
+                                    </span>
+                                  )}
+                                </p>
                               </div>
                             </div>
 
@@ -2541,6 +2691,223 @@ export function App() {
                                     Análise integral dividida por dimensão técnica com sub-cards
                                     estruturados — todos os itens listados sem cortes para a banca.
                                   </p>
+
+                                  {/* Auditoria Profunda v2: Capítulos 14/14, ABNT, Slides e Aderência Frontend/Backend/DER */}
+                                  <div className="mb-4 grid gap-3 md:grid-cols-2">
+                                    {/* Sub-painel 1: Mapa Explícito de Capítulos do TCC (Presentes vs Faltantes) */}
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-xs">
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <h5 className="font-extrabold text-slate-900">
+                                          Capítulos do TCC (
+                                          {(grupoAtual.auditoria_tecnica.secoes_abnt_presentes || []).length}
+                                          /14)
+                                        </h5>
+                                        <div className="flex flex-wrap gap-1">
+                                          {grupoAtual.auditoria_tecnica.fonte_texto_monografia && (
+                                            <span className="rounded bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                                              Fonte: {grupoAtual.auditoria_tecnica.fonte_texto_monografia}
+                                            </span>
+                                          )}
+                                          {grupoAtual.auditoria_tecnica.docx_somente_imagens && (
+                                            <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
+                                              DOCX em Imagens (PDF fallback)
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="mt-2.5 space-y-2">
+                                        <div>
+                                          <p className="text-[10px] font-bold uppercase text-red-700">
+                                            Capítulos Faltantes (
+                                            {(grupoAtual.auditoria_tecnica.secoes_abnt_faltantes || []).length}
+                                            ):
+                                          </p>
+                                          {(grupoAtual.auditoria_tecnica.secoes_abnt_faltantes || []).length >
+                                          0 ? (
+                                            <div className="mt-1 flex flex-wrap gap-1">
+                                              {(grupoAtual.auditoria_tecnica.secoes_abnt_faltantes || []).map(
+                                                (cap) => (
+                                                  <span
+                                                    key={cap}
+                                                    className="rounded border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-800"
+                                                  >
+                                                    Ausente: {cap}
+                                                  </span>
+                                                ),
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <p className="mt-1 text-[11px] font-semibold text-emerald-700">
+                                              Nenhum capítulo faltante (14/14 identificados).
+                                            </p>
+                                          )}
+                                        </div>
+
+                                        <div>
+                                          <p className="text-[10px] font-bold uppercase text-emerald-700">
+                                            Capítulos Analisados (
+                                            {(grupoAtual.auditoria_tecnica.secoes_abnt_presentes || []).length}
+                                            ):
+                                          </p>
+                                          <div className="mt-1 flex flex-wrap gap-1">
+                                            {(grupoAtual.auditoria_tecnica.secoes_abnt_presentes || []).map(
+                                              (cap) => (
+                                                <span
+                                                  key={cap}
+                                                  className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800"
+                                                >
+                                                  {cap}
+                                                </span>
+                                              ),
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Sub-painel 2: Checklist de Formatação ABNT */}
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-xs">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <h5 className="font-extrabold text-slate-900">
+                                          Normas &amp; Formatação ABNT
+                                        </h5>
+                                        <span className="rounded-full bg-slate-900 px-2.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                                          {grupoAtual.auditoria_tecnica.abnt_score_pct !== undefined
+                                            ? `${grupoAtual.auditoria_tecnica.abnt_score_pct.toFixed(1)}%`
+                                            : 'N/D'}
+                                        </span>
+                                      </div>
+                                      <p className="mt-1 text-[10px] text-slate-500">
+                                        Desvios reduzem apenas a rubrica 1.1 Monografia ABNT (sem trava paralela).
+                                      </p>
+                                      {(grupoAtual.auditoria_tecnica.checklist_abnt || []).length > 0 ? (
+                                        <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto pr-1 text-[11px]">
+                                          {(grupoAtual.auditoria_tecnica.checklist_abnt || []).map(
+                                            (chk, idx) => (
+                                              <li
+                                                key={idx}
+                                                className="flex items-start justify-between gap-2 rounded border border-slate-200/80 bg-white px-2 py-1"
+                                              >
+                                                <span className="font-semibold text-slate-800">
+                                                  {chk.conforme ? '✅' : '⚠️'} {chk.regra}
+                                                </span>
+                                                <span className="shrink-0 font-mono text-[10px] text-slate-600">
+                                                  {chk.valor_detectado}
+                                                </span>
+                                              </li>
+                                            ),
+                                          )}
+                                        </ul>
+                                      ) : (
+                                        <p className="mt-2 text-[11px] text-slate-500">
+                                          {(grupoAtual.auditoria_tecnica.pendencias_formatacao_abnt || [])
+                                            .length > 0
+                                            ? grupoAtual.auditoria_tecnica.pendencias_formatacao_abnt!.join(
+                                                ' • ',
+                                              )
+                                            : 'Checklist ABNT detalhado indisponível nesta versão.'}
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    {/* Sub-painel 3: Apresentação (Slides) — Qualidade & Objetividade */}
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-xs">
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <h5 className="font-extrabold text-slate-900">
+                                          Slides ({grupoAtual.auditoria_tecnica.slides_qtd} lâminas)
+                                        </h5>
+                                        <div className="flex flex-wrap gap-1">
+                                          {grupoAtual.auditoria_tecnica.slides_objetividade_nivel && (
+                                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                              Objetividade:{' '}
+                                              {grupoAtual.auditoria_tecnica.slides_objetividade_nivel}
+                                            </span>
+                                          )}
+                                          {grupoAtual.auditoria_tecnica.slides_fonte_texto && (
+                                            <span className="rounded bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                                              {grupoAtual.auditoria_tecnica.slides_fonte_texto}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <p className="mt-2 text-[11px] leading-relaxed text-slate-700">
+                                        {grupoAtual.auditoria_tecnica.slides_qualidade_resumo ||
+                                          'Análise de qualidade e objetividade dos slides não disponível.'}
+                                      </p>
+                                      <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold text-slate-600">
+                                        <span>
+                                          Média:{' '}
+                                          {grupoAtual.auditoria_tecnica.slides_media_palavras_por_slide ??
+                                            '—'}{' '}
+                                          pal/slide
+                                        </span>
+                                        <span>•</span>
+                                        <span>
+                                          Imagens: {grupoAtual.auditoria_tecnica.slides_imagens_qtd ?? '—'}
+                                        </span>
+                                        {(grupoAtual.auditoria_tecnica.slides_etapas_faltantes || [])
+                                          .length > 0 && (
+                                          <>
+                                            <span>•</span>
+                                            <span className="text-amber-800">
+                                              Faltam:{' '}
+                                              {grupoAtual.auditoria_tecnica.slides_etapas_faltantes!.join(
+                                                ', ',
+                                              )}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Sub-painel 4: Aderência Frontend/Backend, DER <-> SQL & Deploy vs GitHub */}
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-xs">
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <h5 className="font-extrabold text-slate-900">
+                                          Sistema, DER &amp; Deploy vs GitHub
+                                        </h5>
+                                        {grupoAtual.auditoria_tecnica.sistema_aderencia_proposto_pct !==
+                                          undefined && (
+                                          <span className="rounded-full bg-slate-900 px-2.5 py-0.5 font-mono text-[10px] font-bold text-white">
+                                            Aderência:{' '}
+                                            {grupoAtual.auditoria_tecnica.sistema_aderencia_proposto_pct}%
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="mt-2 text-[11px] leading-relaxed text-slate-700">
+                                        {grupoAtual.auditoria_tecnica.sistema_aderencia_proposto_resumo ||
+                                          grupoAtual.auditoria_tecnica.deploy_versao_diagnostico ||
+                                          'Verificação técnica de aderência e rotas registrada nos blocos abaixo.'}
+                                      </p>
+                                      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                                        <span className="rounded bg-white border border-slate-200 px-2 py-0.5 text-slate-700">
+                                          Rotas API:{' '}
+                                          {(grupoAtual.auditoria_tecnica.backend_rotas_detectadas || []).length}
+                                        </span>
+                                        <span className="rounded bg-white border border-slate-200 px-2 py-0.5 text-slate-700">
+                                          Páginas UI:{' '}
+                                          {(grupoAtual.auditoria_tecnica.frontend_paginas_detectadas || []).length}
+                                        </span>
+                                        <span className="rounded bg-white border border-slate-200 px-2 py-0.5 text-slate-700">
+                                          DER ↔ SQL:{' '}
+                                          {grupoAtual.auditoria_tecnica.sql_correspondencia_der_pct ?? '—'}%
+                                        </span>
+                                        <span
+                                          className={`rounded border px-2 py-0.5 ${
+                                            grupoAtual.auditoria_tecnica.github_sistema_funcional
+                                              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                                              : 'border-amber-200 bg-amber-50 text-amber-800'
+                                          }`}
+                                        >
+                                          GitHub:{' '}
+                                          {grupoAtual.auditoria_tecnica.github_sistema_funcional
+                                            ? 'Sistema Funcional'
+                                            : 'Estrutura Parcial'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
 
                                   {/* Cards de Parecer Estruturado */}
                                   {grupoAtual.parecer_estruturado &&
@@ -2870,6 +3237,24 @@ export function App() {
                                       Instância: {grupoAtual.auditoria_tecnica.banco_url_detectada}
                                     </p>
                                   )}
+                                  {grupoAtual.auditoria_tecnica.bd_config_host_detectado && (
+                                    <p className="mt-0.5 text-[11px] text-slate-700">
+                                      Host configurado no código:{' '}
+                                      <code className="font-bold">
+                                        {grupoAtual.auditoria_tecnica.bd_config_host_detectado}
+                                      </code>
+                                      {grupoAtual.auditoria_tecnica.bd_host_localhost_valido_em_nuvem && (
+                                        <span className="ml-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                                          Válido online (VM Oracle / InfinityFree)
+                                        </span>
+                                      )}
+                                    </p>
+                                  )}
+                                  {grupoAtual.auditoria_tecnica.bd_diagnostico_deploy_online && (
+                                    <p className="mt-0.5 text-[11px] text-slate-600">
+                                      {grupoAtual.auditoria_tecnica.bd_diagnostico_deploy_online}
+                                    </p>
+                                  )}
                                   <div className="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
                                     <span className="rounded bg-slate-100 px-2 py-0.5 font-semibold text-slate-700">
                                       Online:{' '}
@@ -3014,88 +3399,124 @@ export function App() {
                                         <tr className="border-b border-slate-200 bg-slate-100 text-[10px] font-bold uppercase text-slate-600">
                                           <th className="px-2.5 py-2">Tabela (.sql)</th>
                                           <th className="px-2 py-2 text-center">Regs .sql</th>
-                                          <th className="px-2.5 py-2 text-center">
-                                            Existe no Banco Online?
-                                          </th>
-                                          <th className="px-2.5 py-2 text-center">
-                                            Grava (INSERT/UPDATE)?
-                                          </th>
-                                          <th className="px-2.5 py-2 text-center">
-                                            Consome (SELECT)?
-                                          </th>
+                                          <th className="px-2 py-2 text-center">DER</th>
+                                          <th className="px-2.5 py-2 text-center">Banco Online</th>
+                                          <th className="px-2 py-2 text-center">INSERT</th>
+                                          <th className="px-2 py-2 text-center">UPDATE</th>
+                                          <th className="px-2 py-2 text-center">SELECT</th>
+                                          <th className="px-2 py-2 text-center">DELETE</th>
                                           <th className="px-2.5 py-2">Evidência no Código</th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-slate-100">
                                         {grupoAtual.auditoria_tecnica.tabelas_auditoria_online.map(
-                                          (tAud) => (
-                                            <tr
-                                              key={tAud.tabela}
-                                              className={
-                                                tAud.conforme_ciclo_completo
-                                                  ? 'bg-emerald-50/20'
-                                                  : 'bg-red-50/30'
-                                              }
-                                            >
-                                              <td className="px-2.5 py-1.5 font-mono font-bold text-slate-900">
-                                                {tAud.tabela}
-                                              </td>
-                                              <td className="px-2 py-1.5 text-center font-mono">
-                                                <span
-                                                  className={
-                                                    tAud.registros_no_sql >= 20
-                                                      ? 'font-bold text-emerald-700'
-                                                      : 'font-bold text-red-600'
-                                                  }
-                                                >
-                                                  {tAud.registros_no_sql}
-                                                </span>
-                                              </td>
-                                              <td className="px-2.5 py-1.5 text-center">
-                                                <span
-                                                  className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                                                    tAud.presente_no_banco_online
-                                                      ? 'bg-emerald-100 text-emerald-800'
-                                                      : 'bg-red-100 text-red-800'
-                                                  }`}
-                                                  title={tAud.status_banco_online}
-                                                >
-                                                  {tAud.presente_no_banco_online
-                                                    ? '✅ Sim (Online)'
-                                                    : '❌ Ausente (404)'}
-                                                </span>
-                                              </td>
-                                              <td className="px-2.5 py-1.5 text-center">
-                                                <span
-                                                  className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                                                    tAud.codigo_faz_gravacao
-                                                      ? 'bg-emerald-100 text-emerald-800'
-                                                      : 'bg-red-100 text-red-800'
-                                                  }`}
-                                                >
-                                                  {tAud.codigo_faz_gravacao
-                                                    ? '✅ Grava'
-                                                    : '❌ Não Grava'}
-                                                </span>
-                                              </td>
-                                              <td className="px-2.5 py-1.5 text-center">
-                                                <span
-                                                  className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                                                    tAud.codigo_faz_consumo_leitura
-                                                      ? 'bg-emerald-100 text-emerald-800'
-                                                      : 'bg-red-100 text-red-800'
-                                                  }`}
-                                                >
-                                                  {tAud.codigo_faz_consumo_leitura
-                                                    ? '✅ Consome (SELECT)'
-                                                    : '❌ Não Consome'}
-                                                </span>
-                                              </td>
-                                              <td className="px-2.5 py-1.5 text-[10px] text-slate-600">
-                                                {tAud.evidencia_codigo}
-                                              </td>
-                                            </tr>
-                                          ),
+                                          (tAud) => {
+                                            const fazIns =
+                                              tAud.codigo_faz_insert ?? tAud.codigo_faz_gravacao;
+                                            const fazUpd =
+                                              tAud.codigo_faz_update ?? tAud.codigo_faz_gravacao;
+                                            const fazSel =
+                                              tAud.codigo_faz_select ??
+                                              tAud.codigo_faz_consumo_leitura;
+                                            const fazDel = Boolean(tAud.codigo_faz_delete);
+                                            return (
+                                              <tr
+                                                key={tAud.tabela}
+                                                className={
+                                                  tAud.conforme_ciclo_completo
+                                                    ? 'bg-emerald-50/20'
+                                                    : 'bg-red-50/30'
+                                                }
+                                              >
+                                                <td className="px-2.5 py-1.5 font-mono font-bold text-slate-900">
+                                                  {tAud.tabela}
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center font-mono">
+                                                  <span
+                                                    className={
+                                                      tAud.registros_no_sql >= 20
+                                                        ? 'font-bold text-emerald-700'
+                                                        : 'font-bold text-red-600'
+                                                    }
+                                                  >
+                                                    {tAud.registros_no_sql}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center">
+                                                  <span
+                                                    className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                                                      tAud.presente_no_der === false
+                                                        ? 'bg-amber-100 text-amber-800'
+                                                        : 'bg-emerald-100 text-emerald-800'
+                                                    }`}
+                                                  >
+                                                    {tAud.presente_no_der === false ? 'Ausente' : 'DER OK'}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2.5 py-1.5 text-center">
+                                                  <span
+                                                    className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                                                      tAud.presente_no_banco_online
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : 'bg-red-100 text-red-800'
+                                                    }`}
+                                                    title={tAud.status_banco_online}
+                                                  >
+                                                    {tAud.presente_no_banco_online
+                                                      ? '✅ Online'
+                                                      : '❌ Ausente'}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center">
+                                                  <span
+                                                    className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                                                      fazIns
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : 'bg-red-100 text-red-800'
+                                                    }`}
+                                                  >
+                                                    {fazIns ? '✅' : '❌'}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center">
+                                                  <span
+                                                    className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                                                      fazUpd
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : 'bg-slate-100 text-slate-600'
+                                                    }`}
+                                                  >
+                                                    {fazUpd ? '✅' : '—'}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center">
+                                                  <span
+                                                    className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                                                      fazSel
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : 'bg-red-100 text-red-800'
+                                                    }`}
+                                                  >
+                                                    {fazSel ? '✅' : '❌'}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center">
+                                                  <span
+                                                    className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                                                      fazDel
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : 'bg-slate-100 text-slate-600'
+                                                    }`}
+                                                  >
+                                                    {fazDel ? '✅' : '—'}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2.5 py-1.5 text-[10px] text-slate-600">
+                                                  {tAud.evidencia_codigo}
+                                                </td>
+                                              </tr>
+                                            );
+                                          },
                                         )}
                                       </tbody>
                                     </table>
@@ -3350,6 +3771,7 @@ export function App() {
                   onEncerrarEConsolidarBanca={handleEncerrarEConsolidarBanca}
                   onResetarBanca={handleResetarBanca}
                   onReabrirEdicao={() => setModoEdicaoReaberto(true)}
+                  onAtualizarPendencias={handleAtualizarPendencias}
                   modoEdicaoReaberto={modoEdicaoReaberto}
                   salvando={salvandoFicha}
                 />
@@ -4739,8 +5161,9 @@ export function App() {
 
       {/* Modal de Autenticação / Identificação do Professor Avaliador */}
       <AuthModal
-        aberto={authModalAberto || (!usuarioAuth && authPronto)}
+        aberto={rotaAtual === 'professor' && (authModalAberto || (!usuarioAuth && authPronto))}
         obrigatorio={!usuarioAuth}
+        onVoltarPortal={() => navegarPara('alunos')}
         onClose={() => {
           if (usuarioAuth) setAuthModalAberto(false);
         }}
