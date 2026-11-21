@@ -141,6 +141,15 @@ class AuditoriaArquivoItem(BaseModel):
     alertas_nomenclatura: list[str] = Field(default_factory=list)
 
 
+class ItemPersistenciaForaBD(BaseModel):
+    chave: str
+    origem: Literal["localStorage", "sessionStorage", "json_local"] = "localStorage"
+    arquivo: str = ""
+    classificacao: Literal["cache_espelho_bd", "exclusivo_fora_bd", "json_local_servidor"] = "exclusivo_fora_bd"
+    tabela_relacionada: str = ""
+    motivo: str = ""
+
+
 class AuditoriaTecnicaDetalhada(BaseModel):
     # Monografia (DOCX/PDF)
     monografia_paginas_estimadas: int = 0
@@ -263,9 +272,11 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     usa_localstorage_indevido: bool = False
     arquivos_localstorage_detectados: list[str] = Field(default_factory=list)
     chaves_localstorage_negocio: list[str] = Field(default_factory=list)
+    chaves_localstorage_cache_bd: list[str] = Field(default_factory=list)
     chaves_localstorage_permitidas_ui: list[str] = Field(default_factory=list)
     usa_arquivos_json_locais_no_servidor: bool = False
     arquivos_json_locais_detectados: list[str] = Field(default_factory=list)
+    itens_persistencia_fora_bd: list[ItemPersistenciaForaBD] = Field(default_factory=list)
     tabelas_auditoria_online: list[AuditoriaTabelaBanco] = Field(default_factory=list)
     tabelas_sql_presentes_online_qtd: int = 0
     tabelas_sql_gravadas_pelo_codigo_qtd: int = 0

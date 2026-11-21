@@ -19,7 +19,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from .config_manager import ler_env, resolver_pasta_destino
-from .models import AvaliacaoGrupoModel
+from .models import AuditoriaTecnicaDetalhada, AvaliacaoGrupoModel, ItemPersistenciaForaBD
 from .regras_msep import RUBRICAS_MSEP_OFICIAIS
 
 
@@ -28,6 +28,47 @@ def _sanitizar_nome_arquivo(texto: str) -> str:
     sem_acento = "".join([c for c in nfkd if not unicodedata.combining(c)])
     limpo = re.sub(r"[^\w\-]+", "_", sem_acento.strip())
     return re.sub(r"_+", "_", limpo).strip("_")
+
+
+def _obter_itens_persistencia_para_relatorio(
+    det: AuditoriaTecnicaDetalhada,
+) -> list[ItemPersistenciaForaBD]:
+    """Retorna itens persistidos fora do BD (com fallback para campos legados)."""
+    itens = list(det.itens_persistencia_fora_bd or [])
+    if itens:
+        return itens
+    for ch_x in det.chaves_localstorage_negocio or []:
+        itens.append(
+            ItemPersistenciaForaBD(
+                chave=ch_x,
+                origem="localStorage",
+                arquivo=", ".join((det.arquivos_localstorage_detectados or [])[:2]),
+                classificacao="exclusivo_fora_bd",
+                motivo="Persistência exclusiva em armazenamento do navegador",
+            )
+        )
+    for ch_c in det.chaves_localstorage_cache_bd or []:
+        itens.append(
+            ItemPersistenciaForaBD(
+                chave=ch_c,
+                origem="localStorage",
+                arquivo="",
+                classificacao="cache_espelho_bd",
+                motivo="Cache/espelho local de tabela já integrada ao banco online",
+            )
+        )
+    if det.usa_arquivos_json_locais_no_servidor:
+        for arq_j in det.arquivos_json_locais_detectados or ["storage/*.json"]:
+            itens.append(
+                ItemPersistenciaForaBD(
+                    chave="storage/*.json",
+                    origem="json_local",
+                    arquivo=arq_j,
+                    classificacao="json_local_servidor",
+                    motivo="Leitura/gravação em arquivo JSON local substituindo SELECT no BD",
+                )
+            )
+    return itens
 
 
 def _escrever_pdf_minimo_valido(caminho_pdf: Path, titulo: str) -> None:
@@ -565,7 +606,8 @@ def gerar_markdown_dossie_analitico(av: AvaliacaoGrupoModel) -> str:
             f"- **Diagnóstico Deploy (2.4):** {det.deploy_diagnostico}",
             f"- **Banco de Dados em Nuvem Publicado (2.3):** `{det.banco_provedor_nuvem or 'Não identificado'}` ({det.banco_url_detectada or 'sem endpoint explícito'})",
             f"- **Chaves `localStorage` de UI/Sessão Permitidas (Não Penalizam):** `{', '.join(det.chaves_localstorage_permitidas_ui) or 'Nenhuma'}`",
-            f"- **Persistência Local Indevida do Tema do Projeto:** `{', '.join(det.chaves_localstorage_negocio) or ('storage/*.json local' if det.usa_arquivos_json_locais_no_servidor else 'Nenhuma (100% Nuvem)')}`",
+            f"- **Chaves em `localStorage` Classificadas como Cache/Espelho do BD (0 Penalidade):** `{', '.join(det.chaves_localstorage_cache_bd) or 'Nenhuma'}`",
+            f"- **Persistência Fora do BD Exclusiva (`localStorage`/JSON Local):** `{', '.join(det.chaves_localstorage_negocio) or ('storage/*.json local' if det.usa_arquivos_json_locais_no_servidor else 'Nenhuma (100% Nuvem)')}`",
             f"- **Tabelas `.sql` Presentes no Banco Online:** `{det.tabelas_sql_presentes_online_qtd}/{det.sql_tabelas_qtd}`",
             f"- **Tabelas `.sql` Gravadas (`INSERT/UPDATE`) pelo Código:** `{det.tabelas_sql_gravadas_pelo_codigo_qtd}/{det.sql_tabelas_qtd}`",
             f"- **Tabelas `.sql` Consumidas (`SELECT`) pelo Código:** `{det.tabelas_sql_consumidas_pelo_codigo_qtd}/{det.sql_tabelas_qtd}` (Ciclo completo: `{det.tabelas_ciclo_completo_qtd}/{det.sql_tabelas_qtd}`)",
@@ -586,8 +628,30 @@ def gerar_markdown_dossie_analitico(av: AvaliacaoGrupoModel) -> str:
     if det.entidades_tema_sem_tabela_banco:
         linhas.append("")
         linhas.append(
-            f"- **⚠️ Entidades do Tema do Projeto Sem Tabela no `.sql`/Banco Online (gravadas em `localStorage`):** `{', '.join(det.entidades_tema_sem_tabela_banco)}`"
+            f"- **⚠️ Entidades do Tema do Projeto Sem Tabela no `.sql`/Banco Online (persistidas exclusivamente fora do BD):** `{', '.join(det.entidades_tema_sem_tabela_banco)}`"
         )
+
+    itens_fora_rel = _obter_itens_persistencia_para_relatorio(det)
+    if itens_fora_rel:
+        linhas.extend(
+            [
+                "",
+                "#### Itens Persistidos Fora do Banco de Dados (Conferência Pontual — Item 2.3):",
+                "| Chave / Recurso | Origem | Arquivo-Fonte | Classificação | Tabela Relacionada / Motivo |",
+                "| :--- | :---: | :--- | :---: | :--- |",
+            ]
+        )
+        mapa_rotulos_cls = {
+            "cache_espelho_bd": "ℹ️ Cache/Espelho BD (0 pen.)",
+            "exclusivo_fora_bd": "⚠️ Exclusivo Fora BD",
+            "json_local_servidor": "❌ JSON Local Servidor",
+        }
+        for it_f in itens_fora_rel:
+            cls_txt = mapa_rotulos_cls.get(it_f.classificacao, it_f.classificacao)
+            tab_m = f"`{it_f.tabela_relacionada}` — {it_f.motivo}" if it_f.tabela_relacionada else it_f.motivo
+            linhas.append(
+                f"| `{it_f.chave}` | `{it_f.origem}` | `{it_f.arquivo or '-'}` | {cls_txt} | {tab_m} |"
+            )
 
     linhas.extend(
         [
@@ -714,6 +778,41 @@ def gerar_html_dossie_analitico(av: AvaliacaoGrupoModel) -> str:
             for tab, qtd in det.sql_inserts_por_tabela.items()
         )
 
+    itens_fora_html = _obter_itens_persistencia_para_relatorio(det)
+    bloco_persistencia_fora_html = ""
+    if itens_fora_html:
+        mapa_badge_cls = {
+            "cache_espelho_bd": ("#0369a1", "ℹ️ Cache/Espelho BD (0 pen.)"),
+            "exclusivo_fora_bd": ("#b45309", "⚠️ Exclusivo Fora BD"),
+            "json_local_servidor": ("#b91c1c", "❌ JSON Local Servidor"),
+        }
+        linhas_fora_html = "".join(
+            f"""
+            <tr>
+              <td style="font-family:monospace"><strong>{html.escape(it.chave)}</strong></td>
+              <td style="text-align:center">{html.escape(it.origem)}</td>
+              <td style="font-family:monospace;font-size:8.5px">{html.escape(it.arquivo or '—')}</td>
+              <td style="text-align:center;color:{mapa_badge_cls.get(it.classificacao, ('#334155', it.classificacao))[0]};font-weight:bold">
+                {mapa_badge_cls.get(it.classificacao, ('#334155', it.classificacao))[1]}
+              </td>
+              <td style="font-size:8.5px;color:#334155">{html.escape((it.tabela_relacionada + ' — ' if it.tabela_relacionada else '') + it.motivo)}</td>
+            </tr>
+            """
+            for it in itens_fora_html
+        )
+        bloco_persistencia_fora_html = f"""
+  <h2>3.1. Persistência Fora do Banco de Dados (Conferência Pontual — Item 2.3)</h2>
+  <table>
+    <tr>
+      <th>Chave / Recurso</th>
+      <th style="text-align:center">Origem</th>
+      <th>Arquivo-Fonte</th>
+      <th style="text-align:center">Classificação</th>
+      <th>Tabela Relacionada / Motivo</th>
+    </tr>
+    {linhas_fora_html}
+  </table>"""
+
     blocos_perguntas = "".join(
         f"""
         <div style="border:1px solid #cbd5e1; border-radius:6px; padding:8px 10px; margin-bottom:8px; background:#f8fafc; page-break-inside:avoid;">
@@ -795,6 +894,7 @@ def gerar_html_dossie_analitico(av: AvaliacaoGrupoModel) -> str:
     </tr>
     {linhas_sql}
   </table>
+  {bloco_persistencia_fora_html}
 
   <h2>4. Perguntas Técnicas de Arguição Individual (Entendimento da Tecnologia — Rubrica 3.1)</h2>
   {blocos_perguntas}

@@ -717,6 +717,220 @@ def test_upload_nao_bloqueia_get_bancas_e_auditoria_reporta_progresso_granular()
         salvar_avaliacoes_salvas(salvas_rest)
 
 
+def test_calibragem_rubrica_2_3_e_persistencia_fora_bd(tmp_path, monkeypatch):
+    import zipfile
+    import httpx
+    from backend.app.models import AuditoriaTecnicaDetalhada
+    from backend.app.report_generator import gerar_html_dossie_analitico, gerar_markdown_dossie_analitico
+    from backend.app.tcc_auditor import (
+        _analisar_arquivo_zip,
+        _analisar_script_sql,
+        _calcular_rubricas_deterministicas,
+        auditar_grupo_individual,
+    )
+
+    # 1. Cenário ECOA-like: auth.users no .sql, 0 INSERTs, Supabase HTTP 200 e 206, localStorage espelhando tabelas e auth.updateUser
+    pasta_ecoa = tmp_path / "Banca05-Grupo09-ECOA"
+    pasta_ecoa.mkdir(parents=True)
+    (pasta_ecoa / "links.txt").write_text(
+        "GitHub: https://github.com/ecoa/ecoa\nDeploy: https://ecoa-app.vercel.app\n",
+        encoding="utf-8",
+    )
+    sql_ecoa = pasta_ecoa / "CTDS-2026-02-BD-ECOA.sql"
+    sql_ecoa.write_text(
+        """
+        CREATE TABLE IF NOT EXISTS auth.users (id uuid PRIMARY KEY);
+        CREATE TABLE IF NOT EXISTS public.assinatura (id serial PRIMARY KEY, status text);
+        CREATE TABLE IF NOT EXISTS public.meta (id serial PRIMARY KEY, titulo text);
+        CREATE TABLE IF NOT EXISTS public.aporte_meta (id serial PRIMARY KEY, meta_id int REFERENCES meta(id), valor numeric);
+        CREATE TABLE IF NOT EXISTS public.humor_financeiro (id serial PRIMARY KEY, humor text);
+        CREATE INDEX idx_meta_titulo ON public.meta(titulo);
+        """,
+        encoding="utf-8",
+    )
+    zip_ecoa = pasta_ecoa / "CTDS-2026-02-Sistema-ECOA.zip"
+    with zipfile.ZipFile(zip_ecoa, "w") as zf:
+        zf.writestr("ecoa/package.json", '{"dependencies": {"@supabase/supabase-js": "^2.45.0", "@ionic/angular": "^8.0.0"}}')
+        zf.writestr("ecoa/README.md", "# ECOA\nSistema financeiro integrado ao Supabase.\n" + ("detalhes " * 80))
+        zf.writestr(
+            "ecoa/src/environments/environment.ts",
+            "export const environment = { supabaseUrl: 'https://ecoaprod.supabase.co', supabaseKey: 'sb_publishable_abcdefghijklmnopqrstuvwxyz1234' };",
+        )
+        zf.writestr(
+            "ecoa/src/app/services/plano.service.ts",
+            """
+            export class PlanoService {
+              async sync() {
+                await supabase.from('assinatura').select('*');
+                await supabase.from('assinatura').insert({ status: 'pro' });
+                localStorage.setItem(`ecoa_assinatura_ativa_${user.id}`, JSON.stringify({ status: 'pro' }));
+              }
+            }
+            """,
+        )
+        zf.writestr(
+            "ecoa/src/app/tab4/tab4.page.ts",
+            """
+            export class Tab4Page {
+              async load() {
+                await supabase.from('meta').select('*');
+                await supabase.from('meta').insert({ titulo: 'Reserva' });
+                await supabase.from('aporte_meta').select('*');
+                await supabase.from('aporte_meta').insert({ valor: 100 });
+                localStorage.setItem(`metas_${userId}`, '[]');
+                localStorage.setItem(`aportes_${userId}`, '[]');
+              }
+            }
+            """,
+        )
+        zf.writestr(
+            "ecoa/src/app/tab1/tab1.page.ts",
+            """
+            export class Tab1Page {
+              async registrarHumor(user: any) {
+                localStorage.setItem(`humor_${user.id}`, 'feliz');
+                await this.supabaseService.client.auth.updateUser({ data: { humor: 'feliz' } });
+              }
+            }
+            """,
+        )
+
+    class _FakeHttpResponse:
+        def __init__(self, status_code: int, text: str = "[]", headers: dict[str, str] | None = None):
+            self.status_code = status_code
+            self.text = text
+            self.headers = headers or {"Content-Range": "0-0/2"}
+
+    class _FakeHttpxClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def get(self, url: str, *args, **kwargs):
+            if "/rest/v1/meta?" in url:
+                return _FakeHttpResponse(206, "[]", {"Content-Range": "0-0/5"})
+            if "/rest/v1/" in url:
+                return _FakeHttpResponse(200, "[]", {"Content-Range": "*/0"})
+            return _FakeHttpResponse(200, "<title>ECOA App</title>")
+
+    monkeypatch.setattr(httpx, "Client", _FakeHttpxClient)
+
+    det_ecoa = AuditoriaTecnicaDetalhada()
+    _analisar_script_sql(sql_ecoa, det_ecoa)
+    assert det_ecoa.sql_tabelas == ["assinatura", "meta", "aporte_meta", "humor_financeiro"]
+    assert "users" not in det_ecoa.sql_tabelas
+
+    _analisar_arquivo_zip(zip_ecoa, det_ecoa)
+    assert det_ecoa.tabelas_sql_presentes_online_qtd == 4
+    assert det_ecoa.chaves_localstorage_negocio == []
+    assert det_ecoa.usa_localstorage_indevido is False
+    assert set(det_ecoa.chaves_localstorage_cache_bd) == {
+        "ecoa_assinatura_ativa_${user.id}",
+        "metas_${userId}",
+        "aportes_${userId}",
+        "humor_${user.id}",
+    }
+    assert len(det_ecoa.itens_persistencia_fora_bd) == 4
+    assert all(it.classificacao == "cache_espelho_bd" for it in det_ecoa.itens_persistencia_fora_bd)
+
+    det_ecoa.banco_online_ativo_e_apontado = True
+    rubs_ecoa = _calcular_rubricas_deterministicas(det_ecoa, 100.0)
+    r23_ecoa = next(r for r in rubs_ecoa if r.codigo == "2.3")
+    assert r23_ecoa.nivel == "Pleno"
+    assert abs(r23_ecoa.nota - 7.9) < 0.01
+    ev_joined = "\n".join(r23_ecoa.evidencias)
+    assert "-1,50 pt" in ev_joined
+    assert "ecoa_assinatura_ativa_${user.id}" in ev_joined
+    assert "humor_${user.id}" in ev_joined
+
+    # Validar também Dossiê MD e HTML listando itens persistidos fora do BD
+    av_ecoa = auditar_grupo_individual(
+        {
+            "id": "ECOA_Teste",
+            "turma": "I2DEV-B",
+            "dia_semana": "Quinta-feira",
+            "grupo": "Grupo 09",
+            "grupo_num": 9,
+            "projeto": "ECOA",
+            "tema": "Fintech",
+            "data": "21/11/2026",
+            "horario": "15:00",
+            "integrantes": ["Luiza", "Maria", "Sophia"],
+        },
+        pasta_ecoa,
+        ordem_apresentacao=5,
+    )
+    r23_real = next(r for r in av_ecoa.rubricas if r.codigo == "2.3")
+    assert r23_real.nivel == "Pleno"
+    assert abs(r23_real.nota - 7.9) < 0.01
+    md_ecoa = gerar_markdown_dossie_analitico(av_ecoa)
+    html_ecoa = gerar_html_dossie_analitico(av_ecoa)
+    assert "Itens Persistidos Fora do Banco de Dados" in md_ecoa
+    assert "ecoa_assinatura_ativa_${user.id}" in md_ecoa
+    assert "3.1. Persistência Fora do Banco de Dados" in html_ecoa
+    assert "humor_${user.id}" in html_ecoa
+
+    # 2. Cenário Moderado: BD online povoado + 2 chaves secundárias exclusivas fora do BD -> Pleno (>= 5.0)
+    det_mod = AuditoriaTecnicaDetalhada(
+        sql_tabelas=["usuarios", "pedidos", "produtos", "itens", "pagamentos"],
+        sql_tabelas_qtd=5,
+        sql_inserts_por_tabela={"usuarios": 20, "pedidos": 20, "produtos": 20, "itens": 20, "pagamentos": 20},
+        sql_total_registros_inseridos=100,
+        sql_possui_indices=True,
+        banco_provedor_nuvem="Supabase (PostgreSQL Cloud)",
+        banco_url_detectada="https://mod.supabase.co",
+        banco_online_ativo_e_apontado=True,
+        tabelas_sql_presentes_online_qtd=5,
+        tabelas_sql_consumidas_pelo_codigo_qtd=5,
+        tabelas_sql_gravadas_pelo_codigo_qtd=5,
+        usa_localstorage_indevido=True,
+        chaves_localstorage_negocio=["rascunho_cupom", "historico_calculo"],
+        arquivos_localstorage_detectados=["src/cupom.ts"],
+    )
+    r23_mod = next(r for r in _calcular_rubricas_deterministicas(det_mod, 100.0) if r.codigo == "2.3")
+    assert r23_mod.nivel == "Pleno"
+    assert 5.0 <= r23_mod.nota < 9.0
+    assert "rascunho_cupom" in "\n".join(r23_mod.evidencias)
+
+    # 3. Cenário Severo: JSON local no servidor ou maioria exclusiva sem SELECT -> Insuficiente (< 5.0)
+    det_json = AuditoriaTecnicaDetalhada(
+        sql_tabelas=["usuarios", "animais"],
+        sql_tabelas_qtd=2,
+        sql_inserts_por_tabela={"usuarios": 20, "animais": 20},
+        sql_total_registros_inseridos=40,
+        banco_provedor_nuvem="Supabase (PostgreSQL Cloud)",
+        banco_online_ativo_e_apontado=True,
+        tabelas_sql_presentes_online_qtd=1,
+        usa_localstorage_indevido=True,
+        usa_arquivos_json_locais_no_servidor=True,
+        arquivos_json_locais_detectados=["api/store.php"],
+    )
+    r23_json = next(r for r in _calcular_rubricas_deterministicas(det_json, 100.0) if r.codigo == "2.3")
+    assert r23_json.nivel == "Insuficiente"
+    assert r23_json.nota < 5.0
+
+    det_sem_sel = AuditoriaTecnicaDetalhada(
+        sql_tabelas=["a", "b", "c"],
+        sql_tabelas_qtd=3,
+        sql_inserts_por_tabela={"a": 0, "b": 0, "c": 0},
+        sql_total_registros_inseridos=0,
+        banco_provedor_nuvem="Supabase (PostgreSQL Cloud)",
+        banco_online_ativo_e_apontado=True,
+        tabelas_sql_presentes_online_qtd=3,
+        tabelas_sql_consumidas_pelo_codigo_qtd=0,
+        usa_localstorage_indevido=True,
+        chaves_localstorage_negocio=["k1", "k2", "k3", "k4", "k5"],
+    )
+    r23_sev = next(r for r in _calcular_rubricas_deterministicas(det_sem_sel, 100.0) if r.codigo == "2.3")
+    assert r23_sev.nivel == "Insuficiente"
+    assert r23_sev.nota < 5.0
+
+
 
 
 

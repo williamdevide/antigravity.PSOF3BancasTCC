@@ -38,6 +38,7 @@ from .models import (
     AuditoriaTecnicaDetalhada,
     AvaliacaoGrupoModel,
     BlocoParecerTecnico,
+    ItemPersistenciaForaBD,
     NivelMSEP,
     NotaIndividualIntegrante,
     PerguntaArguicao,
@@ -444,14 +445,18 @@ def _analisar_script_sql(caminho_sql: Path, det: AuditoriaTecnicaDetalhada) -> d
         linhas_limpas.append(sem_coment)
     sql_limpo = "\n".join(linhas_limpas)
 
-    # 1. Identificar CREATE TABLE
+    # 1. Identificar CREATE TABLE (ignorando tabelas de schemas internos como auth.users / storage.*)
+    schemas_sistema = {"auth", "storage", "realtime", "pg_catalog", "information_schema"}
     padrao_create = re.compile(
-        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:public\.)?[\"`]?([a-zA-Z0-9_]+)[\"`]?",
+        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:[\"`]?([a-zA-Z0-9_]+)[\"`]?\.)?[\"`]?([a-zA-Z0-9_]+)[\"`]?",
         re.IGNORECASE,
     )
     tabelas: list[str] = []
     for m in padrao_create.finditer(sql_limpo):
-        nome_t = m.group(1).lower()
+        schema_t = (m.group(1) or "").lower()
+        if schema_t in schemas_sistema:
+            continue
+        nome_t = m.group(2).lower()
         if nome_t not in tabelas:
             tabelas.append(nome_t)
 
@@ -461,12 +466,15 @@ def _analisar_script_sql(caminho_sql: Path, det: AuditoriaTecnicaDetalhada) -> d
 
     # 2. Contar registros INSERT INTO por tabela
     padrao_insert = re.compile(
-        r"INSERT\s+INTO\s+(?:public\.)?[\"`]?([a-zA-Z0-9_]+)[\"`]?[^;]*?\bVALUES\b\s*(.*?);",
+        r"INSERT\s+INTO\s+(?:[\"`]?([a-zA-Z0-9_]+)[\"`]?\.)?[\"`]?([a-zA-Z0-9_]+)[\"`]?[^;]*?\bVALUES\b\s*(.*?);",
         re.IGNORECASE | re.DOTALL,
     )
     for m in padrao_insert.finditer(sql_limpo):
-        tabela = m.group(1).lower()
-        bloco_values = m.group(2)
+        schema_t = (m.group(1) or "").lower()
+        if schema_t in schemas_sistema:
+            continue
+        tabela = m.group(2).lower()
+        bloco_values = m.group(3)
         # Ignora triggers internos como INSERT INTO public.profiles VALUES (new.id, ...)
         if re.search(r"\bnew\.[a-zA-Z0-9_]+", bloco_values, re.IGNORECASE):
             continue
@@ -517,6 +525,165 @@ def _analisar_script_sql(caminho_sql: Path, det: AuditoriaTecnicaDetalhada) -> d
     return extrair_ddl_detalhes_sql(sql_limpo)
 
 
+def _stems_identificador_bd(texto: str) -> list[str]:
+    """Extrai stems normalizados (len >= 4) de uma chave localStorage ou nome de tabela SQL."""
+    limpo = re.sub(r"\$\{[^}]+\}", " ", (texto or "").lower())
+    stop = {
+        "local", "storage", "cache", "ativo", "ativa", "ativos", "ativas",
+        "data", "dados", "item", "itens", "list", "lista", "temp", "user",
+        "users", "usuario", "usuarios", "userid", "state", "status", "info",
+        "config", "form", "backup", "draft", "ecoa", "organizai", "riskzero",
+        "seguranapp", "labware", "fitlink", "guardiao",
+    }
+    stems: list[str] = []
+    for tok in re.split(r"[^a-z0-9]+", limpo):
+        if len(tok) < 4 or tok in stop:
+            continue
+        if tok not in stems:
+            stems.append(tok)
+        if tok.endswith("s") and len(tok) > 4:
+            sing = tok[:-1]
+            if sing not in stems:
+                stems.append(sing)
+    return stems
+
+
+def _classificar_chave_persistencia_fora_bd(
+    chave: str,
+    arquivo: str,
+    tem_cloud_auth_no_arquivo: bool,
+    tabelas_auditadas_map: dict[str, AuditoriaTabelaBanco],
+    tabelas_explicitamente_ausentes: set[str],
+    possui_banco_nuvem: bool,
+) -> tuple[str, str, str]:
+    """
+    Classifica uma chave não-UI em `cache_espelho_bd` ou `exclusivo_fora_bd`.
+    Retorna `(classificacao, tabela_relacionada, motivo)`.
+    """
+    ch_stems = _stems_identificador_bd(chave)
+    tabela_relacionada = ""
+
+    # Procurar tabela do .sql compatível semanticamente com a chave
+    melhor_tab: AuditoriaTabelaBanco | None = None
+    for tab_low, t_info in tabelas_auditadas_map.items():
+        tab_stems = set(_stems_identificador_bd(tab_low))
+        tab_stems.add(tab_low)
+        if any(s in tab_stems for s in ch_stems):
+            # Priorizar tabela que possui gravação/consumo no código
+            if t_info.codigo_faz_gravacao or t_info.codigo_faz_consumo_leitura:
+                melhor_tab = t_info
+                break
+            if melhor_tab is None:
+                melhor_tab = t_info
+
+    if melhor_tab is not None:
+        tab_nome = melhor_tab.tabela
+        ausente_online = tab_nome.lower() in tabelas_explicitamente_ausentes
+        tem_crud_bd = bool(melhor_tab.codigo_faz_gravacao or melhor_tab.codigo_faz_consumo_leitura)
+        if possui_banco_nuvem and not ausente_online and (tem_crud_bd or tem_cloud_auth_no_arquivo):
+            sufixo_sync = " (sync auth.updateUser)" if (tem_cloud_auth_no_arquivo and not tem_crud_bd) else ""
+            return (
+                "cache_espelho_bd",
+                f"{tab_nome}{sufixo_sync}",
+                f"Cache/espelho local de '{tab_nome}' já persistida na nuvem{sufixo_sync}",
+            )
+        tabela_relacionada = tab_nome
+
+    return (
+        "exclusivo_fora_bd",
+        tabela_relacionada,
+        (
+            f"Tabela '{tabela_relacionada}' sem integração CRUD efetiva no código/nuvem"
+            if tabela_relacionada
+            else f"Chave persistida em {arquivo or 'armazenamento local'} sem tabela correspondente no .sql/BD"
+        ),
+    )
+
+
+def _avaliar_persistencia_fora_bd(det: AuditoriaTecnicaDetalhada) -> dict[str, Any]:
+    """Consolida classificação, severidade e descrições de todos os itens persistidos fora do BD."""
+    itens: list[ItemPersistenciaForaBD] = list(det.itens_persistencia_fora_bd or [])
+
+    # Compatibilidade retroativa com registros antigos que só possuíam listas legadas
+    if not itens:
+        for ch_ex in det.chaves_localstorage_negocio or []:
+            itens.append(
+                ItemPersistenciaForaBD(
+                    chave=ch_ex,
+                    origem="localStorage",
+                    arquivo=", ".join((det.arquivos_localstorage_detectados or [])[:2]),
+                    classificacao="exclusivo_fora_bd",
+                    tabela_relacionada="",
+                    motivo="Persistência exclusiva em armazenamento do navegador",
+                )
+            )
+        for ch_cache in det.chaves_localstorage_cache_bd or []:
+            itens.append(
+                ItemPersistenciaForaBD(
+                    chave=ch_cache,
+                    origem="localStorage",
+                    arquivo="",
+                    classificacao="cache_espelho_bd",
+                    tabela_relacionada="",
+                    motivo="Cache/espelho de tabela integrada ao banco em nuvem",
+                )
+            )
+        if det.usa_arquivos_json_locais_no_servidor:
+            for arq_j in det.arquivos_json_locais_detectados or ["storage/*.json"]:
+                itens.append(
+                    ItemPersistenciaForaBD(
+                        chave="storage/*.json",
+                        origem="json_local",
+                        arquivo=arq_j,
+                        classificacao="json_local_servidor",
+                        tabela_relacionada="",
+                        motivo="Leitura/gravação em JSON local substituindo SELECT no BD",
+                    )
+                )
+
+    caches = [i for i in itens if i.classificacao == "cache_espelho_bd"]
+    exclusivos = [i for i in itens if i.classificacao == "exclusivo_fora_bd"]
+    json_locais = [i for i in itens if i.classificacao == "json_local_servidor"]
+
+    chaves_excl_unicas = {i.chave for i in exclusivos if i.chave}
+    qtd_excl = len(chaves_excl_unicas)
+    usa_json = bool(det.usa_arquivos_json_locais_no_servidor or json_locais)
+    sem_select_bd_com_ls = bool(qtd_excl > 0 and det.tabelas_sql_consumidas_pelo_codigo_qtd == 0)
+    maioria_fora_bd = bool(qtd_excl > 0 and qtd_excl >= max(5, det.sql_tabelas_qtd))
+
+    severa = bool(usa_json or sem_select_bd_com_ls or maioria_fora_bd)
+    moderada = bool(not severa and qtd_excl > 0)
+    somente_cache = bool(not severa and not moderada and len(caches) > 0)
+
+    def _fmt(it: ItemPersistenciaForaBD) -> str:
+        loc = f"{it.origem} @ {it.arquivo}" if it.arquivo else it.origem
+        tab_s = f" ↔ '{it.tabela_relacionada}'" if it.tabela_relacionada else ""
+        if it.classificacao == "json_local_servidor":
+            return f"[JSON Local] {it.chave} ({loc})"
+        if it.classificacao == "cache_espelho_bd":
+            return f"[Cache/Espelho BD] {it.chave} ({loc}{tab_s})"
+        return f"[Exclusivo Fora BD] {it.chave} ({loc}{tab_s})"
+
+    descricoes_todos = [_fmt(it) for it in (json_locais + exclusivos + caches)]
+    descricoes_cache = [_fmt(it) for it in caches]
+    descricoes_exclusivos = [_fmt(it) for it in (json_locais + exclusivos)]
+
+    return {
+        "itens": itens,
+        "caches": caches,
+        "exclusivos": exclusivos,
+        "json_locais": json_locais,
+        "qtd_exclusivos": qtd_excl,
+        "usa_json": usa_json,
+        "severa": severa,
+        "moderada": moderada,
+        "somente_cache": somente_cache,
+        "descricoes_todos": descricoes_todos,
+        "descricoes_cache": descricoes_cache,
+        "descricoes_exclusivos": descricoes_exclusivos,
+    }
+
+
 def _analisar_arquivo_zip(
     caminho_zip: Path,
     det: AuditoriaTecnicaDetalhada,
@@ -537,8 +704,11 @@ def _analisar_arquivo_zip(
     urls_banco: list[str] = []
     arqs_ls_indevido: list[str] = []
     chaves_ls_negocio: list[str] = []
+    chaves_ls_cache_bd: list[str] = []
     chaves_ls_permitidas_ui: list[str] = []
     arqs_json_local: list[str] = []
+    ocorrencias_ls_raw: list[dict[str, Any]] = []
+    ocorrencias_json_raw: list[str] = []
 
     supa_url_encontrada: str = ""
     supa_key_encontrada: str = ""
@@ -712,13 +882,17 @@ def _analisar_arquivo_zip(
                         else:
                             provedores_banco.add("MySQL / MariaDB Relacional")
 
-                    # Coleta de tabelas estruturadas no código (DDL ou queries de persistência)
+                    # Coleta de tabelas estruturadas no código (DDL ou queries de persistência, ignorando auth.*/storage.*)
+                    schemas_sistema_cod = {"auth", "storage", "realtime", "pg_catalog", "information_schema"}
                     for m_ct in re.finditer(
-                        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[\`\"]?([a-zA-Z0-9_]+)[\`\"]?",
+                        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:[\"`]?([a-zA-Z0-9_]+)[\"`]?\.)?[\"`]?([a-zA-Z0-9_]+)[\"`]?",
                         codigo_txt,
                         re.IGNORECASE,
                     ):
-                        t_nome = m_ct.group(1).lower()
+                        schema_c = (m_ct.group(1) or "").lower()
+                        if schema_c in schemas_sistema_cod:
+                            continue
+                        t_nome = m_ct.group(2).lower()
                         if len(t_nome) > 2 and t_nome not in ("if", "table", "public"):
                             tabelas_detectadas_no_codigo.add(t_nome)
 
@@ -776,6 +950,8 @@ def _analisar_arquivo_zip(
                         det.usa_arquivos_json_locais_no_servidor = True
                         if nome_curto not in arqs_json_local:
                             arqs_json_local.append(f"{nome_curto} (lê/grava em storage/*.json local)")
+                        if nome_curto not in ocorrencias_json_raw:
+                            ocorrencias_json_raw.append(nome_curto)
 
                     # 3. Analisar gravação (INSERT/UPDATE/UPSERT) e consumo (SELECT) de cada tabela do .sql no código
                     for tab in det.sql_tabelas:
@@ -820,40 +996,49 @@ def _analisar_arquivo_zip(
                         if "setDoc(" in codigo_txt or "updateDoc(" in codigo_txt:
                             usa_firestore_users_doc = True
 
-                    # 4. Classificar chaves de localStorage / sessionStorage / userStorage (UI Permitida vs Negócio do Tema)
+                    # 4. Capturar e separar chaves de UI/Sessão das chaves não-UI (cache vs exclusivo fora do BD serão classificados após auditoria das tabelas)
                     if (
                         "localStorage" in codigo_txt
                         or "sessionStorage" in codigo_txt
                         or "userStorage.getItem" in codigo_txt
                         or "userStorage.setItem" in codigo_txt
                     ):
-                        chaves_encontradas = re.findall(
-                            r"(?:localStorage|sessionStorage|userStorage)\.(?:getItem|setItem|removeItem)\(\s*['\"`]([^'\"`]+)['\"`]",
+                        matches_ls = re.findall(
+                            r"(localStorage|sessionStorage|userStorage)\.(?:getItem|setItem|removeItem)\(\s*['\"`]([^'\"`]+)['\"`]",
                             codigo_txt,
                         )
                         # Também capturar constantes de chave passadas para localStorage.getItem(CONST_KEY)
-                        for m_const in re.findall(
-                            r"(?:localStorage|sessionStorage)\.(?:getItem|setItem)\(\s*([A-Z0-9_]{4,})\s*[,)]",
+                        for st_obj, m_const in re.findall(
+                            r"(localStorage|sessionStorage)\.(?:getItem|setItem)\(\s*([A-Z0-9_]{4,})\s*[,)]",
                             codigo_txt,
                         ):
-                            # Tentar resolver o valor literal da constante no mesmo arquivo
                             m_val = re.search(rf"{re.escape(m_const)}\s*=\s*['\"]([^'\"]+)['\"]", codigo_txt)
-                            chaves_encontradas.append(m_val.group(1) if m_val else m_const)
+                            matches_ls.append((st_obj, m_val.group(1) if m_val else m_const))
 
-                        chaves_negocio_arq: list[str] = []
-                        for ch in chaves_encontradas:
+                        txt_low_ls = codigo_txt.lower()
+                        tem_cloud_auth = (
+                            "auth.updateuser" in txt_low_ls
+                            or "updateprofile(" in txt_low_ls
+                        )
+                        visto_arq: set[tuple[str, str]] = set()
+                        for st_obj, ch in matches_ls:
                             ch_low = ch.lower()
+                            origem_norm = "sessionStorage" if st_obj == "sessionStorage" else "localStorage"
                             if any(perm in ch_low for perm in padroes_ui_permitidos):
                                 if ch not in chaves_ls_permitidas_ui:
                                     chaves_ls_permitidas_ui.append(ch)
                             else:
-                                chaves_negocio_arq.append(ch)
-                                if ch not in chaves_ls_negocio:
-                                    chaves_ls_negocio.append(ch)
-
-                        if chaves_negocio_arq:
-                            if nome_curto not in arqs_ls_indevido:
-                                arqs_ls_indevido.append(nome_curto)
+                                par_k = (origem_norm, ch)
+                                if par_k not in visto_arq:
+                                    visto_arq.add(par_k)
+                                    ocorrencias_ls_raw.append(
+                                        {
+                                            "chave": ch,
+                                            "origem": origem_norm,
+                                            "arquivo": nome_curto,
+                                            "tem_cloud_auth": tem_cloud_auth,
+                                        }
+                                    )
 
                     if (
                         350 <= info.file_size <= 45000
@@ -904,13 +1089,12 @@ def _analisar_arquivo_zip(
 
     det.banco_provedor_nuvem = " + ".join(sorted(provedores_banco)) if provedores_banco else "Não identificado no código"
     det.banco_url_detectada = ", ".join(urls_banco[:3]) if urls_banco else "Configurado via variáveis de ambiente / não exposto"
-    det.arquivos_localstorage_detectados = arqs_ls_indevido
-    det.chaves_localstorage_negocio = chaves_ls_negocio
     det.chaves_localstorage_permitidas_ui = chaves_ls_permitidas_ui
     det.arquivos_json_locais_detectados = arqs_json_local
 
     # 5. Auditar tabela por tabela do .sql contra o Banco Online (Supabase REST API / Firebase Firestore) e o Código
     tabelas_auditadas: list[AuditoriaTabelaBanco] = []
+    tabelas_explicitamente_ausentes: set[str] = set()
     entidades_sem_tabela: list[str] = []
 
     # Se for projeto Firebase Firestore que entregou .sql relacional (como RiskZero):
@@ -964,16 +1148,17 @@ def _analisar_arquivo_zip(
                             "Prefer": "count=exact",
                         },
                     )
-                    if r_tab.status_code == 200:
+                    if r_tab.status_code in (200, 206):
                         presente_online = True
                         cr = r_tab.headers.get("Content-Range", "*/0")
                         qtd_on = cr.split("/")[-1] if "/" in cr else "0"
-                        status_online = f"Presente no Supabase Online (HTTP 200 • {qtd_on} reg)"
+                        status_online = f"Presente no Supabase Online (HTTP {r_tab.status_code} • {qtd_on} reg)"
                     elif r_tab.status_code in (401, 403) and "42501" in r_tab.text:
                         presente_online = True
                         status_online = "Presente no Supabase Online (Protegida por RLS/ACL — HTTP 401)"
                     elif r_tab.status_code == 404 or "PGRST205" in r_tab.text:
                         presente_online = False
+                        tabelas_explicitamente_ausentes.add(tab.lower())
                         status_online = "AUSENTE no Supabase Online (HTTP 404 PGRST205 — Tabela não criada no banco!)"
                     else:
                         status_online = f"HTTP {r_tab.status_code} ao consultar Supabase"
@@ -1028,8 +1213,64 @@ def _analisar_arquivo_zip(
             )
         )
 
-    # Adicionar também entidades de negócio do tema do projeto que estão sendo gravadas no localStorage
-    # e NÃO existem no .sql nem no banco online (ex.: boletos, assinaturas, contas_fixas, renda_mensal no OrganizAI)
+    # 5b. Classificar todas as chaves não-UI de localStorage/sessionStorage (cache_espelho_bd vs exclusivo_fora_bd) e arquivos JSON locais
+    tabelas_auditadas_map = {t.tabela.lower(): t for t in tabelas_auditadas}
+    possui_bd_nuvem_cod = bool(provedores_banco or det.hospedado_vm_oracle)
+    itens_persistencia_fora: list[ItemPersistenciaForaBD] = []
+    vistos_itens_fora: set[tuple[str, str, str]] = set()
+
+    for oc in ocorrencias_ls_raw:
+        ch_raw = oc["chave"]
+        orig_raw = oc["origem"]
+        arq_raw = oc["arquivo"]
+        classif, tab_rel, motivo_cls = _classificar_chave_persistencia_fora_bd(
+            chave=ch_raw,
+            arquivo=arq_raw,
+            tem_cloud_auth_no_arquivo=bool(oc["tem_cloud_auth"]),
+            tabelas_auditadas_map=tabelas_auditadas_map,
+            tabelas_explicitamente_ausentes=tabelas_explicitamente_ausentes,
+            possui_banco_nuvem=possui_bd_nuvem_cod,
+        )
+        chave_dedup = (orig_raw, ch_raw, arq_raw)
+        if chave_dedup not in vistos_itens_fora:
+            vistos_itens_fora.add(chave_dedup)
+            itens_persistencia_fora.append(
+                ItemPersistenciaForaBD(
+                    chave=ch_raw,
+                    origem=orig_raw,
+                    arquivo=arq_raw,
+                    classificacao=classif,  # type: ignore[arg-type]
+                    tabela_relacionada=tab_rel,
+                    motivo=motivo_cls,
+                )
+            )
+        if classif == "cache_espelho_bd":
+            if ch_raw not in chaves_ls_cache_bd:
+                chaves_ls_cache_bd.append(ch_raw)
+        else:
+            if ch_raw not in chaves_ls_negocio:
+                chaves_ls_negocio.append(ch_raw)
+            if arq_raw and arq_raw not in arqs_ls_indevido:
+                arqs_ls_indevido.append(arq_raw)
+
+    for arq_j in ocorrencias_json_raw:
+        itens_persistencia_fora.append(
+            ItemPersistenciaForaBD(
+                chave="storage/*.json",
+                origem="json_local",
+                arquivo=arq_j,
+                classificacao="json_local_servidor",
+                tabela_relacionada="",
+                motivo="Leitura e gravação de dados em arquivo JSON local no servidor em vez de SELECT/INSERT no BD",
+            )
+        )
+
+    det.arquivos_localstorage_detectados = arqs_ls_indevido
+    det.chaves_localstorage_negocio = chaves_ls_negocio
+    det.chaves_localstorage_cache_bd = chaves_ls_cache_bd
+    det.itens_persistencia_fora_bd = itens_persistencia_fora
+
+    # Adicionar também entidades exclusivas fora do BD que não possuem tabela integrada no .sql/banco online
     for ch_neg in chaves_ls_negocio:
         ch_limpa = ch_neg.lower().replace("seguranapp_", "").replace("rz_", "")
         if ch_limpa not in [t.lower() for t in det.sql_tabelas]:
@@ -1040,7 +1281,7 @@ def _analisar_arquivo_zip(
                     presente_no_sql=False,
                     registros_no_sql=0,
                     presente_no_banco_online=False,
-                    status_banco_online="AUSENTE no .sql e no Banco Online — Persistido apenas em localStorage!",
+                    status_banco_online="AUSENTE no .sql e no Banco Online — Persistido exclusivamente fora do BD!",
                     codigo_faz_gravacao=False,
                     codigo_faz_consumo_leitura=False,
                     evidencia_codigo=f"Gravado e lido exclusivamente via localStorage ({', '.join(arqs_ls_indevido[:2])})",
@@ -1057,18 +1298,28 @@ def _analisar_arquivo_zip(
     det.entidades_tema_sem_tabela_banco = entidades_sem_tabela
 
     # Regras de Conformidade de Persistência no Banco Online (Itens 2.3 e 2.4):
-    # - localStorage para preferências de UI (temaEscuro, ocultarValores, etc.) é PERMITIDO.
-    # - Inviabiliza / penaliza se:
-    #   (a) Entidades do tema do projeto estão em localStorage sem tabela no banco online (ex.: boletos/assinaturas/contas_fixas no OrganizAI, histórico/VPN no RiskZero), OU
-    #   (b) Tabelas do .sql faltam no banco online (ex.: solicitacoes_adocao no Guardião Animal) ou o programa não consome (SELECT) delas no banco online (lendo de JSON local storage/*.json).
+    # - UI permitida e Cache/Espelho de tabela já ativa no BD (`cache_espelho_bd`) NÃO penalizam nem retêm.
+    # - Apenas itens `exclusivo_fora_bd` (sem integração real no BD) e JSON local compõem `usa_localstorage_indevido`.
+    # - Bloqueio rígido de persistência (`inviabiliza_finalizacao_persistencia`) aplica-se aos casos severos.
     det.usa_localstorage_indevido = len(chaves_ls_negocio) > 0 or det.usa_arquivos_json_locais_no_servidor
     todas_tabelas_sql_integradas = (
         det.sql_tabelas_qtd > 0
-        and det.tabelas_ciclo_completo_qtd == det.sql_tabelas_qtd
+        and det.tabelas_sql_presentes_online_qtd == det.sql_tabelas_qtd
+        and det.tabelas_sql_gravadas_pelo_codigo_qtd > 0
+        and det.tabelas_sql_consumidas_pelo_codigo_qtd > 0
+        and det.tabelas_ciclo_completo_qtd >= max(1, (det.sql_tabelas_qtd * 7) // 10)
         and len(entidades_sem_tabela) == 0
     )
     det.banco_exclusivo_nuvem = bool(provedores_banco) and todas_tabelas_sql_integradas and not det.usa_localstorage_indevido
-    det.inviabiliza_finalizacao_persistencia = not det.banco_exclusivo_nuvem
+    persistencia_info_inicial = _avaliar_persistencia_fora_bd(det)
+    det.inviabiliza_finalizacao_persistencia = bool(
+        (not det.banco_exclusivo_nuvem)
+        and (
+            persistencia_info_inicial["severa"]
+            or det.tabelas_sql_presentes_online_qtd < det.sql_tabelas_qtd
+            or not provedores_banco
+        )
+    )
 
     return snippets_codigo
 
@@ -1525,7 +1776,8 @@ def _auditar_online_github_e_deploy(
         ) or len(det.sql_tabelas)
         det.deploy_rodando_inteiramente_nuvem = not det.usa_localstorage_indevido and not det.usa_arquivos_json_locais_no_servidor
         det.banco_exclusivo_nuvem = det.deploy_rodando_inteiramente_nuvem
-        det.inviabiliza_finalizacao_persistencia = not det.banco_exclusivo_nuvem
+        p_vm = _avaliar_persistencia_fora_bd(det)
+        det.inviabiliza_finalizacao_persistencia = bool((not det.banco_exclusivo_nuvem) and p_vm["severa"])
 
     elif is_infinityfree_ou_php_cloud and det.deploy_online_ok:
         det.banco_provedor_nuvem = "MySQL / MariaDB Cloud (InfinityFree / ByetHost — site.je)"
@@ -1542,7 +1794,8 @@ def _auditar_online_github_e_deploy(
         ) or len(det.sql_tabelas)
         det.deploy_rodando_inteiramente_nuvem = not det.usa_localstorage_indevido and not det.usa_arquivos_json_locais_no_servidor
         det.banco_exclusivo_nuvem = det.deploy_rodando_inteiramente_nuvem
-        det.inviabiliza_finalizacao_persistencia = not det.banco_exclusivo_nuvem
+        p_inf = _avaliar_persistencia_fora_bd(det)
+        det.inviabiliza_finalizacao_persistencia = bool((not det.banco_exclusivo_nuvem) and p_inf["severa"])
 
     # Análise profunda GitHub (fallback 403/ls-remote + árvore funcional) & Deploy <-> GitHub + Contexto BD
     auditar_github_e_deploy_profundo(gh_url, deploy_url, det, gh_token=gh_token)
@@ -1557,9 +1810,15 @@ def _auditar_online_github_e_deploy(
     )
 
     # Construir diagnóstico consolidado de Persistência em Banco de Dados e Deploy Online (Itens 2.3 e 2.4)
+    p_info = _avaliar_persistencia_fora_bd(det)
     resumo_ui_ok = (
         f"Chaves de UI/Sessão permitidas em localStorage (não penalizam): [{', '.join(det.chaves_localstorage_permitidas_ui[:6])}]. "
         if det.chaves_localstorage_permitidas_ui
+        else ""
+    )
+    resumo_cache_bd = (
+        f"Cache/Espelho local de tabelas do BD (0 penalidade; listado para conferência): [{'; '.join(p_info['descricoes_cache'][:6])}]. "
+        if p_info["descricoes_cache"]
         else ""
     )
     resumo_tabelas = (
@@ -1573,14 +1832,16 @@ def _auditar_online_github_e_deploy(
     motivos_bloqueio_2_3: list[str] = []
     motivos_bloqueio_2_4: list[str] = []
 
-    # Delimitação 2.3: Dados gravados fora do BD (localStorage indevido, sessionStorage ou arquivos JSON locais)
-    if det.usa_arquivos_json_locais_no_servidor:
+    # Delimitação 2.3: Dados gravados fora do BD (exclusivos em localStorage/sessionStorage ou JSON locais)
+    if p_info["usa_json"]:
         motivos_bloqueio_2_3.append(
             f"O sistema lê/grava entidades do tema em arquivos JSON locais ({', '.join(det.arquivos_json_locais_detectados[:4])}) em vez de usar o banco"
         )
     if det.chaves_localstorage_negocio:
+        itens_excl_txt = "; ".join(p_info["descricoes_exclusivos"][:6]) or ", ".join(det.chaves_localstorage_negocio[:6])
+        tipo_desc_ls = "Penalidade severa" if p_info["severa"] else "Desconto moderado (secundário)"
         motivos_bloqueio_2_3.append(
-            f"Entidades do tema sendo gravadas fora do banco em localStorage [{', '.join(det.chaves_localstorage_negocio[:6])}]"
+            f"{tipo_desc_ls} — chaves exclusivas fora do BD: [{itens_excl_txt}]"
         )
 
     # Delimitação 2.4: Deploy funcional e banco online ativo apontado pelo sistema
@@ -1593,29 +1854,30 @@ def _auditar_online_github_e_deploy(
 
     if motivos_bloqueio_2_3 and motivos_bloqueio_2_4:
         det.diagnostico_persistencia_2_3_2_4 = (
-            f"PENDÊNCIAS EM 2.3 E 2.4: {resumo_ui_ok}{resumo_tabelas} "
+            f"PENDÊNCIAS EM 2.3 E 2.4: {resumo_ui_ok}{resumo_cache_bd}{resumo_tabelas} "
             f"[Item 2.3 Penalizado]: {'; '.join(motivos_bloqueio_2_3)}. "
             f"[Item 2.4 Penalizado]: {'; '.join(motivos_bloqueio_2_4)}."
         )
     elif motivos_bloqueio_2_3:
+        prefixo_23 = "PENDÊNCIA CRÍTICA NO ITEM 2.3" if p_info["severa"] else "ATENÇÃO MODERADA NO ITEM 2.3"
         det.diagnostico_persistencia_2_3_2_4 = (
-            f"PENDÊNCIA NO ITEM 2.3 (Persistência Fora do Banco): {resumo_ui_ok}{resumo_tabelas} "
-            f"Penalidade aplicada em 2.3: {'; '.join(motivos_bloqueio_2_3)}. (Item 2.4 Deploy e BD online ativo: Conforme)."
+            f"{prefixo_23} (Persistência Fora do Banco): {resumo_ui_ok}{resumo_cache_bd}{resumo_tabelas} "
+            f"Ajuste aplicado em 2.3: {'; '.join(motivos_bloqueio_2_3)}. (Item 2.4 Deploy e BD online ativo: Conforme)."
         )
     elif motivos_bloqueio_2_4:
         det.diagnostico_persistencia_2_3_2_4 = (
-            f"PENDÊNCIA NO ITEM 2.4 (Deploy / BD Online): {resumo_ui_ok}{resumo_tabelas} "
+            f"PENDÊNCIA NO ITEM 2.4 (Deploy / BD Online): {resumo_ui_ok}{resumo_cache_bd}{resumo_tabelas} "
             f"Penalidade aplicada em 2.4: {'; '.join(motivos_bloqueio_2_4)}. (Item 2.3 Banco Físico e Dados: Conforme)."
         )
     elif not det.sql_atende_min_20_por_tabela:
         det.diagnostico_persistencia_2_3_2_4 = (
-            f"PARCIAL NO SCRIPT SQL (Item 2.3): {resumo_ui_ok}{resumo_tabelas} "
-            f"Script .sql possui {det.sql_total_registros_inseridos} registros, mas algumas tabelas não possuem INSERTs populados."
+            f"PARCIAL NO SCRIPT SQL (Item 2.3 — Abatimento Proporcional): {resumo_ui_ok}{resumo_cache_bd}{resumo_tabelas} "
+            f"Script .sql possui {det.sql_total_registros_inseridos} registros; ausência de registros em tabelas gera desconto proporcional sem bloquear a liberação."
         )
     else:
         det.diagnostico_persistencia_2_3_2_4 = (
-            f"CONFORME (Itens 2.3 e 2.4): {resumo_ui_ok}{resumo_tabelas} "
-            f"Script .sql possui registros em todas as tabelas (Total: {det.sql_total_registros_inseridos}). Deploy e banco em nuvem 100% integrados."
+            f"CONFORME (Itens 2.3 e 2.4): {resumo_ui_ok}{resumo_cache_bd}{resumo_tabelas} "
+            f"Script .sql possui registros em todas as tabelas (Total: {det.sql_total_registros_inseridos}). Deploy e banco em nuvem integrados."
         )
 
 
@@ -1800,9 +2062,12 @@ def _calcular_rubricas_deterministicas(
 
         elif cod == "2.3":  # Banco de Dados Físico (10.0)
             # Avalia:
-            # 1. Se a estrutura do arquivo .sql corresponde ao DER e está sendo usada efetivamente pelo programa (leitura/SELECT e gravação/INSERT)
-            # 2. Se o script possui registros em todas as tabelas (não é obrigatório os 20 registros, era uma sugestão)
-            # 3. Penalidade: Se existirem dados sendo gravados fora do BD (localStorage, sessionStorage ou JSON local), deve abater pontos do 2.3!
+            # 1. Estrutura do arquivo .sql (DER, PK, FK, índices) e consumo efetivo pelo código (CRUD)
+            # 2. Registros no .sql (abatimento proporcional quando 0 ou parcial, mantendo Pleno se o BD online está ativo)
+            # 3. Persistência fora do BD:
+            #    - `cache_espelho_bd` (cache de tabela ativa no BD / auth.updateUser): 0 penalidade (alerta informativo + listagem)
+            #    - `exclusivo_fora_bd` secundário (tabelas principais no BD online): desconto moderado (1.0 + 0.4 * qtd, máx 2.5, piso 5.0)
+            #    - Severa (JSON local substituindo SELECT ou maioria/entidades centrais só em localStorage): Insuficiente (< 5.0)
             tabelas_sem_reg = [t for t, qtd in det.sql_inserts_por_tabela.items() if qtd == 0]
             tem_todas_tabelas_com_reg = (det.sql_tabelas_qtd > 0 and len(tabelas_sem_reg) == 0)
 
@@ -1812,10 +2077,20 @@ def _calcular_rubricas_deterministicas(
                 or (det.banco_provedor_nuvem and det.tabelas_sql_presentes_online_qtd > 0)
             )
 
-            if tem_banco_nuvem_reconhecido:
-                nota_base = 9.4
-            elif det.sql_tabelas_qtd == 0:
+            desconto_sql_desc = ""
+            if det.sql_tabelas_qtd == 0:
                 nota_base = 2.0
+            elif tem_banco_nuvem_reconhecido:
+                nota_base = 9.4
+                if det.sql_total_registros_inseridos == 0:
+                    nota_base = max(4.5, round(nota_base - 1.5, 2))
+                    desconto_sql_desc = "Abatimento proporcional de -1,50 pt por 0 registros INSERT no .sql"
+                elif len(tabelas_sem_reg) > 0:
+                    desc_parcial = min(1.0, round(0.35 * len(tabelas_sem_reg), 2))
+                    nota_base = max(5.0, round(nota_base - desc_parcial, 2))
+                    desconto_sql_desc = f"Abatimento proporcional de -{desc_parcial:.2f} pt por {len(tabelas_sem_reg)} tabela(s) sem INSERT no .sql"
+                else:
+                    nota_base = 9.8 if (det.sql_possui_rls or det.sql_possui_indices) else 9.4
             elif tem_todas_tabelas_com_reg:
                 nota_base = 9.8 if (det.sql_possui_rls or det.sql_possui_indices) else 9.2
             elif det.sql_total_registros_inseridos > 0:
@@ -1826,29 +2101,61 @@ def _calcular_rubricas_deterministicas(
             if not tem_banco_nuvem_reconhecido and det.sql_tabelas_qtd > 0 and det.tabelas_sql_gravadas_pelo_codigo_qtd == 0 and det.tabelas_sql_consumidas_pelo_codigo_qtd == 0:
                 nota_base = max(2.5, nota_base - 3.0)
 
-            grava_fora_do_bd = bool(det.usa_localstorage_indevido or det.usa_arquivos_json_locais_no_servidor)
-            if grava_fora_do_bd:
-                # Abate pontos do 2.3 se existirem dados sendo gravados fora do BD
-                nota = min(3.8, max(2.0, nota_base - 5.5))
+            p_info_23 = _avaliar_persistencia_fora_bd(det)
+            if p_info_23["severa"]:
+                nota = min(3.8, max(2.0, round(nota_base - 5.5, 2)))
+            elif p_info_23["moderada"]:
+                desconto_mod = min(2.5, round(1.0 + 0.4 * p_info_23["qtd_exclusivos"], 2))
+                nota = max(5.0, round(nota_base - desconto_mod, 2)) if nota_base >= 5.0 else round(max(2.0, nota_base - desconto_mod), 2)
             else:
-                nota = nota_base
+                nota = round(nota_base, 2)
+
+            if p_info_23["descricoes_todos"]:
+                if p_info_23["severa"]:
+                    rotulo_fora_bd = "PENALIDADE SEVERA APLICADA (Insuficiente)"
+                elif p_info_23["moderada"]:
+                    rotulo_fora_bd = f"DESCONTO MODERADO APLICADO (-{min(2.5, 1.0 + 0.4 * p_info_23['qtd_exclusivos']):.2f} pt; nível Pleno preservado)"
+                else:
+                    rotulo_fora_bd = "APENAS CACHE/ESPELHO DO BD (0 penalidade — conferir itens abaixo)"
+                linha_fora_bd = f"Persistência fora do BD ({rotulo_fora_bd}): {' ; '.join(p_info_23['descricoes_todos'])}"
+            else:
+                linha_fora_bd = "Persistência fora do BD (localStorage/JSON): Nenhuma (100% Banco Online)"
+
+            info_reg_sql = (
+                f"{det.sql_total_registros_inseridos} registros"
+                + (f" ({desconto_sql_desc})" if desconto_sql_desc else f" (Todas as tabelas com registros: {'SIM' if (tem_todas_tabelas_com_reg or det.hospedado_vm_oracle) else f'NÃO - {len(tabelas_sem_reg)} sem registro'})")
+            )
 
             evidencias = [
                 f"Correspondência DER ↔ DDL (.sql): {det.sql_correspondencia_der_pct:.0f}% ({len(det.der_tabelas_correspondentes)}/{det.sql_tabelas_qtd} tabelas mapeadas; PK={'Sim' if det.sql_possui_pk else 'Não'}, FK={'Sim' if det.sql_possui_fk else 'Não'})",
                 f"CRUD no Código-Fonte: INSERT={det.backend_crud_resumo.get('insert', 0)}/{det.sql_tabelas_qtd}, UPDATE={det.backend_crud_resumo.get('update', 0)}/{det.sql_tabelas_qtd}, SELECT={det.backend_crud_resumo.get('select', 0)}/{det.sql_tabelas_qtd}, DELETE={det.backend_crud_resumo.get('delete', 0)}/{det.sql_tabelas_qtd}",
                 f"Deploy BD & Host: {det.bd_diagnostico_deploy_online or det.banco_provedor_nuvem}",
-                f"Registros no script .sql: {det.sql_total_registros_inseridos} registros (Todas as tabelas com registros: {'SIM' if (tem_todas_tabelas_com_reg or det.hospedado_vm_oracle) else f'NÃO - {len(tabelas_sem_reg)} sem registro'})",
+                f"Registros no script .sql: {info_reg_sql}",
                 f"Chaves localStorage permitidas (UI/Sessão): {', '.join(det.chaves_localstorage_permitidas_ui[:6]) or 'Nenhuma'}",
-                f"Persistência fora do BD (localStorage/JSON indevido): {'DETECTADA (Abatimento de pontos aplicado em 2.3)' if grava_fora_do_bd else 'Nenhuma (Conforme)'}",
+                linha_fora_bd,
             ]
-            justificativa = (
-                f"Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros em todas as tabelas (20 reg era sugestão). "
-                + (
-                    f"PENALIDADE APLICADA: Dados do tema gravados fora do banco de dados ({', '.join(det.chaves_localstorage_negocio[:4]) or 'JSON local no servidor'}), abatendo a nota da rubrica 2.3."
-                    if grava_fora_do_bd
-                    else "Estrutura do banco de dados e uso pelo código plenamente validados sem persistência indevida de dados do tema fora do banco."
+            if p_info_23["severa"]:
+                justificativa = (
+                    f"Item 2.3 penalizado severamente: persistência principal/substitutiva fora do banco de dados "
+                    f"({' ; '.join(p_info_23['descricoes_exclusivos'][:5])})."
                 )
-            )
+            elif p_info_23["moderada"]:
+                justificativa = (
+                    f"Item 2.3 com desconto moderado (nível Pleno preservado pois tabelas principais operam no BD online): "
+                    f"persistência secundária fora do BD detectada em {' ; '.join(p_info_23['descricoes_exclusivos'][:5])}."
+                    + (f" ({desconto_sql_desc})." if desconto_sql_desc else "")
+                )
+            elif p_info_23["somente_cache"]:
+                justificativa = (
+                    f"Item 2.3 avaliou estrutura DDL, CRUD e BD online com 0 penalidade sobre chaves em localStorage classificadas como cache/espelho de tabelas já integradas "
+                    f"({', '.join(p_info_23['descricoes_cache'][:4])})."
+                    + (f" {desconto_sql_desc}." if desconto_sql_desc else " Todos os critérios validados.")
+                )
+            else:
+                justificativa = (
+                    f"Item 2.3 avalia correspondência do .sql com o DER, uso efetivo pelo código e registros nas tabelas. "
+                    + (desconto_sql_desc + "." if desconto_sql_desc else "Estrutura do banco de dados e uso pelo código plenamente validados sem persistência indevida fora do banco.")
+                )
 
         elif cod == "2.4":  # Deploy Online & Execução em Nuvem (5.0)
             # Avalia:
@@ -2218,7 +2525,13 @@ def _sintetizar_parecer_deterministico(
         atencao.append(msg_falt)
         itens_bd_deploy.append(f"❌ {msg_falt}")
 
-    if det.usa_arquivos_json_locais_no_servidor:
+    p_sin = _avaliar_persistencia_fora_bd(det)
+    if p_sin["descricoes_cache"]:
+        itens_bd_deploy.append(
+            f"ℹ️ Cache/Espelho Local de Tabelas do BD (0 Penalidade — Conferência Pontual): {' ; '.join(p_sin['descricoes_cache'][:8])}."
+        )
+
+    if p_sin["usa_json"]:
         msg_json = (
             f"PERSISTÊNCIA E CONSUMO EM ARQUIVOS JSON LOCAIS: O sistema realiza apenas INSERT unidirecional em {det.tabelas_sql_gravadas_pelo_codigo_qtd}/{det.sql_tabelas_qtd} tabelas "
             f"e consome via SELECT {det.tabelas_sql_consumidas_pelo_codigo_qtd}/{det.sql_tabelas_qtd} tabelas do banco online, lendo e gravando os dados do tema em [{', '.join(det.arquivos_json_locais_detectados[:4])}]."
@@ -2227,40 +2540,41 @@ def _sintetizar_parecer_deterministico(
         itens_bd_deploy.append(f"❌ {msg_json}")
 
     if det.chaves_localstorage_negocio:
+        escopo_ls = "CRÍTICA (maioria/entidades centrais)" if p_sin["severa"] else "MODERADA (secundária — nível Pleno preservado)"
         msg_ls = (
-            f"PERSISTÊNCIA LOCAL DE ENTIDADES DO TEMA (Itens 2.3 / 2.4): Enquanto as tabelas do .sql ({', '.join(det.sql_tabelas[:4])}) "
-            f"possuem {det.tabelas_ciclo_completo_qtd}/{det.sql_tabelas_qtd} ciclos completos no banco online, entidades centrais do tema "
-            f"[{', '.join(det.chaves_localstorage_negocio[:6])}] estão sendo gravadas e consumidas via localStorage "
+            f"PERSISTÊNCIA FORA DO BD ({escopo_ls} — Item 2.3): Enquanto as tabelas do .sql ({', '.join(det.sql_tabelas[:4])}) "
+            f"possuem {det.tabelas_ciclo_completo_qtd}/{det.sql_tabelas_qtd} ciclos no banco online, os itens "
+            f"[{' ; '.join(p_sin['descricoes_exclusivos'][:8])}] operam fora do BD"
             + (
-                f"(sem tabela correspondente no .sql/banco online: {', '.join(det.entidades_tema_sem_tabela_banco)})."
+                f" (sem tabela correspondente no .sql: {', '.join(det.entidades_tema_sem_tabela_banco)})."
                 if det.entidades_tema_sem_tabela_banco
-                else f"nos arquivos [{', '.join(det.arquivos_localstorage_detectados[:4])}]."
+                else f" nos arquivos [{', '.join(det.arquivos_localstorage_detectados[:4])}]."
             )
         )
         atencao.append(msg_ls)
-        itens_bd_deploy.append(f"❌ {msg_ls}")
+        itens_bd_deploy.append(f"{'❌' if p_sin['severa'] else '⚠️'} {msg_ls}")
     elif not det.usa_localstorage_indevido and det.banco_exclusivo_nuvem:
         fortes.append(
-            f"Persistência do tema 100% realizada no banco online ({det.banco_provedor_nuvem}) com {det.tabelas_ciclo_completo_qtd}/{det.sql_tabelas_qtd} tabelas em ciclo completo (gravação + leitura)."
+            f"Persistência do tema realizada no banco online ({det.banco_provedor_nuvem}) com {det.tabelas_ciclo_completo_qtd}/{det.sql_tabelas_qtd} tabelas em ciclo completo."
         )
         itens_bd_deploy.append(
-            f"✅ Persistência do Tema 100% em Nuvem: Todas as {det.sql_tabelas_qtd} tabelas existem no banco online e são gravadas e consumidas pelo código."
+            f"✅ Persistência do Tema em Nuvem: Todas as {det.sql_tabelas_qtd} tabelas existem no banco online e são integradas pelo código."
         )
 
     if det.sql_atende_min_20_por_tabela:
         fortes.append(
-            f"Script SQL exemplar: {det.sql_tabelas_qtd} tabelas normalizadas com {det.sql_total_registros_inseridos} registros válidos (>= 20 por entidade)."
+            f"Script SQL exemplar: {det.sql_tabelas_qtd} tabelas normalizadas com {det.sql_total_registros_inseridos} registros válidos."
         )
         itens_bd_deploy.append(
-            f"✅ Povoamento SQL Conforme: Todas as {det.sql_tabelas_qtd} tabelas possuem no mínimo 20 registros inseridos via INSERT INTO."
+            f"✅ Povoamento SQL Conforme: Todas as {det.sql_tabelas_qtd} tabelas possuem registros inseridos via INSERT INTO."
         )
     else:
         msg_sql = (
-            f"Pendência na Rubrica 2.3 (Script SQL): O arquivo '{det.sql_arquivo}' contém {det.sql_tabelas_qtd} tabelas DDL, "
-            f"mas possui {det.sql_total_registros_inseridos} registros INSERT INTO (exigido mínimo de 20 registros válidos por tabela)."
+            f"Atenção na Rubrica 2.3 (Script SQL): O arquivo '{det.sql_arquivo}' contém {det.sql_tabelas_qtd} tabelas DDL, "
+            f"com {det.sql_total_registros_inseridos} registros INSERT INTO (aplicado abatimento proporcional)."
         )
         atencao.append(msg_sql)
-        itens_bd_deploy.append(f"❌ {msg_sql}")
+        itens_bd_deploy.append(f"⚠️ {msg_sql}")
 
     if det.deploy_online_ok:
         fortes.append(
@@ -2270,8 +2584,10 @@ def _sintetizar_parecer_deterministico(
         atencao.append(f"Problema no Deploy Online ({det.deploy_url or 'URL ausente'}): {det.deploy_diagnostico}")
 
     status_bloco_bd: Any = "conforme"
-    if det.usa_localstorage_indevido or not det.banco_exclusivo_nuvem or not det.sql_atende_min_20_por_tabela or not det.deploy_online_ok:
+    if p_sin["severa"] or not det.deploy_online_ok or det.tabelas_sql_presentes_online_qtd < det.sql_tabelas_qtd or not det.banco_online_ativo_e_apontado:
         status_bloco_bd = "critico"
+    elif p_sin["moderada"] or not det.sql_atende_min_20_por_tabela or p_sin["somente_cache"]:
+        status_bloco_bd = "alerta"
 
     blocos.append(
         BlocoParecerTecnico(

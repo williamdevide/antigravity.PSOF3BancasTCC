@@ -90,10 +90,12 @@ import {
 import type {
   AgentStatus,
   AgentSummary,
+  AuditoriaTecnicaDetalhada,
   AvaliacaoGrupo,
   AvaliacaoProfessorIndividual,
   BancaConsolidada,
   ConfigEnv,
+  ItemPersistenciaForaBD,
   NivelMSEP,
   NotaIndividualIntegrante,
   RegrasOficiaisResponse,
@@ -122,6 +124,74 @@ const CONFIG_INICIAL: ConfigEnv = {
 
 function isStatusNotaRetida(status?: string | null): boolean {
   return status === 'Nota Retida (Pendências)' || status === 'Nota Retida';
+}
+
+function obterItensPersistenciaForaBD(
+  aud?: AuditoriaTecnicaDetalhada | null,
+): ItemPersistenciaForaBD[] {
+  if (!aud) return [];
+  if (aud.itens_persistencia_fora_bd && aud.itens_persistencia_fora_bd.length > 0) {
+    return aud.itens_persistencia_fora_bd;
+  }
+  const itens: ItemPersistenciaForaBD[] = [];
+  for (const ch of aud.chaves_localstorage_negocio || []) {
+    itens.push({
+      chave: ch,
+      origem: 'localStorage',
+      arquivo: (aud.arquivos_localstorage_detectados || []).slice(0, 2).join(', '),
+      classificacao: 'exclusivo_fora_bd',
+      tabela_relacionada: '',
+      motivo: 'Persistência exclusiva fora do BD',
+    });
+  }
+  for (const ch of aud.chaves_localstorage_cache_bd || []) {
+    itens.push({
+      chave: ch,
+      origem: 'localStorage',
+      arquivo: '',
+      classificacao: 'cache_espelho_bd',
+      tabela_relacionada: '',
+      motivo: 'Cache/espelho local de tabela ativa no banco online (0 penalidade)',
+    });
+  }
+  if (aud.usa_arquivos_json_locais_no_servidor) {
+    const arqs =
+      aud.arquivos_json_locais_detectados?.length > 0
+        ? aud.arquivos_json_locais_detectados
+        : ['storage/*.json'];
+    for (const arq of arqs) {
+      itens.push({
+        chave: 'storage/*.json',
+        origem: 'json_local',
+        arquivo: arq,
+        classificacao: 'json_local_servidor',
+        tabela_relacionada: '',
+        motivo: 'Leitura/gravação em arquivo JSON local no servidor em vez do BD',
+      });
+    }
+  }
+  return itens;
+}
+
+function badgeClassificacaoPersistenciaForaBD(
+  cls: ItemPersistenciaForaBD['classificacao'],
+) {
+  if (cls === 'cache_espelho_bd') {
+    return {
+      rotulo: 'Cache/Espelho BD (0 pen.)',
+      classe: 'border-sky-300 bg-sky-100 text-sky-900',
+    };
+  }
+  if (cls === 'json_local_servidor') {
+    return {
+      rotulo: 'JSON Local (Severo)',
+      classe: 'border-red-300 bg-red-100 text-red-800',
+    };
+  }
+  return {
+    rotulo: 'Exclusivo Fora BD',
+    classe: 'border-amber-300 bg-amber-100 text-amber-900',
+  };
 }
 
 function badgeNivelMsep(nivel: NivelMSEP, prefixo?: string) {
@@ -2643,18 +2713,29 @@ export function App() {
                                         </span>
                                         <span
                                           className={`font-semibold ${
-                                            b.auditoria_tecnica.banco_exclusivo_nuvem &&
-                                            !b.auditoria_tecnica.usa_localstorage_indevido &&
-                                            b.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                              ? 'text-emerald-700'
-                                              : 'text-red-600'
+                                            b.auditoria_tecnica.inviabiliza_finalizacao_persistencia ||
+                                            b.auditoria_tecnica.usa_arquivos_json_locais_no_servidor
+                                              ? 'text-red-600'
+                                              : b.auditoria_tecnica.usa_localstorage_indevido ||
+                                                !b.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                              ? 'text-amber-700'
+                                              : 'text-emerald-700'
                                           }`}
                                         >
-                                          {b.auditoria_tecnica.usa_localstorage_indevido
-                                            ? '⚠️ localStorage Indevido'
-                                            : b.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                            ? `✅ ${b.auditoria_tecnica.banco_provedor_nuvem || 'Cloud DB'}`
-                                            : `⚠️ SQL < 20 regs`}
+                                          {b.auditoria_tecnica.usa_arquivos_json_locais_no_servidor
+                                            ? '❌ JSON Local'
+                                            : b.auditoria_tecnica.usa_localstorage_indevido
+                                            ? b.auditoria_tecnica.inviabiliza_finalizacao_persistencia
+                                              ? '⚠️ localStorage (Crítico)'
+                                              : '⚠️ localStorage Secundário'
+                                            : !b.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                            ? '⚠️ .SQL s/ Regs (BD OK)'
+                                            : (b.auditoria_tecnica.chaves_localstorage_cache_bd || [])
+                                                .length > 0
+                                            ? `✅ ${
+                                                b.auditoria_tecnica.banco_provedor_nuvem || 'Cloud DB'
+                                              } (Cache OK)`
+                                            : `✅ ${b.auditoria_tecnica.banco_provedor_nuvem || 'Cloud DB'}`}
                                         </span>
                                       </>
                                     )}
@@ -3517,6 +3598,37 @@ export function App() {
                                     </>
                                   )}
                                 </p>
+                                {(() => {
+                                  const itensForaCard = obterItensPersistenciaForaBD(
+                                    grupoAtual.auditoria_tecnica,
+                                  );
+                                  if (itensForaCard.length === 0) return null;
+                                  const qtdExcl = itensForaCard.filter(
+                                    (i) => i.classificacao !== 'cache_espelho_bd',
+                                  ).length;
+                                  return (
+                                    <div
+                                      className={`mt-2 rounded-lg border px-2.5 py-1.5 text-[10px] ${
+                                        qtdExcl > 0
+                                          ? 'border-amber-200 bg-amber-50 text-amber-950'
+                                          : 'border-sky-200 bg-sky-50 text-sky-950'
+                                      }`}
+                                    >
+                                      <p className="font-bold">
+                                        Persistência fora do BD ({itensForaCard.length}):{' '}
+                                        <span className="font-normal">
+                                          {itensForaCard
+                                            .slice(0, 4)
+                                            .map((i) => i.chave)
+                                            .join(', ')}
+                                          {itensForaCard.length > 4
+                                            ? ` (+${itensForaCard.length - 4})`
+                                            : ''}
+                                        </span>
+                                      </p>
+                                    </div>
+                                  );
+                                })()}
                               </div>
 
                               {/* Card 3: Repositório GitHub (Item 2.5) */}
@@ -4038,8 +4150,13 @@ export function App() {
                               className={`overflow-hidden rounded-xl border-2 shadow-2xs transition ${
                                 grupoAtual.auditoria_tecnica
                                   .inviabiliza_finalizacao_persistencia ||
-                                !grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                grupoAtual.auditoria_tecnica
+                                  .usa_arquivos_json_locais_no_servidor
                                   ? 'border-red-300 bg-red-50/20'
+                                  : grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
+                                    !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem ||
+                                    !grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                  ? 'border-amber-300 bg-amber-50/20'
                                   : 'border-emerald-300 bg-emerald-50/20'
                               }`}
                             >
@@ -4064,18 +4181,28 @@ export function App() {
                                 <div className="flex items-center gap-2 shrink-0">
                                   <span
                                     className={`hidden md:inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                                      grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
-                                      !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
+                                      grupoAtual.auditoria_tecnica
+                                        .inviabiliza_finalizacao_persistencia ||
+                                      grupoAtual.auditoria_tecnica
+                                        .usa_arquivos_json_locais_no_servidor
                                         ? 'bg-red-600 text-white'
-                                        : grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem &&
-                                          grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                        ? 'bg-emerald-600 text-white'
-                                        : 'bg-amber-500 text-white'
+                                        : grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
+                                          !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem ||
+                                          !grupoAtual.auditoria_tecnica
+                                            .sql_atende_min_20_por_tabela
+                                        ? 'bg-amber-500 text-white'
+                                        : 'bg-emerald-600 text-white'
                                     }`}
                                   >
-                                    {grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
-                                    !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
-                                      ? '❌ Pendência de Persistência'
+                                    {grupoAtual.auditoria_tecnica
+                                      .inviabiliza_finalizacao_persistencia ||
+                                    grupoAtual.auditoria_tecnica
+                                      .usa_arquivos_json_locais_no_servidor
+                                      ? '❌ Pendência Crítica BD'
+                                      : grupoAtual.auditoria_tecnica.usa_localstorage_indevido
+                                      ? '⚠️ Secundário Fora BD'
+                                      : !grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
+                                      ? '⚠️ BD OK • .SQL s/ Regs'
                                       : `${grupoAtual.auditoria_tecnica.tabelas_ciclo_completo_qtd}/${grupoAtual.auditoria_tecnica.sql_tabelas_qtd} Tabelas 100% OK`}
                                   </span>
                                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600">
@@ -4096,22 +4223,30 @@ export function App() {
                                     </span>
                                     <span
                                       className={`rounded-full px-3 py-0.5 text-xs font-bold ${
-                                        grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
-                                        !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
+                                        grupoAtual.auditoria_tecnica
+                                          .inviabiliza_finalizacao_persistencia ||
+                                        grupoAtual.auditoria_tecnica
+                                          .usa_arquivos_json_locais_no_servidor
                                           ? 'bg-red-600 text-white'
-                                          : grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem &&
-                                            grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
-                                          ? 'bg-emerald-600 text-white'
-                                          : 'bg-amber-500 text-white'
+                                          : grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
+                                            !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem ||
+                                            !grupoAtual.auditoria_tecnica
+                                              .sql_atende_min_20_por_tabela
+                                          ? 'bg-amber-500 text-white'
+                                          : 'bg-emerald-600 text-white'
                                       }`}
                                     >
-                                      {grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
-                                      !grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem
-                                        ? '❌ BLOQUEIO: Persistência do Tema Incompleta no Banco Online'
+                                      {grupoAtual.auditoria_tecnica
+                                        .inviabiliza_finalizacao_persistencia ||
+                                      grupoAtual.auditoria_tecnica
+                                        .usa_arquivos_json_locais_no_servidor
+                                        ? '❌ BLOQUEIO CRÍTICO: Persistência Principal Fora do BD'
+                                        : grupoAtual.auditoria_tecnica.usa_localstorage_indevido
+                                        ? '⚠️ ATENÇÃO: Persistência Secundária Fora do BD (Nível Pleno Preservado)'
                                         : grupoAtual.auditoria_tecnica.banco_exclusivo_nuvem &&
                                           grupoAtual.auditoria_tecnica.sql_atende_min_20_por_tabela
                                         ? '✅ 100% Nuvem • Ciclo Completo (INSERT + SELECT)'
-                                        : '⚠️ Banco Online OK • Falta Povoamento .SQL'}
+                                        : '⚠️ Banco Online OK • Abatimento Proporcional por .SQL s/ Regs'}
                                     </span>
                                   </div>
 
@@ -4259,71 +4394,112 @@ export function App() {
                                 </div>
                               )}
 
-                              {/* Alertas de Persistência Local Indevida do Tema do Projeto */}
-                              {(grupoAtual.auditoria_tecnica.usa_localstorage_indevido ||
-                                grupoAtual.auditoria_tecnica
-                                  .usa_arquivos_json_locais_no_servidor) && (
-                                <div className="mt-2.5 rounded-lg border border-red-200 bg-red-100/70 p-2.5 text-xs text-red-900">
-                                  <p className="font-bold">
-                                    <ShieldAlert className="mr-1 inline h-4 w-4 text-red-700" />
-                                    Persistência Local Indevida de Dados do Tema do Projeto (Retém a
-                                    liberação da nota nos itens 2.3 e 2.4):
-                                  </p>
-                                  {grupoAtual.auditoria_tecnica.chaves_localstorage_negocio.length >
-                                    0 && (
-                                    <p className="mt-1 text-[11px]">
-                                      <strong>
-                                        Chaves de negócio salvas em localStorage/sessionStorage:
-                                      </strong>{' '}
-                                      <code className="font-bold">
-                                        {grupoAtual.auditoria_tecnica.chaves_localstorage_negocio.join(
-                                          ', ',
-                                        )}
-                                      </code>
-                                    </p>
-                                  )}
-                                  {(
-                                    grupoAtual.auditoria_tecnica.entidades_tema_sem_tabela_banco ||
-                                    []
-                                  ).length > 0 && (
-                                    <p className="mt-1 text-[11px]">
-                                      <strong>
-                                        Entidades do tema ausentes no .sql e no banco online:
-                                      </strong>{' '}
-                                      <code className="font-bold">
-                                        {grupoAtual.auditoria_tecnica.entidades_tema_sem_tabela_banco.join(
-                                          ', ',
-                                        )}
-                                      </code>
-                                    </p>
-                                  )}
-                                  {grupoAtual.auditoria_tecnica
-                                    .usa_arquivos_json_locais_no_servidor && (
-                                    <p className="mt-1 text-[11px]">
-                                      <strong>
-                                        Arquivos JSON locais usados para leitura/gravação em vez de
-                                        SELECT no banco online:
-                                      </strong>{' '}
-                                      <code className="font-bold">
-                                        {grupoAtual.auditoria_tecnica.arquivos_json_locais_detectados.join(
-                                          ', ',
-                                        )}
-                                      </code>
-                                    </p>
-                                  )}
-                                  {grupoAtual.auditoria_tecnica.arquivos_localstorage_detectados
-                                    .length > 0 && (
-                                    <p className="mt-1 text-[11px]">
-                                      <strong>Arquivos de código inspecionados:</strong>{' '}
-                                      <span className="font-mono">
-                                        {grupoAtual.auditoria_tecnica.arquivos_localstorage_detectados.join(
-                                          ', ',
-                                        )}
+                              {/* Lista Explícita de Persistência Fora do BD (Cache/Espelho BD, Secundária e JSON Local) para Decisão Pontual */}
+                              {(() => {
+                                const itensFora = obterItensPersistenciaForaBD(
+                                  grupoAtual.auditoria_tecnica,
+                                );
+                                if (itensFora.length === 0) return null;
+                                const temSevero =
+                                  grupoAtual.auditoria_tecnica
+                                    .inviabiliza_finalizacao_persistencia ||
+                                  itensFora.some(
+                                    (i) => i.classificacao === 'json_local_servidor',
+                                  );
+                                const temExclusivo = itensFora.some(
+                                  (i) => i.classificacao !== 'cache_espelho_bd',
+                                );
+                                return (
+                                  <div
+                                    className={`mt-2.5 rounded-lg border p-3 text-xs ${
+                                      temSevero
+                                        ? 'border-red-200 bg-red-50/80 text-red-950'
+                                        : temExclusivo
+                                        ? 'border-amber-200 bg-amber-50/80 text-amber-950'
+                                        : 'border-sky-200 bg-sky-50/80 text-sky-950'
+                                    }`}
+                                  >
+                                    <p className="font-bold flex items-center gap-1.5">
+                                      {temSevero ? (
+                                        <ShieldAlert className="h-4 w-4 text-red-700 shrink-0" />
+                                      ) : temExclusivo ? (
+                                        <AlertTriangle className="h-4 w-4 text-amber-700 shrink-0" />
+                                      ) : (
+                                        <Info className="h-4 w-4 text-sky-700 shrink-0" />
+                                      )}
+                                      <span>
+                                        Persistência fora do BD — Itens Identificados (
+                                        {itensFora.length}) para Conferência Pontual (Item 2.3):
                                       </span>
                                     </p>
-                                  )}
-                                </div>
-                              )}
+                                    <div className="mt-2 overflow-x-auto rounded-md border border-slate-200 bg-white">
+                                      <table className="w-full text-left text-[11px]">
+                                        <thead>
+                                          <tr className="border-b border-slate-200 bg-slate-100 text-[10px] font-bold uppercase text-slate-600">
+                                            <th className="px-2.5 py-1.5">Chave / Recurso</th>
+                                            <th className="px-2 py-1.5 text-center">Origem</th>
+                                            <th className="px-2.5 py-1.5">Arquivo-Fonte</th>
+                                            <th className="px-2.5 py-1.5 text-center">Classificação</th>
+                                            <th className="px-2.5 py-1.5">
+                                              Tabela Relacionada / Observação
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                          {itensFora.map((it, idxIt) => {
+                                            const badge = badgeClassificacaoPersistenciaForaBD(
+                                              it.classificacao,
+                                            );
+                                            return (
+                                              <tr key={`${it.chave}-${it.arquivo}-${idxIt}`}>
+                                                <td className="px-2.5 py-1.5 font-mono font-bold text-slate-900">
+                                                  {it.chave}
+                                                </td>
+                                                <td className="px-2 py-1.5 text-center font-mono text-slate-700">
+                                                  {it.origem}
+                                                </td>
+                                                <td className="px-2.5 py-1.5 font-mono text-slate-600">
+                                                  {it.arquivo || '—'}
+                                                </td>
+                                                <td className="px-2.5 py-1.5 text-center">
+                                                  <span
+                                                    className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-bold ${badge.classe}`}
+                                                  >
+                                                    {badge.rotulo}
+                                                  </span>
+                                                </td>
+                                                <td className="px-2.5 py-1.5 text-slate-700">
+                                                  {it.tabela_relacionada && (
+                                                    <span className="mr-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-900">
+                                                      {it.tabela_relacionada}
+                                                    </span>
+                                                  )}
+                                                  {it.motivo}
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                    {(
+                                      grupoAtual.auditoria_tecnica
+                                        .entidades_tema_sem_tabela_banco || []
+                                    ).length > 0 && (
+                                      <p className="mt-1.5 text-[11px]">
+                                        <strong>
+                                          Entidades exclusivas sem tabela no .sql/BD online:
+                                        </strong>{' '}
+                                        <code className="font-bold">
+                                          {grupoAtual.auditoria_tecnica.entidades_tema_sem_tabela_banco.join(
+                                            ', ',
+                                          )}
+                                        </code>
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })()}
 
                               {/* Matriz de Rastreabilidade por Tabela (.sql ↔ Banco Online ↔ Gravação & Consumo no Código) */}
                               <div className="mt-3 border-t border-slate-200/80 pt-3">
@@ -5097,6 +5273,52 @@ export function App() {
                                           ))}
                                         </ul>
                                       )}
+                                      {r.codigo === '2.3' &&
+                                        (() => {
+                                          const itensFora23 = obterItensPersistenciaForaBD(
+                                            grupoAtual.auditoria_tecnica,
+                                          );
+                                          if (itensFora23.length === 0) return null;
+                                          return (
+                                            <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px]">
+                                              <p className="font-bold text-slate-800">
+                                                Itens Persistidos Fora do BD (Decisão Pontual — Item
+                                                2.3):
+                                              </p>
+                                              <ul className="mt-1 space-y-1">
+                                                {itensFora23.map((it23, idx23) => {
+                                                  const b23 =
+                                                    badgeClassificacaoPersistenciaForaBD(
+                                                      it23.classificacao,
+                                                    );
+                                                  return (
+                                                    <li
+                                                      key={`${it23.chave}-${idx23}`}
+                                                      className="flex flex-wrap items-center gap-1.5"
+                                                    >
+                                                      <span
+                                                        className={`rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${b23.classe}`}
+                                                      >
+                                                        {b23.rotulo}
+                                                      </span>
+                                                      <code className="font-bold text-slate-900">
+                                                        {it23.chave}
+                                                      </code>
+                                                      <span className="text-slate-600">
+                                                        ({it23.origem}
+                                                        {it23.arquivo ? ` @ ${it23.arquivo}` : ''}
+                                                        {it23.tabela_relacionada
+                                                          ? ` ↔ ${it23.tabela_relacionada}`
+                                                          : ''}
+                                                        )
+                                                      </span>
+                                                    </li>
+                                                  );
+                                                })}
+                                              </ul>
+                                            </div>
+                                          );
+                                        })()}
                                     </td>
                                     <td className="p-3 text-center">
                                       <div className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 p-0.5">

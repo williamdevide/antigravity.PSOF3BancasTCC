@@ -805,3 +805,23 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
 
 
 
+
+
+---
+
+## Sessão 34 — Calibragem da Rubrica 2.3 e Transparência da Persistência Fora do BD (21/11/2026)
+
+### Prompt 34
+```text
+/agente-orquestrador /grill-me /goal no avaliação do item 2.3 quero ser um pouco menos rigoroso, digo, por exemplo o grupo do projeto ECOA, consumiu todas as tabelas que precisava, devm perder pontos pelos 0 registros no .sql, mas a persistencia fora do bd (localstorage ou json) não foi das tabelas do sistema certo? vamos tentar ser mais leves um pouco. importante: sempre que existir o item Persistência fora do BD mostre o que esta sendo persistido fora para que eu decida pontualmente
+```
+
+### Decisões Consolidadas (/grill-me)
+1. **Calibragem proporcional da Rubrica 2.3:**
+   - **0 registros no `.sql` (com BD online ativo):** abatimento proporcional (`-1.5` pts para `0` registros; até `-1.0` pt quando parcialmente populado).
+   - **Cache/espelho em `localStorage` (`cache_espelho_bd`):** chaves de apoio/cache que espelham tabelas já integradas no BD online (ou sincronizadas via nuvem como `auth.updateUser`) passam a gerar **0 penalidade** (apenas alerta informativo para conferência do professor).
+   - **Persistência secundária exclusiva fora do BD (`exclusivo_fora_bd`):** quando as tabelas principais já operam no BD online, aplica desconto moderado (`1.0 + 0.4 * qtd`, máximo `2.5` pts e piso `5.0`), mantendo o item em nível **Pleno** (`>= 5.0`).
+   - **Penalidade severa (`Insuficiente < 5.0`):** reservada apenas para JSON local substituindo `SELECT` no servidor (`usa_arquivos_json_locais_no_servidor`) ou quando entidades principais/maioria vivem exclusivamente em `localStorage` sem tabela no BD (`SELECT == 0` ou `len(exclusivos) >= max(5, sql_tabelas_qtd)`).
+2. **Listagem explícita de Persistência fora do BD:** exibir chave/recurso, origem (`localStorage`, `sessionStorage`, `json_local`), arquivo-fonte, classificação (`cache_espelho_bd`, `exclusivo_fora_bd`, `json_local_servidor`) e tabela relacionada em: Ficha MSEP (`2.3` e exportações), `Auditoria & Bancas` (Sidebar, Card 2 e Bloco 3) e Dossiê MD/PDF.
+3. **Correções de falsos positivos técnicos no ECOA (`I2DEV-B_Grupo09`):** ignorar prefixos de sistema (`auth.*`, `storage.*`, `realtime.*`, `pg_catalog.*`, `information_schema.*`) no parser `.sql` e aceitar `HTTP 206` do PostgREST/Supabase na checagem online das tabelas.
+4. **Reauditoria pós-deploy:** após deploy na VM Oracle, reauditar apenas `I2DEV-B_Grupo09` (**ECOA**), preservando integralmente as 6 bancas já concluídas.

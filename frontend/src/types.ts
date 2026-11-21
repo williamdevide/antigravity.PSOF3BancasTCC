@@ -131,6 +131,15 @@ export interface AuditoriaTabelaBanco {
   conforme_ciclo_completo: boolean;
 }
 
+export interface ItemPersistenciaForaBD {
+  chave: string;
+  origem: 'localStorage' | 'sessionStorage' | 'json_local';
+  arquivo: string;
+  classificacao: 'cache_espelho_bd' | 'exclusivo_fora_bd' | 'json_local_servidor';
+  tabela_relacionada: string;
+  motivo: string;
+}
+
 export interface AuditoriaTecnicaDetalhada {
   monografia_paginas_estimadas: number;
   monografia_palavras: number;
@@ -245,9 +254,11 @@ export interface AuditoriaTecnicaDetalhada {
   usa_localstorage_indevido: boolean;
   arquivos_localstorage_detectados: string[];
   chaves_localstorage_permitidas_ui: string[];
+  chaves_localstorage_cache_bd?: string[];
   chaves_localstorage_negocio: string[];
   usa_arquivos_json_locais_no_servidor: boolean;
   arquivos_json_locais_detectados: string[];
+  itens_persistencia_fora_bd?: ItemPersistenciaForaBD[];
   tabelas_auditoria_online: AuditoriaTabelaBanco[];
   tabelas_sql_presentes_online_qtd: number;
   tabelas_sql_gravadas_pelo_codigo_qtd: number;
