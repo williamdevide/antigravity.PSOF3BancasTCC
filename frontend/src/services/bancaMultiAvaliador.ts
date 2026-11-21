@@ -30,6 +30,7 @@ import {
   mesclarIntegrantesSoberanosComBase,
   mesclarRubricasSoberanasComBase,
   normalizarRubricasComNivel,
+  obterNomesAvaliadoresBanca,
   obterP3TotalAvaliador,
   recalcularAvaliacaoProfessor,
   recalcularConsolidadaExistente,
@@ -45,6 +46,7 @@ export {
   mesclarIntegrantesSoberanosComBase,
   mesclarRubricasSoberanasComBase,
   normalizarRubricasComNivel,
+  obterNomesAvaliadoresBanca,
   obterP3TotalAvaliador,
   recalcularAvaliacaoProfessor,
   recalcularConsolidadaExistente,
@@ -387,6 +389,11 @@ export async function encerrarEConsolidarBanca(
       bancaConsolidada.status_liberacao_final !== 'Aprovado' || itensPendenciaAuto.length > 0;
 
     const titularNome = titular.displayName || titular.email?.split('@')[0] || 'Prof. Titular';
+    const nomesAvaliadores = obterNomesAvaliadoresBanca(
+      null,
+      bancaConsolidada,
+      { avaliador: titularNome, banca_realizada: true },
+    );
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
     const dadosConsolidacao: Partial<SessaoBancaAoVivo> & Record<string, unknown> = {
       status: 'concluida',
@@ -395,7 +402,8 @@ export async function encerrarEConsolidarBanca(
       duracao_formatada: duracaoFormatada,
       titular_uid: titular.uid,
       titular_nome: titularNome,
-      contingencia_um_avaliador: contingencia,
+      avaliadores_presentes: nomesAvaliadores,
+      contingencia_um_avaliador: Boolean(contingencia && nomesAvaliadores.length < 2),
       justificativa_contingencia: justificativa,
       media_final_consolidada: bancaConsolidada.media_final,
       status_liberacao_final: bancaConsolidada.status_liberacao_final,
@@ -702,11 +710,13 @@ export async function recalcularEConsolidarBancaAposEdicao(
       await Promise.all(promessasCura);
     }
 
+    const nomesAvaliadores = obterNomesAvaliadoresBanca(null, consolidada, grupoBase);
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
     await setDoc(
       docSessaoRef,
       {
         status: 'concluida',
+        avaliadores_presentes: nomesAvaliadores,
         media_final_consolidada: consolidada.media_final,
         status_liberacao_final: consolidada.status_liberacao_final,
         banca_consolidada: consolidada,
@@ -803,10 +813,12 @@ export async function aplicarAjusteConsensoBancaNoFirestore(
       statusManualEfetivo,
     );
 
+    const nomesAvaliadores = obterNomesAvaliadoresBanca(null, consolidada, grupoBase);
     await setDoc(
       doc(db, COLECAO_SESSOES_BANCA, grupoId),
       {
         status: 'concluida',
+        avaliadores_presentes: nomesAvaliadores,
         media_final_consolidada: consolidada.media_final,
         status_liberacao_final: consolidada.status_liberacao_final,
         banca_consolidada: consolidada,
@@ -846,10 +858,12 @@ export async function sincronizarSnapshotSessaoFirestore(
       ...consolidada,
       status_liberacao_final: statusPreservado,
     };
+    const nomesAvaliadores = obterNomesAvaliadoresBanca(sessaoAtual, bancaSincronizada);
     await setDoc(
       docSessaoRef,
       {
         status: sessaoAtual.status || 'concluida',
+        avaliadores_presentes: nomesAvaliadores,
         media_final_consolidada: bancaSincronizada.media_final,
         banca_consolidada: bancaSincronizada,
         atualizado_em: agora,

@@ -15,6 +15,7 @@ import {
   calcularNivelMsep,
   consolidadaDivergeDeSessao,
   normalizarRubricasComNivel,
+  obterNomesAvaliadoresBanca,
   obterP3TotalAvaliador,
   recalcularAvaliacaoProfessor,
   recalcularConsolidadaExistente,
@@ -422,6 +423,44 @@ function criarGrupoBase(): AvaliacaoGrupo {
     { ...grupo.rubricas[0], nota: 7.5, peso_max: 10, nivel: 'Insuficiente' },
   ]);
   assert.equal(rubCorrigidas[0].nivel, 'Pleno');
+
+  // Resolução deduplicada dos nomes dos avaliadores e divergência de avaliadores_presentes
+  const consDoisAval: typeof cons = {
+    ...cons,
+    avaliadores_concluidos: ['Edivan Andrade', 'William Devidé Komel'],
+    pareceres_professores: [],
+    avaliacoes_individuais: {
+      u2: {
+        ...cons.avaliacoes_individuais['u1'],
+        professor_uid: 'u2',
+        professor_nome: 'Edivan Andrade',
+        professor_email: 'edivan.andrade2025@gmail.com',
+      },
+      u1: {
+        ...cons.avaliacoes_individuais['u1'],
+        professor_uid: 'u1',
+        professor_nome: 'William Devidé Komel',
+        professor_email: 'williamdevide@gmail.com',
+      },
+    },
+  };
+  const sessaoUmPresente: SessaoBancaAoVivo = {
+    ...sessaoAntiga,
+    titular_nome: 'William Devidé Komel',
+    avaliadores_presentes: ['William Devidé Komel'],
+    media_final_consolidada: consDoisAval.media_final,
+    banca_consolidada: consDoisAval,
+  };
+  const nomesResolvidos = obterNomesAvaliadoresBanca(sessaoUmPresente, consDoisAval);
+  assert.deepEqual(nomesResolvidos, ['William Devidé Komel', 'Edivan Andrade']);
+  assert.equal(consolidadaDivergeDeSessao(consDoisAval, sessaoUmPresente), true);
+  assert.equal(
+    consolidadaDivergeDeSessao(consDoisAval, {
+      ...sessaoUmPresente,
+      avaliadores_presentes: nomesResolvidos,
+    }),
+    false,
+  );
 }
 
 // 5. Política de acesso flexível (Titular williamdevide@gmail.com, pré-autorizados João/Edivan e convidados aprovados)

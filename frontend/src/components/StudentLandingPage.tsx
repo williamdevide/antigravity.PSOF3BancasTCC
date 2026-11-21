@@ -25,6 +25,7 @@ import { APP_VERSION } from '../config/version';
 import {
   formatarDataPrevistaBr,
   obterAdiamentoDataFuturaAtivo,
+  obterNomesAvaliadoresBanca,
   recalcularConsolidadaExistente,
 } from '../services/bancaMultiAvaliador';
 import type {
@@ -146,6 +147,7 @@ function resolverDadosBancaRealizada(
     sessao?.historico_pendencias && sessao.historico_pendencias.length > 0
       ? sessao.historico_pendencias
       : banca.historico_pendencias || [];
+  const nomesAvaliadores = obterNomesAvaliadoresBanca(sessao, consolidada, banca);
 
   return {
     realizada,
@@ -165,6 +167,7 @@ function resolverDadosBancaRealizada(
     consideracoesProfessores,
     revisaoPosBanca,
     historicoPendencias,
+    nomesAvaliadores,
   };
 }
 
@@ -606,26 +609,71 @@ export function StudentLandingPage({
                         {/* Selos de Situação à Direita */}
                         <div className="flex shrink-0 flex-col items-end gap-2">
                           {info.realizada ? (
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-black uppercase tracking-wider ${
-                                info.statusLiberacao === 'Aprovado'
-                                  ? 'bg-emerald-600 text-white'
-                                  : info.statusLiberacao === 'Nota Retida (Pendências)'
-                                  ? 'bg-orange-500 text-white'
-                                  : 'bg-red-600 text-white'
-                              }`}
-                            >
-                              {info.statusLiberacao === 'Aprovado' && <CheckCircle2 className="h-4 w-4" />}
-                              {info.statusLiberacao === 'Nota Retida (Pendências)' && <Lock className="h-4 w-4" />}
-                              {info.statusLiberacao === 'Nova Chance (Data Futura)' && <XCircle className="h-4 w-4" />}
-                              <span>
-                                {info.statusLiberacao === 'Aprovado'
-                                  ? 'Nota Liberada'
-                                  : info.statusLiberacao === 'Nota Retida (Pendências)'
-                                  ? 'Nota Retida'
-                                  : 'Nova Apresentação'}
+                            <>
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-black uppercase tracking-wider ${
+                                  info.statusLiberacao === 'Aprovado'
+                                    ? 'bg-emerald-600 text-white'
+                                    : info.statusLiberacao === 'Nota Retida (Pendências)'
+                                    ? 'bg-orange-500 text-white'
+                                    : 'bg-red-600 text-white'
+                                }`}
+                              >
+                                {info.statusLiberacao === 'Aprovado' && <CheckCircle2 className="h-4 w-4" />}
+                                {info.statusLiberacao === 'Nota Retida (Pendências)' && <Lock className="h-4 w-4" />}
+                                {info.statusLiberacao === 'Nova Chance (Data Futura)' && <XCircle className="h-4 w-4" />}
+                                <span>
+                                  {info.statusLiberacao === 'Aprovado'
+                                    ? 'Nota Liberada'
+                                    : info.statusLiberacao === 'Nota Retida (Pendências)'
+                                    ? 'Nota Retida'
+                                    : 'Nova Apresentação'}
+                                </span>
                               </span>
-                            </span>
+
+                              {(() => {
+                                const qtdAv = info.nomesAvaliadores.length || 2;
+                                return (
+                                  <div className="flex flex-wrap items-center justify-end gap-1.5">
+                                    {sessao?.duracao_formatada && (
+                                      <span className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                                        <Clock className="h-3 w-3 text-slate-500" />
+                                        {sessao.duracao_formatada}
+                                      </span>
+                                    )}
+                                    <span
+                                      title={
+                                        info.nomesAvaliadores.length > 0
+                                          ? `Avaliadores: ${info.nomesAvaliadores.join(' • ')}`
+                                          : undefined
+                                      }
+                                      className="group relative inline-flex cursor-help items-center gap-1 rounded-lg border border-purple-200 bg-purple-50/90 px-2.5 py-0.5 text-[11px] font-bold text-purple-800 transition hover:border-purple-400 hover:bg-purple-100"
+                                    >
+                                      <span>
+                                        👨‍🏫 {qtdAv} {qtdAv === 1 ? 'Avaliador' : 'Avaliadores'}
+                                      </span>
+                                      {info.nomesAvaliadores.length > 0 && (
+                                        <span className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-max max-w-[240px] rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-2 text-left text-[11px] font-medium text-white opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                                          <span className="block border-b border-slate-700/80 pb-1 text-[9px] font-extrabold uppercase tracking-wider text-amber-300">
+                                            Avaliadores da Banca
+                                          </span>
+                                          <span className="mt-1 block space-y-0.5">
+                                            {info.nomesAvaliadores.map((nomeAv) => (
+                                              <span
+                                                key={nomeAv}
+                                                className="block truncate font-semibold text-slate-100"
+                                              >
+                                                • {nomeAv}
+                                              </span>
+                                            ))}
+                                          </span>
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
+                            </>
                           ) : info.emAndamento ? (
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-black uppercase tracking-wider text-white">
                               <span className="h-2 w-2 animate-ping rounded-full bg-white" />

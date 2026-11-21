@@ -890,3 +890,20 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
    - O Titular possui botão exclusivo **"Docentes"** no cabeçalho (com contador pulsante de pedidos pendentes) que abre `ModalGestaoDocentes` para aprovar, recusar, revogar ou pré-autorizar manualmente qualquer e-mail permanentemente.
 3. **Permissões do Professor Convidado:**
    - Mantém exatamente o perfil de convidado: leitura em auditorias/arquivos/fichas e criação/edição/encerramento apenas da própria avaliação individual (`psof3_avaliacoes_professores`) e rascunho (`psof3_rascunhos_professores`), preservando gestão/consolidação/arquivos/configurações/aprovação de docentes exclusivos para `williamdevide@gmail.com`.
+
+
+---
+
+## Sessão 38 — Exibição Correta da Quantidade de Avaliadores e Tooltip com Nomes (21/11/2026)
+
+### Prompt 38
+```text
+/agente-orquestrador /grill-me /goal nas bancas já realizadas esta aparecendo como 1 avaliador sendo que essas bancas tiveram sempre eu e mais 1. exiba correto e se passar o mouse em cima da tag exibe os nomes
+```
+
+### Decisões Consolidadas (/grill-me)
+1. **Resolução Real Deduplicada dos Avaliadores:**
+   - Criar `obterNomesAvaliadoresBanca(sessao, consolidada, banca)` em `calculoBanca.ts` combinando `avaliadores_concluidos`, `avaliacoes_individuais`, `pareceres_professores`, `avaliadores_presentes` e `titular_nome`, garantindo que as bancas consolidadas com 2 avaliadores (`William + Edivan` ou `William + João`) exibam **`2 Avaliadores`** com singular/plural correto.
+2. **Tooltip Flutuante com Nomes nos Cards (Professor e Alunos) + Auto-Cura:**
+   - Adicionar tooltip flutuante estilizado no hover (`group-hover`) e atributo nativo `title` na tag de avaliadores nos cards de `Auditoria & Bancas` (`App.tsx`) e nos cards concluídos do `Portal dos Alunos` (`StudentLandingPage.tsx`).
+   - Atualizar `consolidadaDivergeDeSessao` e as funções de consolidação em `bancaMultiAvaliador.ts` para auto-curar `avaliadores_presentes` no Cloud Firestore quando houver divergência.

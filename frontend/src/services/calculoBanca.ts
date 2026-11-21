@@ -752,8 +752,58 @@ export function aplicarDiffConsensoNaAvaliacao(
   return recalcularAvaliacaoProfessor(avAtualizada, grupoBase);
 }
 
+const ROTULOS_GENERICOS_AVALIADOR = new Set(['sistema', 'ia', 'avaliador', 'titular']);
+
 /**
- * Verifica se o snapshot salvo em psof3_sessoes_banca diverge dos cálculos derivados das rubricas.
+ * Resolve e deduplica os nomes reais dos professores avaliadores de uma banca,
+ * priorizando registros individuais e consolidados com o Titular primeiro.
+ */
+export function obterNomesAvaliadoresBanca(
+  sessao?: SessaoBancaAoVivo | null,
+  consolidada?: BancaConsolidada | null,
+  banca?: Pick<AvaliacaoGrupo, 'avaliador' | 'banca_realizada'> | null,
+): string[] {
+  const porChave = new Map<string, string>();
+  const adicionar = (bruto?: string | null) => {
+    const limpo = (bruto || '').trim();
+    if (!limpo) return;
+    const chave = limpo.toLowerCase();
+    if (ROTULOS_GENERICOS_AVALIADOR.has(chave)) return;
+    if (!porChave.has(chave)) {
+      porChave.set(chave, limpo);
+    }
+  };
+
+  (consolidada?.avaliadores_concluidos || []).forEach(adicionar);
+  (sessao?.banca_consolidada?.avaliadores_concluidos || []).forEach(adicionar);
+  Object.values(consolidada?.avaliacoes_individuais || {}).forEach((av) =>
+    adicionar(av?.professor_nome),
+  );
+  Object.values(sessao?.banca_consolidada?.avaliacoes_individuais || {}).forEach((av) =>
+    adicionar(av?.professor_nome),
+  );
+  (consolidada?.pareceres_professores || []).forEach((p) => adicionar(p?.professor_nome));
+  (sessao?.banca_consolidada?.pareceres_professores || []).forEach((p) =>
+    adicionar(p?.professor_nome),
+  );
+  (sessao?.avaliadores_presentes || []).forEach(adicionar);
+  adicionar(sessao?.titular_nome);
+  if (banca?.banca_realizada && banca?.avaliador) {
+    banca.avaliador.split(/\s*\/\s*/).forEach(adicionar);
+  }
+
+  return Array.from(porChave.values()).sort((a, b) => {
+    const aTit = a.toLowerCase().includes('william');
+    const bTit = b.toLowerCase().includes('william');
+    if (aTit && !bTit) return -1;
+    if (!aTit && bTit) return 1;
+    return a.localeCompare(b, 'pt-BR');
+  });
+}
+
+/**
+ * Verifica se o snapshot salvo em psof3_sessoes_banca diverge dos cálculos derivados das rubricas
+ * ou da lista efetiva de avaliadores da banca.
  */
 export function consolidadaDivergeDeSessao(
   recalculada: BancaConsolidada,
@@ -796,6 +846,18 @@ export function consolidadaDivergeDeSessao(
     ) {
       return true;
     }
+  }
+
+  const nomesEsperados = obterNomesAvaliadoresBanca(sessao, recalculada);
+  const presentesAtuais = Array.from(
+    new Set((sessao.avaliadores_presentes || []).map((n) => (n || '').trim()).filter(Boolean)),
+  );
+  if (presentesAtuais.length !== nomesEsperados.length) {
+    return true;
+  }
+  const setPres = new Set(presentesAtuais.map((n) => n.toLowerCase()));
+  if (nomesEsperados.some((n) => !setPres.has(n.toLowerCase()))) {
+    return true;
   }
 
   return false;

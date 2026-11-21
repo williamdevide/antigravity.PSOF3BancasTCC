@@ -86,6 +86,7 @@ import {
   obterP3TotalAvaliador,
   calcularNivelMsep,
   normalizarRubricasComNivel,
+  obterNomesAvaliadoresBanca,
   mesclarRubricasSoberanasComBase,
   mesclarIntegrantesSoberanosComBase,
   aplicarAjusteConsensoBancaNoFirestore,
@@ -2347,20 +2348,11 @@ export function App() {
       0)
     : (grupoAtual?.media_nota_final_grupo ?? 0);
 
-  const nomesAvaliadoresBanca: string[] = [];
-  if (sessaoAtual?.avaliadores_presentes?.length) {
-    sessaoAtual.avaliadores_presentes.forEach((n) => {
-      if (!nomesAvaliadoresBanca.includes(n)) nomesAvaliadoresBanca.push(n);
-    });
-  }
-  if (avaliacoesIndividuaisList.length > 0) {
-    avaliacoesIndividuaisList.forEach((av) => {
-      if (!nomesAvaliadoresBanca.includes(av.professor_nome)) nomesAvaliadoresBanca.push(av.professor_nome);
-    });
-  }
-  if (nomesAvaliadoresBanca.length === 0 && sessaoAtual?.titular_nome) {
-    nomesAvaliadoresBanca.push(sessaoAtual.titular_nome);
-  }
+  const nomesAvaliadoresBanca = obterNomesAvaliadoresBanca(
+    sessaoAtual,
+    consolidadaAtual,
+    grupoAtual,
+  );
 
   const pareceresAvaliadoresBanca: {
     professor_nome: string;
@@ -3221,16 +3213,51 @@ export function App() {
 
                                 {(bancaJaRealizada || b.entregue_na_pasta) && (
                                   <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] text-slate-600">
-                                    {bancaJaRealizada ? (
-                                      <>
-                                        <span className="font-semibold text-purple-900">
-                                          ⏱️ Duração: <strong>{sessaoB?.duracao_formatada || 'Concluída'}</strong>
-                                        </span>
-                                        <span className="font-semibold text-purple-700">
-                                          👨‍🏫 {sessaoB?.avaliadores_presentes?.length || 2} Avaliadores
-                                        </span>
-                                      </>
-                                    ) : (
+                                    {bancaJaRealizada ? (() => {
+                                      const nomesAvaliadoresCard = obterNomesAvaliadoresBanca(
+                                        sessaoB,
+                                        consB,
+                                        b,
+                                      );
+                                      const qtdAvaliadoresCard = nomesAvaliadoresCard.length || 2;
+                                      return (
+                                        <>
+                                          <span className="font-semibold text-purple-900">
+                                            ⏱️ Duração: <strong>{sessaoB?.duracao_formatada || 'Concluída'}</strong>
+                                          </span>
+                                          <span
+                                            title={
+                                              nomesAvaliadoresCard.length > 0
+                                                ? `Avaliadores: ${nomesAvaliadoresCard.join(' • ')}`
+                                                : undefined
+                                            }
+                                            className="group relative inline-flex cursor-help items-center gap-1 rounded-md border border-purple-200 bg-purple-50/80 px-2 py-0.5 font-semibold text-purple-800 transition hover:border-purple-400 hover:bg-purple-100"
+                                          >
+                                            <span>
+                                              👨‍🏫 {qtdAvaliadoresCard}{' '}
+                                              {qtdAvaliadoresCard === 1 ? 'Avaliador' : 'Avaliadores'}
+                                            </span>
+                                            {nomesAvaliadoresCard.length > 0 && (
+                                              <span className="pointer-events-none invisible absolute bottom-full right-0 z-30 mb-1.5 w-max max-w-[240px] rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-2 text-left text-[11px] font-medium text-white opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                                                <span className="block border-b border-slate-700/80 pb-1 text-[9px] font-extrabold uppercase tracking-wider text-amber-300">
+                                                  Avaliadores da Banca
+                                                </span>
+                                                <span className="mt-1 block space-y-0.5">
+                                                  {nomesAvaliadoresCard.map((nomeAv) => (
+                                                    <span
+                                                      key={nomeAv}
+                                                      className="block truncate font-semibold text-slate-100"
+                                                    >
+                                                      • {nomeAv}
+                                                    </span>
+                                                  ))}
+                                                </span>
+                                              </span>
+                                            )}
+                                          </span>
+                                        </>
+                                      );
+                                    })() : (
                                       <>
                                         <span>
                                           P1: <strong>{b.p1_total.toFixed(1)}</strong>/30 • P2:{' '}
