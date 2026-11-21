@@ -319,6 +319,7 @@ export interface AvaliacaoGrupo {
   status_liberacao_nota: ResultadoFinalTipo;
   status_liberacao_manual?: ResultadoFinalTipo | null;
   revisao_pos_banca?: RevisaoPosBanca;
+  adiamento_data_futura?: AdiamentoDataFutura | null;
   historico_pendencias?: RegistroHistoricoPendencia[];
 
   parecer_tecnico: string;
@@ -431,6 +432,7 @@ export interface SessaoBancaAoVivo {
   pendencias_cumpridas_em?: string | null;
   pendencias_atualizado_por?: string;
   revisao_pos_banca?: RevisaoPosBanca;
+  adiamento_data_futura?: AdiamentoDataFutura | null;
   historico_pendencias?: RegistroHistoricoPendencia[];
   atualizado_em: string;
 }
@@ -510,11 +512,22 @@ export interface ListaArquivosRevisadosResponse {
   revisao_pos_banca: RevisaoPosBanca;
 }
 
+export interface AdiamentoDataFutura {
+  ativo: boolean;
+  motivo: string;
+  nova_data_prevista: string;
+  marcado_por: string;
+  marcado_em: string | null;
+  desmarcado_por: string;
+  desmarcado_em: string | null;
+  atualizado_em: string | null;
+}
+
 export interface RegistroHistoricoPendencia {
   id: string;
   data_hora: string;
   autor: string;
-  origem: 'banca' | 'revisados';
+  origem: 'banca' | 'revisados' | 'adiamento';
   mensagem: string;
   status_aplicado?: ResultadoFinalTipo | null;
   pendencias_cumpridas: boolean;

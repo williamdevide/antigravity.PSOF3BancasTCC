@@ -43,6 +43,7 @@ from .firebase_service import (
 from .models import (
     AgentStatusResponse,
     AgentSummaryModel,
+    AtualizarAdiamentoDataFuturaRequest,
     AvaliacaoGrupoModel,
     AvaliarRevisaoPosBancaRequest,
     ConfigEnvModel,
@@ -59,6 +60,7 @@ from .report_generator import (
 )
 from .tcc_auditor import (
     _pasta_possui_arquivos_reais,
+    atualizar_adiamento_data_futura_backend,
     avaliar_revisao_pos_banca_backend,
     banca_esta_concluida_no_backend,
     classificar_tipo_arquivo_entrega,
@@ -473,7 +475,13 @@ def salvar_avaliacao_grupo(grupo_id: str, payload: SalvarAvaliacaoRequest) -> Av
 
     alvo.status_avaliacao = "avaliado_banca"
     alvo.banca_realizada = True
-    alvo.atualizado_em = datetime.now().isoformat(timespec="seconds")
+    agora = datetime.now().isoformat(timespec="seconds")
+    alvo.atualizado_em = agora
+    if alvo.adiamento_data_futura.ativo:
+        alvo.adiamento_data_futura.ativo = False
+        alvo.adiamento_data_futura.desmarcado_por = alvo.avaliador
+        alvo.adiamento_data_futura.desmarcado_em = agora
+        alvo.adiamento_data_futura.atualizado_em = agora
     recalcular_totais_avaliacao(alvo)
 
     if payload.status_liberacao_manual:
@@ -644,6 +652,36 @@ def reabrir_banca_para_entregue_endpoint(grupo_id: str) -> dict[str, Any]:
     return {
         "ok": True,
         "mensagem": f"Banca de {banca_atualizada.projeto} reaberta para o estado 'Entregue'. Agora é possível gerenciar arquivos e reauditar.",
+        "banca": banca_atualizada.model_dump(),
+    }
+
+
+@app.post("/api/bancas/{grupo_id}/adiamento-data-futura")
+def atualizar_adiamento_data_futura_endpoint(
+    grupo_id: str,
+    payload: AtualizarAdiamentoDataFuturaRequest,
+) -> dict[str, Any]:
+    try:
+        banca_atualizada = atualizar_adiamento_data_futura_backend(
+            grupo_id=grupo_id,
+            ativo=payload.ativo,
+            motivo=payload.motivo,
+            nova_data_prevista=payload.nova_data_prevista,
+            autor=payload.autor,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PermissionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return {
+        "ok": True,
+        "mensagem": (
+            f"{banca_atualizada.projeto} marcado como 'Não Apresentou / Data Futura'."
+            if banca_atualizada.adiamento_data_futura.ativo
+            else f"Adiamento de {banca_atualizada.projeto} desmarcado — grupo restaurado para aguardando."
+        ),
+        "adiamento_data_futura": banca_atualizada.adiamento_data_futura.model_dump(),
         "banca": banca_atualizada.model_dump(),
     }
 

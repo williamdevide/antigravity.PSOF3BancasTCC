@@ -1,4 +1,5 @@
 import type {
+  AdiamentoDataFutura,
   AgentStatus,
   AgentSummary,
   ArvoreArquivosResponse,
@@ -222,6 +223,25 @@ export const api = {
       `/api/bancas/${encodeURIComponent(grupoId)}/reabrir`,
       { method: 'POST' },
     ),
+
+  atualizarAdiamentoDataFutura: (
+    grupoId: string,
+    payload: {
+      ativo: boolean;
+      motivo?: string;
+      nova_data_prevista?: string;
+      autor?: string;
+    },
+  ) =>
+    request<{
+      ok: boolean;
+      mensagem: string;
+      adiamento_data_futura: AdiamentoDataFutura;
+      banca: AvaliacaoGrupo;
+    }>(`/api/bancas/${encodeURIComponent(grupoId)}/adiamento-data-futura`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   listarArquivosRevisadosGrupo: (grupoId: string) =>
     request<ListaArquivosRevisadosResponse>(

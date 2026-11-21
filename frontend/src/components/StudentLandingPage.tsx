@@ -5,6 +5,7 @@ import {
   Award,
   BookOpen,
   Calendar,
+  CalendarClock,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -21,7 +22,11 @@ import {
   XCircle,
 } from 'lucide-react';
 import { APP_VERSION } from '../config/version';
-import { recalcularConsolidadaExistente } from '../services/bancaMultiAvaliador';
+import {
+  formatarDataPrevistaBr,
+  obterAdiamentoDataFuturaAtivo,
+  recalcularConsolidadaExistente,
+} from '../services/bancaMultiAvaliador';
 import type {
   AvaliacaoGrupo,
   NotaIndividualIntegrante,
@@ -136,6 +141,7 @@ function resolverDadosBancaRealizada(
   );
 
   const revisaoPosBanca = sessao?.revisao_pos_banca || banca.revisao_pos_banca || null;
+  const adiamentoAtivo = obterAdiamentoDataFuturaAtivo(banca, sessao);
   const historicoPendencias: RegistroHistoricoPendencia[] =
     sessao?.historico_pendencias && sessao.historico_pendencias.length > 0
       ? sessao.historico_pendencias
@@ -144,6 +150,7 @@ function resolverDadosBancaRealizada(
   return {
     realizada,
     emAndamento,
+    adiamentoAtivo,
     p1,
     p2,
     p3,
@@ -211,7 +218,11 @@ export function StudentLandingPage({
       const info = resolverDadosBancaRealizada(b, mapaSessoesBanca[b.id]);
       if (situacaoFiltro === 'realizadas' && !info.realizada) return false;
       if (situacaoFiltro === 'proximas' && info.realizada) return false;
-      if (situacaoFiltro === 'pendencias' && (!info.realizada || (!info.possuiPendencias && info.statusLiberacao === 'Aprovado'))) {
+      if (
+        situacaoFiltro === 'pendencias' &&
+        !info.adiamentoAtivo &&
+        (!info.realizada || (!info.possuiPendencias && info.statusLiberacao === 'Aprovado'))
+      ) {
         return false;
       }
 
@@ -435,7 +446,7 @@ export function StudentLandingPage({
                   </div>
                   <div className="flex items-center gap-2 rounded-lg border-2 border-red-600 bg-white px-2.5 py-1.5">
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-600" />
-                    <span>Nova Apresentação</span>
+                    <span>Nova Apresentação / Data Futura</span>
                   </div>
                 </div>
               </div>
@@ -525,7 +536,9 @@ export function StudentLandingPage({
                   const classeBordaStatus = info.emAndamento
                     ? 'border-2 border-red-600 ring-2 ring-red-200'
                     : !info.realizada
-                    ? 'border-2 border-yellow-400'
+                    ? info.adiamentoAtivo
+                      ? 'border-2 border-red-600 bg-red-50/15'
+                      : 'border-2 border-yellow-400'
                     : info.statusLiberacao === 'Aprovado'
                     ? 'border-2 border-emerald-500'
                     : info.statusLiberacao === 'Nota Retida (Pendências)'
@@ -618,6 +631,11 @@ export function StudentLandingPage({
                               <span className="h-2 w-2 animate-ping rounded-full bg-white" />
                               Banca Ao Vivo
                             </span>
+                          ) : info.adiamentoAtivo ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-black uppercase tracking-wider text-white">
+                              <CalendarClock className="h-4 w-4" />
+                              Não Apresentou • Data Futura
+                            </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-400 bg-yellow-50 px-3 py-1 text-xs font-bold text-yellow-900">
                               <Clock className="h-3.5 w-3.5 text-yellow-700" />
@@ -650,9 +668,30 @@ export function StudentLandingPage({
 
                       {/* Corpo do Card */}
                       <div className="p-5">
-                        {/* CASO 1: BANCA AINDA VAI OCORRER -> Detalhes da Entrega e Horário */}
+                        {/* CASO 1: BANCA AINDA VAI OCORRER (incluindo "Não Apresentou / Data Futura") -> Sem notas P1-P4/individuais */}
                         {!info.realizada ? (
-                          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs">
+                          <div className="space-y-3">
+                            {info.adiamentoAtivo && (
+                              <div className="rounded-xl border border-red-300 bg-red-50/80 p-3.5 text-xs text-red-950">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="inline-flex items-center gap-1.5 font-extrabold uppercase tracking-wider text-[11px] text-red-800">
+                                    <CalendarClock className="h-4 w-4 text-red-600" />
+                                    Grupo optou por não apresentar na data agendada ({banca.data_banca})
+                                  </span>
+                                  <span className="rounded-full border border-red-300 bg-white px-2.5 py-0.5 font-mono text-[11px] font-bold text-red-900">
+                                    Nova data prevista:{' '}
+                                    {formatarDataPrevistaBr(info.adiamentoAtivo.nova_data_prevista)}
+                                  </span>
+                                </div>
+                                {info.adiamentoAtivo.motivo && (
+                                  <p className="mt-2 whitespace-pre-line rounded-lg border border-red-200/80 bg-white/85 px-3 py-2 text-xs leading-relaxed text-slate-800">
+                                    {info.adiamentoAtivo.motivo}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-xs">
                             <div className="flex items-center gap-2.5 text-slate-700">
                               {banca.entregue_na_pasta ? (
                                 <>
@@ -685,6 +724,7 @@ export function StudentLandingPage({
                                 )}
                               </button>
                             )}
+                            </div>
                           </div>
                         ) : (
                           /* CASO 2: BANCA JÁ REALIZADA -> Parciais P1-P4, Média Grupo, Notas Individuais e Pendências */
@@ -909,6 +949,7 @@ export function StudentLandingPage({
                                         })
                                       : '';
                                     const isRev = reg.origem === 'revisados';
+                                    const isAdiamento = reg.origem === 'adiamento';
                                     return (
                                       <div
                                         key={reg.id || `${reg.data_hora}-${reg.mensagem.slice(0, 12)}`}
@@ -920,10 +961,16 @@ export function StudentLandingPage({
                                               className={`rounded px-1.5 py-0.5 font-extrabold uppercase ${
                                                 isRev
                                                   ? 'bg-emerald-100 text-emerald-800'
+                                                  : isAdiamento
+                                                  ? 'bg-red-100 text-red-800'
                                                   : 'bg-indigo-100 text-indigo-800'
                                               }`}
                                             >
-                                              {isRev ? 'Arquivos Revisados' : 'Durante a Banca'}
+                                              {isRev
+                                                ? 'Arquivos Revisados'
+                                                : isAdiamento
+                                                ? 'Data Futura'
+                                                : 'Durante a Banca'}
                                             </span>
                                             <span className="font-bold text-slate-700">
                                               {reg.autor}

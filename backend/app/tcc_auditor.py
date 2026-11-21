@@ -33,6 +33,7 @@ from .config_manager import (
 )
 from .firebase_service import sincronizar_avaliacao_firestore
 from .models import (
+    AdiamentoDataFuturaModel,
     AuditoriaArquivoItem,
     AuditoriaTabelaBanco,
     AuditoriaTecnicaDetalhada,
@@ -2768,6 +2769,39 @@ def _enriquecer_com_gemini_opcional(
             log_cb(f"[{avaliacao.id}] Aviso: fallback para parecer determinístico ({exc}).")
 
 
+def _preservar_estado_operacional_anterior(
+    avaliacao: AvaliacaoGrupoModel,
+    avaliacao_anterior: dict[str, Any] | None,
+) -> None:
+    """Preserva adiamento, revisão pós-banca e histórico datado durante reauditorias e sincronizações."""
+    if not avaliacao_anterior:
+        return
+    if isinstance(avaliacao_anterior.get("adiamento_data_futura"), dict):
+        try:
+            avaliacao.adiamento_data_futura = AdiamentoDataFuturaModel(
+                **avaliacao_anterior["adiamento_data_futura"]
+            )
+        except Exception:
+            pass
+    if isinstance(avaliacao_anterior.get("revisao_pos_banca"), dict):
+        try:
+            avaliacao.revisao_pos_banca = RevisaoPosBancaModel(
+                **avaliacao_anterior["revisao_pos_banca"]
+            )
+        except Exception:
+            pass
+    if isinstance(avaliacao_anterior.get("historico_pendencias"), list):
+        hist_limpo: list[RegistroHistoricoPendenciaModel] = []
+        for item_h in avaliacao_anterior["historico_pendencias"]:
+            if isinstance(item_h, dict):
+                try:
+                    hist_limpo.append(RegistroHistoricoPendenciaModel(**item_h))
+                except Exception:
+                    pass
+        if hist_limpo:
+            avaliacao.historico_pendencias = hist_limpo
+
+
 def auditar_grupo_individual(
     meta_cronograma: dict[str, Any],
     pasta_grupo: Path | None,
@@ -2884,6 +2918,7 @@ def auditar_grupo_individual(
             )
             for nome, d4 in dados_p4_integrantes
         ]
+        _preservar_estado_operacional_anterior(avaliacao, avaliacao_anterior)
         return recalcular_totais_avaliacao(avaliacao)
 
     # Grupo com pasta entregue!
@@ -3052,7 +3087,8 @@ def auditar_grupo_individual(
     if cfg.gemini_api_key:
         enriquecer_auditoria_gemini(avaliacao, cfg.gemini_api_key, cfg.gemini_model, log_cb=log_cb)
 
-    # Preservar edições manuais da banca se já houver avaliação manual salva anteriormente
+    # Preservar edições manuais, adiamento de apresentação e histórico se já houver registro salvo anteriormente
+    _preservar_estado_operacional_anterior(avaliacao, avaliacao_anterior)
     if avaliacao_anterior and avaliacao_anterior.get("status_avaliacao") == "avaliado_banca":
         avaliacao.status_avaliacao = "avaliado_banca"
     else:
@@ -3258,7 +3294,12 @@ def sincronizar_status_entrega_grupo(grupo_id: str) -> AvaliacaoGrupoModel:
                     pasta.rmdir()
             except OSError:
                 pass
-        av = auditar_grupo_individual(meta, None, ordem_apresentacao=ordem)
+        av = auditar_grupo_individual(
+            meta,
+            None,
+            avaliacao_anterior=salvas.get(grupo_id),
+            ordem_apresentacao=ordem,
+        )
         salvas[grupo_id] = av.model_dump()
         salvar_avaliacoes_salvas(salvas)
         return av
@@ -3574,6 +3615,105 @@ def reabrir_banca_para_entregue_backend(grupo_id: str) -> AvaliacaoGrupoModel:
     av.atualizado_em = datetime.now().isoformat(timespec="seconds")
     av = recalcular_totais_avaliacao(av)
 
+    salvas[grupo_id] = av.model_dump()
+    salvar_avaliacoes_salvas(salvas)
+    return av
+
+
+def atualizar_adiamento_data_futura_backend(
+    grupo_id: str,
+    ativo: bool,
+    motivo: str = "",
+    nova_data_prevista: str = "",
+    autor: str = "Docente",
+) -> AvaliacaoGrupoModel:
+    """
+    Marca ou remove o estado de adiamento ("Não Apresentou / Data Futura") para um grupo
+    ainda não concluído, preservando arquivos, auditoria técnica e histórico datado.
+    """
+    info = obter_meta_e_ordem_grupo(grupo_id)
+    if not info:
+        raise ValueError(f"Grupo '{grupo_id}' não encontrado no cronograma oficial.")
+    meta, ordem = info
+
+    salvas = ler_avaliacoes_salvas()
+    registro = salvas.get(grupo_id)
+    av: AvaliacaoGrupoModel | None = None
+    if registro:
+        try:
+            av = AvaliacaoGrupoModel(**registro)
+        except Exception:
+            av = None
+
+    if av is None:
+        pasta_grp, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=False)
+        av = auditar_grupo_individual(
+            meta,
+            pasta_grp if pasta_grp and _pasta_possui_arquivos_reais(pasta_grp) else None,
+            ordem_apresentacao=ordem,
+        )
+
+    if av.banca_realizada or av.status_avaliacao in ("avaliado_banca", "concluida"):
+        raise PermissionError(
+            "Banca já concluída. Use o controle pós-banca ('Nova Apresentação') ou reabra a banca antes de marcar adiamento."
+        )
+
+    agora = datetime.now().isoformat(timespec="seconds")
+    autor_limpo = autor.strip() or av.avaliador or "Docente"
+    motivo_padrao = "Grupo optou por não apresentar na data agendada, ficando para nova apresentação em data futura."
+    motivo_limpo = motivo.strip() or (motivo_padrao if ativo else av.adiamento_data_futura.motivo or motivo_padrao)
+    data_limpa = nova_data_prevista.strip() if ativo else ""
+
+    atual = av.adiamento_data_futura
+    if ativo:
+        av.adiamento_data_futura = AdiamentoDataFuturaModel(
+            ativo=True,
+            motivo=motivo_limpo,
+            nova_data_prevista=data_limpa,
+            marcado_por=atual.marcado_por or autor_limpo,
+            marcado_em=atual.marcado_em or agora,
+            desmarcado_por="",
+            desmarcado_em=None,
+            atualizado_em=agora,
+        )
+        msg_hist = motivo_limpo + (
+            f" (Nova data prevista: {data_limpa})" if data_limpa else " (Nova data prevista: A definir)"
+        )
+        status_hist: str | None = "Nova Chance (Data Futura)"
+    else:
+        av.adiamento_data_futura = AdiamentoDataFuturaModel(
+            ativo=False,
+            motivo="",
+            nova_data_prevista="",
+            marcado_por=atual.marcado_por,
+            marcado_em=atual.marcado_em,
+            desmarcado_por=autor_limpo,
+            desmarcado_em=agora,
+            atualizado_em=agora,
+        )
+        msg_hist = "Adiamento para data futura desmarcado — grupo restaurado para aguardando apresentação."
+        status_hist = None
+
+    ultimo = av.historico_pendencias[-1] if av.historico_pendencias else None
+    if not (
+        ultimo
+        and ultimo.origem == "adiamento"
+        and ultimo.mensagem.strip() == msg_hist
+        and ultimo.status_aplicado == status_hist
+    ):
+        av.historico_pendencias.append(
+            RegistroHistoricoPendenciaModel(
+                id=uuid.uuid4().hex[:10],
+                data_hora=agora,
+                autor=autor_limpo,
+                origem="adiamento",
+                mensagem=msg_hist,
+                status_aplicado=status_hist,  # type: ignore[arg-type]
+                pendencias_cumpridas=False,
+            )
+        )
+
+    av.atualizado_em = agora
     salvas[grupo_id] = av.model_dump()
     salvar_avaliacoes_salvas(salvas)
     return av

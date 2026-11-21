@@ -10,6 +10,7 @@ import {
   where,
 } from './firebase';
 import type {
+  AdiamentoDataFutura,
   AvaliacaoGrupo,
   AvaliacaoProfessorIndividual,
   BancaConsolidada,
@@ -355,6 +356,7 @@ export async function encerrarEConsolidarBanca(
   iniciadoEm: string | null,
   contingencia = false,
   justificativa = '',
+  adiamentoAnterior?: AdiamentoDataFutura | null,
 ): Promise<{ ok: boolean; mensagem: string }> {
   try {
     const agora = new Date();
@@ -376,6 +378,7 @@ export async function encerrarEConsolidarBanca(
     const possuiPendenciasInit =
       bancaConsolidada.status_liberacao_final !== 'Aprovado' || itensPendenciaAuto.length > 0;
 
+    const titularNome = titular.displayName || titular.email?.split('@')[0] || 'Prof. Titular';
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
     const dadosConsolidacao: Partial<SessaoBancaAoVivo> & Record<string, unknown> = {
       status: 'concluida',
@@ -383,7 +386,7 @@ export async function encerrarEConsolidarBanca(
       duracao_segundos: duracaoSegundos,
       duracao_formatada: duracaoFormatada,
       titular_uid: titular.uid,
-      titular_nome: titular.displayName || titular.email?.split('@')[0] || 'Prof. Titular',
+      titular_nome: titularNome,
       contingencia_um_avaliador: contingencia,
       justificativa_contingencia: justificativa,
       media_final_consolidada: bancaConsolidada.media_final,
@@ -396,6 +399,16 @@ export async function encerrarEConsolidarBanca(
       pendencias_atualizado_por: titular.displayName || titular.email || 'Prof. Titular',
       atualizado_em: encerradoEm,
     };
+
+    if (adiamentoAnterior?.ativo) {
+      dadosConsolidacao.adiamento_data_futura = {
+        ...adiamentoAnterior,
+        ativo: false,
+        desmarcado_por: titularNome,
+        desmarcado_em: encerradoEm,
+        atualizado_em: encerradoEm,
+      };
+    }
 
     await setDoc(docSessaoRef, dadosConsolidacao, { merge: true });
 
@@ -962,4 +975,94 @@ export async function sincronizarRevisaoPosBancaFirestore(
       mensagem: formatarErroFirestore(err, 'sincronizar revisão pós-banca'),
     };
   }
+}
+
+/**
+ * Sincroniza no Firestore (psof3_sessoes_banca) o estado de adiamento ("Não Apresentou / Data Futura")
+ * mantendo o status compatível com firestore.rules para visibilidade em tempo real no Portal dos Alunos.
+ */
+export async function atualizarAdiamentoDataFuturaFirestore(
+  grupo: AvaliacaoGrupo,
+  sessaoAtual: SessaoBancaAoVivo | null,
+  professor: User,
+  adiamento: AdiamentoDataFutura,
+  historicoAtualizado?: RegistroHistoricoPendencia[],
+): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    const agora = new Date().toISOString();
+    const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupo.id);
+    const statusPermitido =
+      sessaoAtual?.status && ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida'].includes(sessaoAtual.status)
+        ? sessaoAtual.status
+        : 'aguardando_inicio';
+
+    const payload: Record<string, unknown> = {
+      grupo_id: grupo.id,
+      turma: grupo.turma,
+      projeto: grupo.projeto,
+      status: statusPermitido,
+      titular_uid: sessaoAtual?.titular_uid || professor.uid,
+      titular_nome:
+        sessaoAtual?.titular_nome ||
+        professor.displayName ||
+        professor.email?.split('@')[0] ||
+        'Docente',
+      adiamento_data_futura: adiamento,
+      atualizado_em: agora,
+    };
+    if (historicoAtualizado) {
+      payload.historico_pendencias = historicoAtualizado;
+    }
+
+    await setDoc(docSessaoRef, payload, { merge: true });
+  return {
+      ok: true,
+      mensagem: 'Estado de adiamento sincronizado no Firebase e Portal dos Alunos.',
+    };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      mensagem: formatarErroFirestore(err, 'sincronizar adiamento para data futura'),
+    };
+  }
+}
+
+/**
+ * Resolve o estado ativo de adiamento ("Não Apresentou / Data Futura") conciliando
+ * a sessão em tempo real no Firestore e o registro salvo no backend (vence o mais recente).
+ */
+export function obterAdiamentoDataFuturaAtivo(
+  banca?: AvaliacaoGrupo | null,
+  sessao?: SessaoBancaAoVivo | null,
+): AdiamentoDataFutura | null {
+  if (!banca) return null;
+  const realizada = sessao?.status === 'concluida' || Boolean(banca.banca_realizada);
+  if (realizada) return null;
+
+  const adSessao = sessao?.adiamento_data_futura;
+  const adBackend = banca.adiamento_data_futura;
+
+  let escolhido: AdiamentoDataFutura | null | undefined;
+  if (adSessao && adBackend) {
+    const tSessao = adSessao.atualizado_em ? Date.parse(adSessao.atualizado_em) || 0 : 0;
+    const tBackend = adBackend.atualizado_em ? Date.parse(adBackend.atualizado_em) || 0 : 0;
+    escolhido = tBackend > tSessao ? adBackend : adSessao;
+  } else {
+    escolhido = adSessao ?? adBackend;
+  }
+
+  return escolhido?.ativo ? escolhido : null;
+}
+
+/**
+ * Formata uma data ISO YYYY-MM-DD em DD/MM/YYYY ou retorna "A definir".
+ */
+export function formatarDataPrevistaBr(valor?: string | null): string {
+  const limpo = (valor || '').trim();
+  if (!limpo) return 'A definir';
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(limpo);
+  if (m) {
+    return `${m[3]}/${m[2]}/${m[1]}`;
+  }
+  return limpo;
 }

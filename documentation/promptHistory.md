@@ -825,3 +825,25 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
 2. **Listagem explícita de Persistência fora do BD:** exibir chave/recurso, origem (`localStorage`, `sessionStorage`, `json_local`), arquivo-fonte, classificação (`cache_espelho_bd`, `exclusivo_fora_bd`, `json_local_servidor`) e tabela relacionada em: Ficha MSEP (`2.3` e exportações), `Auditoria & Bancas` (Sidebar, Card 2 e Bloco 3) e Dossiê MD/PDF.
 3. **Correções de falsos positivos técnicos no ECOA (`I2DEV-B_Grupo09`):** ignorar prefixos de sistema (`auth.*`, `storage.*`, `realtime.*`, `pg_catalog.*`, `information_schema.*`) no parser `.sql` e aceitar `HTTP 206` do PostgREST/Supabase na checagem online das tabelas.
 4. **Reauditoria pós-deploy:** após deploy na VM Oracle, reauditar apenas `I2DEV-B_Grupo09` (**ECOA**), preservando integralmente as 6 bancas já concluídas.
+
+
+---
+
+## Sessão 35 — Adiamento de Apresentação ("Não Apresentou / Data Futura") em Auditoria & Bancas e Portal dos Alunos (21/11/2026)
+
+### Prompt 35
+```text
+/agente-orquestrador /grill-me /goal perfeito, agora preciso de um recurso, em que eu aponto que o grupo na pagina de auditoria e bancas e posso dizer que o grupo escolheu não apresentar na data e ficar para data futura
+```
+
+### Decisões Consolidadas (/grill-me)
+1. **Status e Visual Dedicados ("Não Apresentou / Data Futura"):**
+   - Cards com **borda vermelha** (`border-2 border-red-600`) tanto em `Auditoria & Bancas` quanto no `Portal dos Alunos`.
+   - Exibição **sem notas P1–P4 nem notas individuais** (grupo ainda não apresentou), destacando que optou por não apresentar na data agendada e exibindo o motivo/observação docente e a nova data prevista (ou `"A definir"`).
+2. **Ação Rápida em Modal na Aba `Auditoria & Bancas`:**
+   - Botão no cabeçalho do grupo selecionado (disponível para grupos ainda não concluídos, com ou sem arquivos entregues) abrindo modal para informar motivo opcional (pré-preenchido com sugestão padrão) e nova data prevista opcional (`date` ou `"A definir"`).
+   - Quando já marcado, permite editar os dados do adiamento ou **Desmarcar / Restaurar para Aguardando**.
+3. **Ciclo de Vida, Arquivos e Filtros:**
+   - Envio, substituição, exclusão e auditoria de arquivos originais permanecem liberados mesmo com o grupo adiado, preservando `adiamento_data_futura`.
+   - Ao concluir/encerrar a banca na nova data via Ficha MSEP, `adiamento_data_futura.ativo` é limpo automaticamente, mantendo o histórico datado em `historico_pendencias`.
+   - No `Portal dos Alunos`, grupos adiados não entram em `"Já Realizadas (Com Notas)"` e também aparecem no filtro `"Com Pendências / Retidas"`.

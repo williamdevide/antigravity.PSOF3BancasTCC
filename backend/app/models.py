@@ -314,10 +314,21 @@ class RegistroHistoricoPendenciaModel(BaseModel):
     id: str
     data_hora: str
     autor: str = "Docente"
-    origem: Literal["banca", "revisados"] = "banca"
+    origem: Literal["banca", "revisados", "adiamento"] = "banca"
     mensagem: str
     status_aplicado: ResultadoFinalTipo | None = None
     pendencias_cumpridas: bool = False
+
+
+class AdiamentoDataFuturaModel(BaseModel):
+    ativo: bool = False
+    motivo: str = ""
+    nova_data_prevista: str = ""
+    marcado_por: str = ""
+    marcado_em: str | None = None
+    desmarcado_por: str = ""
+    desmarcado_em: str | None = None
+    atualizado_em: str | None = None
 
 
 class AvaliacaoGrupoModel(BaseModel):
@@ -363,6 +374,7 @@ class AvaliacaoGrupoModel(BaseModel):
     status_liberacao_manual: str | None = None
 
     revisao_pos_banca: RevisaoPosBancaModel = Field(default_factory=RevisaoPosBancaModel)
+    adiamento_data_futura: AdiamentoDataFuturaModel = Field(default_factory=AdiamentoDataFuturaModel)
     historico_pendencias: list[RegistroHistoricoPendenciaModel] = Field(default_factory=list)
 
     parecer_tecnico: str = ""
@@ -446,4 +458,11 @@ class SalvarPendenciasGrupoRequest(BaseModel):
     possui_pendencias: bool = True
     pendencias_cumpridas: bool = False
     novo_status_liberacao: ResultadoFinalTipo | None = None
+
+
+class AtualizarAdiamentoDataFuturaRequest(BaseModel):
+    ativo: bool
+    motivo: str = ""
+    nova_data_prevista: str = ""
+    autor: str = "Docente"
 

@@ -931,6 +931,117 @@ def test_calibragem_rubrica_2_3_e_persistencia_fora_bd(tmp_path, monkeypatch):
     assert r23_sev.nota < 5.0
 
 
+def test_adiamento_data_futura_fluxo_completo():
+    import shutil
+    from backend.app.config_manager import ler_avaliacoes_salvas, salvar_avaliacoes_salvas
+    from backend.app.tcc_auditor import resolver_ou_criar_pasta_grupo
+
+    gid = "I2DEV-A_Grupo02"
+    salvas_orig = ler_avaliacoes_salvas()
+    registro_orig = dict(salvas_orig[gid]) if gid in salvas_orig else None
+    pasta_criada = None
+
+    try:
+        # 1. Marcar grupo sem arquivos como "Não Apresentou / Data Futura"
+        r_mark = client.post(
+            f"/api/bancas/{gid}/adiamento-data-futura",
+            json={
+                "ativo": True,
+                "motivo": "",
+                "nova_data_prevista": "",
+                "autor": "Prof. William",
+            },
+        )
+        assert r_mark.status_code == 200
+        d_mark = r_mark.json()
+        assert d_mark["ok"] is True
+        assert d_mark["adiamento_data_futura"]["ativo"] is True
+        assert "não apresentar" in d_mark["adiamento_data_futura"]["motivo"].lower()
+        assert d_mark["adiamento_data_futura"]["nova_data_prevista"] == ""
+        assert d_mark["banca"]["banca_realizada"] is False
+        assert any(h["origem"] == "adiamento" for h in d_mark["banca"]["historico_pendencias"])
+
+        # 2. Editar motivo e nova data prevista
+        r_edit = client.post(
+            f"/api/bancas/{gid}/adiamento-data-futura",
+            json={
+                "ativo": True,
+                "motivo": "Grupo solicitou apresentação na próxima semana.",
+                "nova_data_prevista": "2026-12-03",
+                "autor": "Prof. William",
+            },
+        )
+        assert r_edit.status_code == 200
+        assert r_edit.json()["adiamento_data_futura"]["nova_data_prevista"] == "2026-12-03"
+
+        # 3. Upload e exclusão de arquivos permanecem liberados e preservam o adiamento
+        r_up = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[("arquivos", ("links.txt", b"GitHub: https://github.com/org/repo\n", "text/plain"))],
+        )
+        assert r_up.status_code == 200
+        pasta_criada, _, _ = resolver_ou_criar_pasta_grupo(gid, criar_se_ausente=False)
+        assert r_up.json()["banca"]["adiamento_data_futura"]["ativo"] is True
+
+        r_del = client.delete(f"/api/bancas/{gid}/arquivos")
+        assert r_del.status_code == 200
+        assert r_del.json()["banca"]["adiamento_data_futura"]["ativo"] is True
+        assert r_del.json()["banca"]["adiamento_data_futura"]["nova_data_prevista"] == "2026-12-03"
+
+        # 4. Desmarcar adiamento e restaurar para Aguardando
+        r_unmark = client.post(
+            f"/api/bancas/{gid}/adiamento-data-futura",
+            json={"ativo": False, "motivo": "", "nova_data_prevista": "", "autor": "Prof. William"},
+        )
+        assert r_unmark.status_code == 200
+        assert r_unmark.json()["adiamento_data_futura"]["ativo"] is False
+
+        # 5. Remarcar adiamento e depois concluir a avaliação -> limpa adiamento automaticamente e bloqueia nova marcação (409)
+        r_remark = client.post(
+            f"/api/bancas/{gid}/adiamento-data-futura",
+            json={
+                "ativo": True,
+                "motivo": "Remarcado antes da banca oficial",
+                "nova_data_prevista": "2026-12-05",
+                "autor": "Prof. William",
+            },
+        )
+        assert r_remark.status_code == 200
+        banca_atual = r_remark.json()["banca"]
+
+        r_save = client.put(
+            f"/api/bancas/{gid}/avaliacao",
+            json={
+                "avaliador": "Prof. William",
+                "rubricas": banca_atual["rubricas"],
+                "integrantes_notas": banca_atual["integrantes_notas"],
+                "parecer_tecnico": "Apresentação concluída na nova data.",
+                "status_liberacao_manual": "Aprovado",
+                "sincronizar_firebase": False,
+            },
+        )
+        assert r_save.status_code == 200
+        assert r_save.json()["banca_realizada"] is True
+        assert r_save.json()["adiamento_data_futura"]["ativo"] is False
+        assert len(r_save.json()["historico_pendencias"]) >= 2
+
+        r_blk = client.post(
+            f"/api/bancas/{gid}/adiamento-data-futura",
+            json={"ativo": True, "motivo": "Tentativa pós-banca", "autor": "Prof. William"},
+        )
+        assert r_blk.status_code == 409
+    finally:
+        if pasta_criada and pasta_criada.exists():
+            shutil.rmtree(pasta_criada, ignore_errors=True)
+        salvas_rest = ler_avaliacoes_salvas()
+        if registro_orig is not None:
+            salvas_rest[gid] = registro_orig
+        else:
+            salvas_rest.pop(gid, None)
+        salvar_avaliacoes_salvas(salvas_rest)
+
+
+
 
 
 

@@ -6,6 +6,7 @@ import {
   Award,
   BookOpen,
   Calendar,
+  CalendarClock,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -49,6 +50,7 @@ import { AgentHub, type AbaAgente } from './components/AgentHub';
 import { AuthModal } from './components/AuthModal';
 import { BannerBancaAoVivo } from './components/BannerBancaAoVivo';
 import { FileExplorerView } from './components/FileExplorerView';
+import { ModalAdiamentoDataFutura } from './components/ModalAdiamentoDataFutura';
 import { ModalEntregaArquivos } from './components/ModalEntregaArquivos';
 import { ModalReauditoria } from './components/ModalReauditoria';
 import { PainelBancaConsolidada } from './components/PainelBancaConsolidada';
@@ -78,6 +80,9 @@ import {
   atualizarPendenciasBanca,
   reabrirBancaParaEntregue,
   sincronizarRevisaoPosBancaFirestore,
+  atualizarAdiamentoDataFuturaFirestore,
+  obterAdiamentoDataFuturaAtivo,
+  formatarDataPrevistaBr,
   resetarBancaGrupo,
   recalcularEConsolidarBancaAposEdicao,
   salvarAnaliseAutomaticaFirestore,
@@ -280,6 +285,8 @@ export function App() {
   const [modalReauditoriaAberto, setModalReauditoriaAberto] = useState<boolean>(false);
   const [modalArquivosAberto, setModalArquivosAberto] = useState<boolean>(false);
   const [abaModalArquivos, setAbaModalArquivos] = useState<'originais' | 'revisados'>('originais');
+  const [modalAdiamentoAberto, setModalAdiamentoAberto] = useState<boolean>(false);
+  const [salvandoAdiamento, setSalvandoAdiamento] = useState<boolean>(false);
   const [authPronto, setAuthPronto] = useState<boolean>(false);
   const [avaliacoesFirestoreGrupo, setAvaliacoesFirestoreGrupo] = useState<
     AvaliacaoProfessorIndividual[]
@@ -1557,6 +1564,11 @@ export function App() {
     setSalvandoFicha(true);
     setAviso(null);
     try {
+      const adiamentoAnterior =
+        sessaoAoVivo?.adiamento_data_futura ??
+        sessaoAtual?.adiamento_data_futura ??
+        grupoAtual.adiamento_data_futura ??
+        null;
       const res = await encerrarEConsolidarBanca(
         grupoAtual.id,
         bancaConsolidada,
@@ -1564,6 +1576,7 @@ export function App() {
         sessaoAoVivo?.iniciado_em || null,
         contingencia,
         justificativa,
+        adiamentoAnterior,
       );
       if (res.ok) {
         limparTodosDraftsGrupoLocalStorage(grupoAtual.id);
@@ -1661,6 +1674,53 @@ export function App() {
       });
     } finally {
       setSalvandoFicha(false);
+    }
+  };
+
+  const handleAtualizarAdiamentoDataFutura = async (dados: {
+    ativo: boolean;
+    motivo: string;
+    nova_data_prevista: string;
+  }) => {
+    if (!grupoAtual) return;
+    if (!usuarioAuth) {
+      setAuthModalAberto(true);
+      return;
+    }
+    setSalvandoAdiamento(true);
+    setAviso(null);
+    try {
+      const autorNome =
+        usuarioAuth.displayName ||
+        avaliadorEdit ||
+        usuarioAuth.email?.split('@')[0] ||
+        'Docente';
+      const resBackend = await api.atualizarAdiamentoDataFutura(grupoAtual.id, {
+        ...dados,
+        autor: autorNome,
+      });
+      setBancas((prev) => prev.map((b) => (b.id === grupoAtual.id ? resBackend.banca : b)));
+      const resFb = await atualizarAdiamentoDataFuturaFirestore(
+        resBackend.banca,
+        sessaoAtual || null,
+        usuarioAuth,
+        resBackend.adiamento_data_futura,
+        resBackend.banca.historico_pendencias,
+      );
+      setModalAdiamentoAberto(false);
+      setAviso({
+        tipo: resFb.ok ? 'ok' : 'erro',
+        texto: resFb.ok
+          ? resBackend.mensagem
+          : `${resBackend.mensagem} (Aviso Firebase: ${resFb.mensagem})`,
+      });
+    } catch (err) {
+      setAviso({
+        tipo: 'erro',
+        texto: err instanceof Error ? err.message : 'Erro ao atualizar adiamento para data futura.',
+      });
+    } finally {
+      setSalvandoAdiamento(false);
     }
   };
 
@@ -1946,6 +2006,7 @@ export function App() {
 
   // Dados consolidados pós-banca realizada para o grupo selecionado
   const bancaJaRealizadaAtual = sessaoAtual?.status === 'concluida';
+  const adiamentoAtual = obterAdiamentoDataFuturaAtivo(grupoAtual, sessaoAtual);
   const avaliacoesIndividuaisMap = consolidadaAtual?.avaliacoes_individuais || {};
   const avaliacoesIndividuaisList = Object.values(avaliacoesIndividuaisMap);
   const statusFinalGrupoAtual = bancaJaRealizadaAtual
@@ -2589,8 +2650,11 @@ export function App() {
                                 b.status_liberacao_nota)
                               : b.status_liberacao_nota;
                             const emAndamentoCard = sessaoB?.status === 'em_andamento';
+                            const adiamentoCard = obterAdiamentoDataFuturaAtivo(b, sessaoB);
                             const cardBordaCor = emAndamentoCard
                               ? 'border-2 border-red-600 bg-red-50/25'
+                              : !bancaJaRealizada && adiamentoCard
+                              ? 'border-2 border-red-600 bg-red-50/20'
                               : !bancaJaRealizada
                               ? 'border-2 border-yellow-400 bg-white'
                               : statusFinalApresentado === 'Aprovado'
@@ -2666,6 +2730,25 @@ export function App() {
                                           }`}
                                         >
                                           {statusFinalApresentado}
+                                        </span>
+                                      </>
+                                    ) : adiamentoCard ? (
+                                      <>
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                                          <CalendarClock className="h-3 w-3" />
+                                          Não Apresentou
+                                        </span>
+                                        <span className="mt-1 inline-block rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-bold text-red-800">
+                                          Data Futura: {formatarDataPrevistaBr(adiamentoCard.nova_data_prevista)}
+                                        </span>
+                                        <span
+                                          className={`mt-1 inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold ${
+                                            b.entregue_na_pasta
+                                              ? 'bg-emerald-100 text-emerald-800'
+                                              : 'bg-amber-100 text-amber-800'
+                                          }`}
+                                        >
+                                          {b.entregue_na_pasta ? 'Arquivos Entregues' : 'Sem Entrega'}
                                         </span>
                                       </>
                                     ) : b.entregue_na_pasta ? (
@@ -2778,6 +2861,12 @@ export function App() {
                                   </span>
                                   {badgeResultadoFinal(statusFinalGrupoAtual)}
                                 </div>
+                              ) : adiamentoAtual ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white shadow-2xs">
+                                  <CalendarClock className="h-3.5 w-3.5" />
+                                  Não Apresentou • Data Futura (
+                                  {formatarDataPrevistaBr(adiamentoAtual.nova_data_prevista)})
+                                </span>
                               ) : grupoAtual.entregue_na_pasta ? (
                                 <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-900 shadow-2xs">
                                   <Clock className="h-3.5 w-3.5 text-blue-700" />
@@ -2799,6 +2888,25 @@ export function App() {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
+                            {!bancaJaRealizadaAtual && (
+                              <button
+                                type="button"
+                                onClick={() => setModalAdiamentoAberto(true)}
+                                className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-bold transition cursor-pointer ${
+                                  adiamentoAtual
+                                    ? 'border-red-600 bg-red-600 text-white hover:bg-red-700 shadow-2xs'
+                                    : 'border-red-300 bg-white text-red-700 hover:bg-red-50'
+                                }`}
+                                title="Registrar ou gerenciar quando o grupo escolheu não apresentar na data agendada e ficar para data futura"
+                              >
+                                <CalendarClock className="h-4 w-4" />
+                                <span>
+                                  {adiamentoAtual
+                                    ? 'Gerenciar Data Futura'
+                                    : 'Não Apresentou / Data Futura'}
+                                </span>
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => {
@@ -2869,6 +2977,62 @@ export function App() {
                             )}
                           </div>
                         </div>
+
+                        {!bancaJaRealizadaAtual && adiamentoAtual && (
+                          <div className="mt-4 rounded-xl border-2 border-red-400 bg-red-50/80 p-4 text-xs text-red-950">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-white">
+                                    <CalendarClock className="h-3.5 w-3.5" />
+                                    Não Apresentou / Data Futura
+                                  </span>
+                                  <span className="rounded-md border border-red-300 bg-white px-2 py-0.5 font-mono text-[11px] font-bold text-red-900">
+                                    Nova data prevista:{' '}
+                                    {formatarDataPrevistaBr(adiamentoAtual.nova_data_prevista)}
+                                  </span>
+                                </div>
+                                <p className="mt-1.5 font-medium leading-relaxed text-red-950">
+                                  <strong>Observação registrada:</strong> {adiamentoAtual.motivo}
+                                </p>
+                                <p className="text-[11px] text-red-800/80">
+                                  Registrado por{' '}
+                                  <strong>{adiamentoAtual.marcado_por || 'Docente'}</strong>
+                                  {adiamentoAtual.marcado_em
+                                    ? ` em ${new Date(adiamentoAtual.marcado_em).toLocaleString('pt-BR')}`
+                                    : ''}
+                                  . O gerenciamento de arquivos segue liberado; ao concluir a banca
+                                  futuramente, este status será encerrado automaticamente.
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => setModalAdiamentoAberto(true)}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-[11px] font-bold text-red-800 hover:bg-red-100 cursor-pointer"
+                                >
+                                  <Edit3 className="h-3.5 w-3.5" />
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={salvandoAdiamento}
+                                  onClick={() =>
+                                    void handleAtualizarAdiamentoDataFutura({
+                                      ativo: false,
+                                      motivo: '',
+                                      nova_data_prevista: '',
+                                    })
+                                  }
+                                  className="inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-900 hover:bg-amber-100 disabled:opacity-50 cursor-pointer"
+                                >
+                                  <RotateCcw className="h-3.5 w-3.5" />
+                                  Restaurar Aguardando
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
                         {!grupoAtual.entregue_na_pasta ? (
                           <div className="mt-6 space-y-5">
@@ -6538,6 +6702,18 @@ export function App() {
             }
           }}
           onAtualizarPendencias={handleAtualizarPendencias}
+        />
+      )}
+
+      {/* Modal de Marcação / Gestão de Adiamento ("Não Apresentou / Data Futura") */}
+      {grupoAtual && (
+        <ModalAdiamentoDataFutura
+          aberto={modalAdiamentoAberto}
+          grupo={grupoAtual}
+          adiamentoAtual={adiamentoAtual}
+          salvando={salvandoAdiamento}
+          onFechar={() => setModalAdiamentoAberto(false)}
+          onConfirmar={handleAtualizarAdiamentoDataFutura}
         />
       )}
     </div>
