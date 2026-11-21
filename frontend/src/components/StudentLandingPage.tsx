@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import {
   AlertTriangle,
+  ArrowDown,
   Award,
+  BookOpen,
   Calendar,
   CheckCircle2,
   ChevronDown,
@@ -12,6 +14,7 @@ import {
   GraduationCap,
   Lock,
   MapPin,
+  MessageSquareText,
   Search,
   ShieldCheck,
   Users,
@@ -111,6 +114,19 @@ function resolverDadosBancaRealizada(
         statusLiberacao === 'Nova Chance (Data Futura)'),
   );
 
+  // Considerações escritas exclusivamente pelos professores avaliadores durante/após a banca (sem texto automático pré-banca da IA)
+  const pareceresBrutos =
+    consolidada?.pareceres_professores && consolidada.pareceres_professores.length > 0
+      ? consolidada.pareceres_professores
+      : Object.values(consolidada?.avaliacoes_individuais || {}).map((av) => ({
+          professor_nome: av.professor_nome,
+          parecer: av.parecer_tecnico,
+          atualizado_em: av.atualizado_em,
+        }));
+  const consideracoesProfessores = pareceresBrutos.filter(
+    (p) => Boolean(p.parecer && p.parecer.trim().length > 0),
+  );
+
   return {
     realizada,
     emAndamento,
@@ -125,6 +141,7 @@ function resolverDadosBancaRealizada(
     pendenciasCumpridas,
     pendenciasCumpridasEm: sessao?.pendencias_cumpridas_em || null,
     possuiPendencias,
+    consideracoesProfessores,
   };
 }
 
@@ -248,77 +265,163 @@ export function StudentLandingPage({
         </div>
       </header>
 
-      {/* Hero Compacto Institucional (Acima da dobra) */}
+      {/* Hero Institucional de Abertura — Papel do Portal de Visualização das Bancas para os Alunos */}
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
-          <div className="grid items-center gap-8 lg:grid-cols-12">
+          <div className="grid items-start gap-8 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <div className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-red-700">
                 <GraduationCap className="h-3.5 w-3.5" />
-                Cronograma &amp; Resultados Oficiais
+                Portal Oficial dos Alunos • PSOF3 — SENAI Ourinhos
               </div>
               <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
-                Acompanhe as apresentações e resultados das bancas de TCC
+                Portal de Visualização das Bancas de TCC
               </h1>
-              <p className="mt-2.5 max-w-[65ch] text-sm leading-relaxed text-slate-600 sm:text-base">
-                Consulte a ordem de apresentação por turma, entregas recebidas, parciais dos 4 pilares, notas individuais e pendências em tempo real.
+              <p className="mt-3 max-w-[65ch] text-sm leading-relaxed text-slate-600 sm:text-base">
+                Este portal foi criado para que os alunos das turmas <strong>I2DEV-A</strong> e{' '}
+                <strong>I2DEV-B</strong> acompanhem com transparência toda a jornada das bancas de
+                Conclusão de Curso: desde o agendamento e confirmação de entrega dos arquivos até as
+                notas por pilar em <strong>pts</strong>, considerações dos professores e pendências.
               </p>
 
+              {/* Explicação da Composição dos 100 pts */}
+              <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/90 p-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-extrabold text-slate-800">
+                  <span className="inline-flex items-center gap-1.5">
+                    <BookOpen className="h-4 w-4 text-red-600" />
+                    Como a nota da banca é composta (Total: 100 pts)
+                  </span>
+                  <span className="font-mono text-[11px] text-slate-500">
+                    Média mínima para aprovação: 50,00 pts
+                  </span>
+                </div>
+                <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-center">
+                    <span className="block text-[10px] font-bold uppercase text-slate-500">
+                      Pilar 1 • Doc TCC
+                    </span>
+                    <strong className="font-mono text-sm font-black text-slate-900">30 pts</strong>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-center">
+                    <span className="block text-[10px] font-bold uppercase text-slate-500">
+                      Pilar 2 • Sistema
+                    </span>
+                    <strong className="font-mono text-sm font-black text-slate-900">40 pts</strong>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-center">
+                    <span className="block text-[10px] font-bold uppercase text-slate-500">
+                      Pilar 3 • Defesa
+                    </span>
+                    <strong className="font-mono text-sm font-black text-slate-900">15 pts</strong>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-center">
+                    <span className="block text-[10px] font-bold uppercase text-slate-500">
+                      Pilar 4 • Sprints/Aulas
+                    </span>
+                    <strong className="font-mono text-sm font-black text-slate-900">15 pts</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ação Principal + Filtros de Turma */}
               <div className="mt-5 flex flex-wrap items-center gap-2">
+                <a
+                  href="#resultados-bancas"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document
+                      .getElementById('resultados-bancas')
+                      ?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-extrabold text-white shadow-xs transition hover:bg-red-700 cursor-pointer"
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                  Ver Cronograma e Resultados
+                </a>
+
                 {(['Todas', 'I2DEV-A', 'I2DEV-B'] as const).map((turma) => (
                   <button
                     key={turma}
                     type="button"
                     onClick={() => setTurmaSelecionada(turma)}
-                    className={`rounded-lg px-4 py-2 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                    className={`rounded-lg px-3.5 py-2 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                       turmaSelecionada === turma
                         ? 'bg-slate-900 text-white shadow-xs'
                         : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                     }`}
                   >
-                    {turma === 'Todas' ? `Todas as Turmas (${resumoStats.total})` : `Turma ${turma}`}
+                    {turma === 'Todas' ? `Todas (${resumoStats.total})` : `Turma ${turma}`}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Painel de Métricas Reais */}
-            <div className="grid grid-cols-2 gap-3 lg:col-span-5">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Total de Bancas
-                </span>
-                <p className="mt-1 flex items-baseline gap-2 text-2xl font-black text-slate-900">
-                  {resumoStats.total}
-                  <span className="text-xs font-semibold text-slate-500">agendadas</span>
-                </p>
+            {/* Painel de Métricas Reais + Legenda das Bordas Coloridas */}
+            <div className="space-y-3 lg:col-span-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Total de Bancas
+                  </span>
+                  <p className="mt-1 flex items-baseline gap-2 text-2xl font-black text-slate-900">
+                    {resumoStats.total}
+                    <span className="text-xs font-semibold text-slate-500">agendadas</span>
+                  </p>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                    Já Realizadas
+                  </span>
+                  <p className="mt-1 flex items-baseline gap-2 text-2xl font-black text-emerald-700">
+                    {resumoStats.realizadas}
+                    <span className="text-xs font-semibold text-emerald-700/80">concluídas</span>
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Arquivos Recebidos
+                  </span>
+                  <p className="mt-1 flex items-baseline gap-2 text-2xl font-black text-slate-900">
+                    {resumoStats.entregues}
+                    <span className="text-xs font-semibold text-slate-500">
+                      de {resumoStats.total} grupos
+                    </span>
+                  </p>
+                </div>
+                <div className="rounded-xl border border-yellow-300 bg-yellow-50/60 p-4">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-yellow-900">
+                    Próximas Bancas
+                  </span>
+                  <p className="mt-1 flex items-baseline gap-2 text-2xl font-black text-yellow-800">
+                    {resumoStats.proximas}
+                    <span className="text-xs font-semibold text-yellow-800/90">aguardando</span>
+                  </p>
+                </div>
               </div>
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-                  Já Realizadas
+
+              {/* Legenda das Bordas Coloridas dos Cards */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  Legenda Visual das Bordas nos Cards
                 </span>
-                <p className="mt-1 flex items-baseline gap-2 text-2xl font-black text-emerald-700">
-                  {resumoStats.realizadas}
-                  <span className="text-xs font-semibold text-emerald-700/80">concluídas</span>
-                </p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Arquivos Recebidos
-                </span>
-                <p className="mt-1 flex items-baseline gap-2 text-2xl font-black text-slate-900">
-                  {resumoStats.entregues}
-                  <span className="text-xs font-semibold text-slate-500">de {resumoStats.total} grupos</span>
-                </p>
-              </div>
-              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
-                  Próximas Bancas
-                </span>
-                <p className="mt-1 flex items-baseline gap-2 text-2xl font-black text-amber-800">
-                  {resumoStats.proximas}
-                  <span className="text-xs font-semibold text-amber-700">a realizar</span>
-                </p>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] font-bold text-slate-800">
+                  <div className="flex items-center gap-2 rounded-lg border-2 border-yellow-400 bg-white px-2.5 py-1.5">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-yellow-400" />
+                    <span>Aguardando Apresentação</span>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg border-2 border-emerald-500 bg-white px-2.5 py-1.5">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />
+                    <span>Nota Liberada</span>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg border-2 border-orange-500 bg-white px-2.5 py-1.5">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-orange-500" />
+                    <span>Nota Retida (Pendências)</span>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg border-2 border-red-600 bg-white px-2.5 py-1.5">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-600" />
+                    <span>Nova Apresentação</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -326,7 +429,7 @@ export function StudentLandingPage({
       </section>
 
       {/* Barra de Filtros e Busca */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-8">
+      <main id="resultados-bancas" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs">
           <div className="flex flex-wrap items-center gap-1.5">
             {(
@@ -403,17 +506,20 @@ export function StudentLandingPage({
                   const info = resolverDadosBancaRealizada(banca, mapaSessoesBanca[banca.id]);
                   const arquivosEncontrados = banca.arquivos_entregues.filter((a) => a.encontrado);
                   const mostraArquivos = Boolean(expandidosArquivos[banca.id]);
+                  const classeBordaStatus = info.emAndamento
+                    ? 'border-2 border-red-600 ring-2 ring-red-200'
+                    : !info.realizada
+                    ? 'border-2 border-yellow-400'
+                    : info.statusLiberacao === 'Aprovado'
+                    ? 'border-2 border-emerald-500'
+                    : info.statusLiberacao === 'Nota Retida (Pendências)'
+                    ? 'border-2 border-orange-500'
+                    : 'border-2 border-red-600';
 
                   return (
                     <article
                       key={banca.id}
-                      className={`overflow-hidden rounded-2xl border bg-white shadow-2xs transition ${
-                        info.emAndamento
-                          ? 'border-red-400 ring-2 ring-red-100'
-                          : info.realizada
-                          ? 'border-slate-300'
-                          : 'border-slate-200'
-                      }`}
+                      className={`overflow-hidden rounded-2xl bg-white shadow-xs transition ${classeBordaStatus}`}
                     >
                       {/* Faixa de Cabeçalho da Banca */}
                       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-4">
@@ -476,7 +582,7 @@ export function StudentLandingPage({
                                 info.statusLiberacao === 'Aprovado'
                                   ? 'bg-emerald-600 text-white'
                                   : info.statusLiberacao === 'Nota Retida (Pendências)'
-                                  ? 'bg-amber-500 text-slate-950'
+                                  ? 'bg-orange-500 text-white'
                                   : 'bg-red-600 text-white'
                               }`}
                             >
@@ -497,8 +603,8 @@ export function StudentLandingPage({
                               Banca Ao Vivo
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-bold text-slate-700">
-                              <Clock className="h-3.5 w-3.5 text-slate-500" />
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-yellow-400 bg-yellow-50 px-3 py-1 text-xs font-bold text-yellow-900">
+                              <Clock className="h-3.5 w-3.5 text-yellow-700" />
                               Aguardando Apresentação
                             </span>
                           )}
@@ -567,42 +673,42 @@ export function StudentLandingPage({
                         ) : (
                           /* CASO 2: BANCA JÁ REALIZADA -> Parciais P1-P4, Média Grupo, Notas Individuais e Pendências */
                           <div className="space-y-4">
-                            {/* Placar de Média do Grupo + Parciais P1-P4 */}
+                            {/* Placar de Média do Grupo + Parciais P1-P4 em pts */}
                             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
                               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                                 <span className="text-[10px] font-bold uppercase text-slate-500">
-                                  Pilar 1 • Doc (30%)
+                                  Pilar 1 • Doc (30 pts)
                                 </span>
                                 <p className="mt-1 font-mono text-lg font-black text-slate-900">
                                   {info.p1.toFixed(2)}
-                                  <span className="text-[11px] font-normal text-slate-400"> / 30</span>
+                                  <span className="text-[11px] font-normal text-slate-400"> / 30 pts</span>
                                 </p>
                               </div>
                               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                                 <span className="text-[10px] font-bold uppercase text-slate-500">
-                                  Pilar 2 • Sist (40%)
+                                  Pilar 2 • Sist (40 pts)
                                 </span>
                                 <p className="mt-1 font-mono text-lg font-black text-slate-900">
                                   {info.p2.toFixed(2)}
-                                  <span className="text-[11px] font-normal text-slate-400"> / 40</span>
+                                  <span className="text-[11px] font-normal text-slate-400"> / 40 pts</span>
                                 </p>
                               </div>
                               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                                 <span className="text-[10px] font-bold uppercase text-slate-500">
-                                  Pilar 3 • Banca (15%)
+                                  Pilar 3 • Banca (15 pts)
                                 </span>
                                 <p className="mt-1 font-mono text-lg font-black text-slate-900">
                                   {info.p3.toFixed(2)}
-                                  <span className="text-[11px] font-normal text-slate-400"> / 15</span>
+                                  <span className="text-[11px] font-normal text-slate-400"> / 15 pts</span>
                                 </p>
                               </div>
                               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                                 <span className="text-[10px] font-bold uppercase text-slate-500">
-                                  Pilar 4 • Sprints (15%)
+                                  Pilar 4 • Sprints (15 pts)
                                 </span>
                                 <p className="mt-1 font-mono text-lg font-black text-slate-900">
                                   {info.p4.toFixed(2)}
-                                  <span className="text-[11px] font-normal text-slate-400"> / 15</span>
+                                  <span className="text-[11px] font-normal text-slate-400"> / 15 pts</span>
                                 </p>
                               </div>
                               <div className="col-span-2 sm:col-span-1 rounded-xl border border-red-200 bg-red-50/70 p-3 text-center">
@@ -610,7 +716,7 @@ export function StudentLandingPage({
                                   Média do Grupo
                                 </span>
                                 <p className="mt-1 font-mono text-xl font-black text-red-600">
-                                  {info.mediaFinal.toFixed(2)}%
+                                  {info.mediaFinal.toFixed(2)} pts
                                 </p>
                               </div>
                             </div>
@@ -626,10 +732,10 @@ export function StudentLandingPage({
                                   <thead>
                                     <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-bold uppercase text-slate-500">
                                       <th className="px-3 py-2">Aluno</th>
-                                      <th className="px-2 py-2 text-center">P1 Doc</th>
-                                      <th className="px-2 py-2 text-center">P2 Sist</th>
-                                      <th className="px-2 py-2 text-center">P3 Banca</th>
-                                      <th className="px-2 py-2 text-center">P4 Sprints/Aulas</th>
+                                      <th className="px-2 py-2 text-center">P1 Doc (30 pts)</th>
+                                      <th className="px-2 py-2 text-center">P2 Sist (40 pts)</th>
+                                      <th className="px-2 py-2 text-center">P3 Banca (15 pts)</th>
+                                      <th className="px-2 py-2 text-center">P4 Sprints (15 pts)</th>
                                       <th className="px-3 py-2 text-center">Nota Final</th>
                                       <th className="px-3 py-2 text-center">Situação</th>
                                     </tr>
@@ -661,7 +767,7 @@ export function StudentLandingPage({
                                             {al.p4_nota.toFixed(2)}
                                           </td>
                                           <td className="px-3 py-2.5 text-center font-mono text-sm font-black text-slate-900">
-                                            {al.nota_final.toFixed(2)}%
+                                            {al.nota_final.toFixed(2)} pts
                                           </td>
                                           <td className="px-3 py-2.5 text-center">
                                             <span
@@ -669,7 +775,7 @@ export function StudentLandingPage({
                                                 ap
                                                   ? 'bg-emerald-100 text-emerald-800'
                                                   : ret
-                                                  ? 'bg-amber-100 text-amber-900'
+                                                  ? 'bg-orange-100 text-orange-900'
                                                   : 'bg-red-100 text-red-800'
                                               }`}
                                             >
@@ -684,13 +790,47 @@ export function StudentLandingPage({
                               </div>
                             </div>
 
+                            {/* Considerações dos Professores Avaliadores (quando registradas na banca) */}
+                            {info.consideracoesProfessores.length > 0 && (
+                              <div className="space-y-2.5 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+                                <h4 className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                                  <MessageSquareText className="h-4 w-4 text-red-600" />
+                                  Considerações dos Professores Avaliadores
+                                </h4>
+                                <div className="grid gap-2.5 sm:grid-cols-2">
+                                  {info.consideracoesProfessores.map((cp, cpIdx) => (
+                                    <div
+                                      key={`${cp.professor_nome}_${cpIdx}`}
+                                      className="rounded-lg border border-slate-200 bg-white p-3 text-xs shadow-2xs"
+                                    >
+                                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
+                                        <span className="font-bold text-slate-900">
+                                          Prof. {cp.professor_nome}
+                                        </span>
+                                        {cp.atualizado_em && (
+                                          <span className="text-[10px] text-slate-400">
+                                            {new Date(cp.atualizado_em).toLocaleDateString('pt-BR')}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="mt-2 whitespace-pre-line leading-relaxed text-slate-700">
+                                        {cp.parecer}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Painel Explícito de Pendências & Cumprimento */}
                             <div
                               className={`rounded-xl border p-3.5 text-xs ${
                                 info.pendenciasCumpridas
                                   ? 'border-emerald-300 bg-emerald-50/70 text-emerald-950'
-                                  : info.possuiPendencias || info.statusLiberacao !== 'Aprovado'
-                                  ? 'border-amber-300 bg-amber-50/80 text-amber-950'
+                                  : info.statusLiberacao === 'Nova Chance (Data Futura)'
+                                  ? 'border-red-300 bg-red-50/70 text-red-950'
+                                  : info.possuiPendencias || info.statusLiberacao === 'Nota Retida (Pendências)'
+                                  ? 'border-orange-300 bg-orange-50/80 text-orange-950'
                                   : 'border-emerald-200 bg-emerald-50/40 text-emerald-900'
                               }`}
                             >
@@ -703,7 +843,13 @@ export function StudentLandingPage({
                                     </>
                                   ) : info.possuiPendencias || info.statusLiberacao !== 'Aprovado' ? (
                                     <>
-                                      <AlertTriangle className="h-4 w-4 text-amber-700" />
+                                      <AlertTriangle
+                                        className={`h-4 w-4 ${
+                                          info.statusLiberacao === 'Nova Chance (Data Futura)'
+                                            ? 'text-red-600'
+                                            : 'text-orange-600'
+                                        }`}
+                                      />
                                       <span>Status das Pendências: Há Pendências em Aberto</span>
                                     </>
                                   ) : (
@@ -719,7 +865,7 @@ export function StudentLandingPage({
                                     info.statusLiberacao === 'Aprovado'
                                       ? 'bg-emerald-600 text-white'
                                       : info.statusLiberacao === 'Nota Retida (Pendências)'
-                                      ? 'bg-amber-500 text-slate-950'
+                                      ? 'bg-orange-500 text-white'
                                       : 'bg-red-600 text-white'
                                   }`}
                                 >

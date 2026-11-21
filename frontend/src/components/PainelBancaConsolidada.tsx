@@ -402,9 +402,9 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
           }`}
         >
           {statusSessao === 'concluida'
-            ? `Média Oficial: ${(banca?.media_final || 0).toFixed(2)}%`
+            ? `Média Oficial: ${(banca?.media_final || 0).toFixed(2)} pts`
             : statusSessao === 'em_andamento'
-            ? `Parcial: ${(banca?.media_final || 0).toFixed(2)}%`
+            ? `Parcial: ${(banca?.media_final || 0).toFixed(2)} pts`
             : 'Pré-Banca'}
         </span>
       </div>
@@ -414,7 +414,7 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {/* P1 */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-2xs">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Pilar 1 • Doc (30%)</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500">Pilar 1 • Doc (30 pts)</span>
             <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-600">
               <span>P1: {av1 ? av1.p1_total.toFixed(1) : '—'}</span>
               <span>•</span>
@@ -427,7 +427,7 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
 
           {/* P2 */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-2xs">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Pilar 2 • Sist (40%)</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500">Pilar 2 • Sist (40 pts)</span>
             <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-600">
               <span>P1: {av1 ? av1.p2_total.toFixed(1) : '—'}</span>
               <span>•</span>
@@ -440,7 +440,7 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
 
           {/* P3 */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-2xs">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Pilar 3 • Banca (15%)</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500">Pilar 3 • Banca (15 pts)</span>
             <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-600">
               <span>P1: {av1 ? av1.p3_grupo_base.toFixed(1) : '—'}</span>
               <span>•</span>
@@ -453,7 +453,7 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
 
           {/* P4 */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-2xs">
-            <span className="text-[10px] font-bold uppercase text-slate-500">Pilar 4 • Sprints (15%)</span>
+            <span className="text-[10px] font-bold uppercase text-slate-500">Pilar 4 • Sprints (15 pts)</span>
             <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-600">
               <span>Oficial: {banca.media_p4.toFixed(1)}</span>
             </div>
@@ -471,7 +471,7 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
               <span>P2: {av2 ? av2.nota_final_grupo.toFixed(1) : '—'}</span>
             </div>
             <p className="mt-1 text-lg font-black text-red-600">
-              {banca.media_final.toFixed(2)}%
+              {banca.media_final.toFixed(2)} pts
             </p>
           </div>
         </div>

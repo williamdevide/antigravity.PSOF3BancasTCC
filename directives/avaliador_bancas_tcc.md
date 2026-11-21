@@ -95,7 +95,7 @@ Automatizar a auditoria técnica, documental e estrutural dos Trabalhos de Concl
    - **Média >= 50,0 pontos E nenhum item `Insuficiente`:** Status **`Aprovado`** (Nota Liberada).
    - **Média >= 50,0 pontos PORÉM com qualquer item `Insuficiente`:** A nota final é calculada normalmente, mas o aluno/grupo fica com **`Nota Retida (Pendências)`** até a entrega/regularização das pendências (nota: itens `3.1` e `3.2` em estado `Pendente` antes da banca ao vivo não acionam trava de `Insuficiente`).
    - **Média < 50,0 pontos:** Status **`Nova Chance (Data Futura)`** (nova apresentação agendada em data futura).
-   - **Landing Page Pública (`/`) vs Área do Professor (`/professor`):** A rota raiz (`/`) exibe o Portal Público dos Alunos (sem login), ordenado por turma e ordem das apresentações, mostrando entregas futuras, médias/parciais/notas individuais das bancas realizadas, pendências em aberto ou já cumpridas e situação de liberação. A gestão de pendências fica na Área do Professor (`/professor`).
+   - **Landing Page Pública (`/`) vs Área do Professor (`/professor`):** A rota raiz (`/`) exibe o Portal Público dos Alunos (sem login), iniciando com uma Hero institucional explicando o papel do portal, composição das notas em **pts** (`30 + 40 + 15 + 15 = 100 pts`) e legenda das bordas coloridas nos cards (amarelo para aguardando, verde para nota liberada, laranja para nota retida e vermelho para nova apresentação). As bancas ordenam por turma e ordem de apresentação, exibindo entregas futuras, parciais/médias/notas individuais em `pts`, pendências e as considerações dos professores avaliadores quando registradas na banca. A gestão fica na Área do Professor (`/professor`).
 
 ---
 

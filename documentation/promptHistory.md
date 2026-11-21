@@ -682,3 +682,22 @@ depois, quero uma landingpage em que os alunos vejam cada apresentação (ordena
 3. **Lista de Arquivos & Segurança:**
    - Aceitar todos os entregáveis oficiais (`.docx`, `.pdf`, `.pptx`, `.sql`, `.zip`, `.txt`, `.md`, `.csv`, `.png`, `.jpg`, `.jpeg`, até 200 MB por arquivo), com substituição por nome igual, download individual, exclusão individual e limpeza total (revertendo o grupo para pendente se a pasta ficar vazia).
 
+---
+
+## Sessão 27 — 21/11/2026 (10:44)
+
+### Prompt 27 (21/11/2026 - 10:44)
+```text
+/agente-orquestrador /grill-me /goal na pagina raiz para os alunos antes de iniciar com os resultados faça uma hero explicando o papel da página, sobre ser um portal de visualizção das bancas para os alunos. 
+alem disso em todos os resultados não utilize % mas sim pts. utlize bordas coloridas nos cards de cada grupo (amarelo para aguardando, laranja para nota retida, vermelho para nova apresentação e verde para nota liberada), importante, nas que existirem exiba as considerações dos professores
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 27
+1. **Padronização de `pts` no lugar de `%`:**
+   - Substituir `%` por `pts` em todos os resultados numéricos de notas e rótulos de pesos dos pilares tanto na Landing Page pública (`/`) quanto na Área do Professor (`/professor`), mantendo `%` apenas em indicadores técnicos percentuais (conformidade ABNT, correspondência DER, aderência ao escopo e barra de progresso).
+2. **Hero Institucional de Abertura na Página Raiz (`/`):**
+   - Hero explicando claramente o papel do Portal de Visualização das Bancas para os Alunos, com cards dos 4 pilares (`30 + 40 + 15 + 15 = 100 pts`), legenda visual das 4 bordas coloridas (Amarelo = Aguardando, Laranja = Nota Retida, Vermelho = Nova Apresentação, Verde = Nota Liberada), métricas reais e CTA "Ver Cronograma e Resultados".
+3. **Considerações dos Professores nos Cards:**
+   - Exibir diretamente no card da banca realizada, identificando cada professor avaliador e seu texto integral (quando houver consideração registrada na banca, sem exibir o parecer automático pré-banca da IA).
+
+

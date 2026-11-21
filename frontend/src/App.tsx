@@ -2111,7 +2111,7 @@ export function App() {
                               <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                                 <div>
                                   <span className="text-[11px] font-semibold text-slate-500">
-                                    Pilar 1 • Doc (30%)
+                                    Pilar 1 • Doc (30 pts)
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-slate-900">
                                     {(consolidadaAtual?.media_p1 ?? grupoAtual.p1_total).toFixed(2)}
@@ -2144,7 +2144,7 @@ export function App() {
                               <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                                 <div>
                                   <span className="text-[11px] font-semibold text-slate-500">
-                                    Pilar 2 • Sistema (40%)
+                                    Pilar 2 • Sistema (40 pts)
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-slate-900">
                                     {(consolidadaAtual?.media_p2 ?? grupoAtual.p2_total).toFixed(2)}
@@ -2177,7 +2177,7 @@ export function App() {
                               <div className="flex flex-col justify-between rounded-xl border border-amber-200 bg-amber-50/40 p-3 text-center">
                                 <div>
                                   <span className="text-[11px] font-semibold text-amber-900">
-                                    Pilar 3 • Banca (15%)
+                                    Pilar 3 • Banca (15 pts)
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-amber-800">
                                     {(consolidadaAtual?.media_p3 ?? grupoAtual.p3_grupo_base).toFixed(2)}
@@ -2214,7 +2214,7 @@ export function App() {
                               <div className="flex flex-col justify-between rounded-xl border border-indigo-200 bg-indigo-50/40 p-3 text-center">
                                 <div>
                                   <span className="text-[11px] font-semibold text-indigo-900">
-                                    Pilar 4 • Sprints (15%)
+                                    Pilar 4 • Sprints (15 pts)
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-indigo-800">
                                     {(
@@ -2265,7 +2265,7 @@ export function App() {
                                     {bancaJaRealizadaAtual ? 'Média Consolidada' : 'Média Calculada'}
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-red-700">
-                                    {mediaFinalGrupoAtual.toFixed(2)}%
+                                    {mediaFinalGrupoAtual.toFixed(2)} pts
                                   </p>
                                 </div>
                                 {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
@@ -2282,7 +2282,7 @@ export function App() {
                                           {av.professor_nome.split(' ')[0]}:
                                         </span>
                                         <span className="font-bold">
-                                          {av.nota_final_grupo.toFixed(2)}%
+                                          {av.nota_final_grupo.toFixed(2)} pts
                                         </span>
                                       </div>
                                     ))}
@@ -2456,7 +2456,7 @@ export function App() {
                                           </div>
                                           <div className="text-right">
                                             <span className="font-mono text-base font-black text-slate-900">
-                                              {aluno.nota_final.toFixed(2)}%
+                                              {aluno.nota_final.toFixed(2)} pts
                                             </span>
                                             <div className="mt-0.5">
                                               <span
@@ -3685,7 +3685,7 @@ export function App() {
                                               {ind.p4_nota.toFixed(2)} / 15.0
                                             </td>
                                             <td className="py-2 text-center font-mono text-sm font-black text-slate-900">
-                                              {ind.nota_final.toFixed(2)}%
+                                              {ind.nota_final.toFixed(2)} pts
                                             </td>
                                             <td className="py-2 text-center">
                                               <span
@@ -3950,8 +3950,8 @@ export function App() {
                             (acc, ind) => acc + calcularStatusFinalAluno(ind).nf,
                             0,
                           ) / Math.max(1, integrantesEdit.length)
-                        ).toFixed(2)}
-                        %
+                        ).toFixed(2)}{' '}
+                        pts
                       </span>
                     </div>
                   </div>
@@ -3986,20 +3986,20 @@ export function App() {
                     {[
                       {
                         pilar: 1,
-                        titulo: '1. Pilar Documentação Técnica / TCC (Peso: 30,0%)',
+                        titulo: '1. Pilar Documentação Técnica / TCC (Peso: 30,0 pts)',
                         total: p1TotalEdit,
                         max: 30,
                       },
                       {
                         pilar: 2,
-                        titulo: '2. Pilar Sistema e Aplicação Desenvolvida (Peso: 40,0%)',
+                        titulo: '2. Pilar Sistema e Aplicação Desenvolvida (Peso: 40,0 pts)',
                         total: p2TotalEdit,
                         max: 40,
                       },
                       {
                         pilar: 3,
                         titulo:
-                          '3. Pilar Apresentação e Defesa para a Banca (Peso: 15,0% — 3.1 Arguição Individual [6,0] + 3.2 Pitch [5,0] + 3.3 Slides [4,0])',
+                          '3. Pilar Apresentação e Defesa para a Banca (Peso: 15,0 pts — 3.1 Arguição Individual [6,0] + 3.2 Pitch [5,0] + 3.3 Slides [4,0])',
                         total: p3BaseEdit,
                         max: 9,
                       },
@@ -4223,7 +4223,7 @@ export function App() {
                       <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-900 px-4 py-3 text-white">
                         <h3 className="text-xs font-bold uppercase tracking-wider">
                           CONSOLIDAÇÃO FINAL DAS NOTAS INDIVIDUAIS DOS INTEGRANTES (P1 + P2 + P3 +
-                          P4 = 100%)
+                          P4 = 100 pts)
                         </h3>
                         <span className="rounded bg-amber-500/20 px-2.5 py-0.5 text-[11px] font-bold text-amber-300">
                           3.1 Arguição Individual deve ser preenchida ao vivo • 4.1 e 4.2 vieram do
@@ -4235,15 +4235,15 @@ export function App() {
                           <thead>
                             <tr className="border-b border-slate-200 bg-slate-100 text-[11px] font-bold text-slate-700">
                               <th className="p-3">Aluno / Integrante</th>
-                              <th className="p-3 text-center">P1 (30%)</th>
-                              <th className="p-3 text-center">P2 (40%)</th>
+                              <th className="p-3 text-center">P1 (30 pts)</th>
+                              <th className="p-3 text-center">P2 (40 pts)</th>
                               <th className="border-x-2 border-amber-300 bg-amber-100/80 p-3 text-center text-amber-950">
                                 3.1 Arguição Individual (Máx 6,0) ⚠️
                               </th>
-                              <th className="p-3 text-center">P3 Total (15%)</th>
+                              <th className="p-3 text-center">P3 Total (15 pts)</th>
                               <th className="p-3 text-center">4.1 Sprints PDF (Máx 8,0)</th>
                               <th className="p-3 text-center">4.2 Partic. PDF (Máx 7,0)</th>
-                              <th className="p-3 text-center">P4 Total (15%)</th>
+                              <th className="p-3 text-center">P4 Total (15 pts)</th>
                               <th className="p-3 text-center">Nota Final</th>
                               <th className="p-3 text-center">Status / Liberação de Nota</th>
                             </tr>
@@ -4490,7 +4490,7 @@ export function App() {
                                     {calc.p4.toFixed(2)}
                                   </td>
                                   <td className="p-3 text-center font-mono text-sm font-black text-slate-900">
-                                    {calc.nf.toFixed(2)}%
+                                    {calc.nf.toFixed(2)} pts
                                   </td>
                                   <td className="p-3 text-center">
                                     <div className="flex flex-col items-center gap-1">
@@ -4946,10 +4946,10 @@ export function App() {
                           <th className="p-3">Projeto TCC</th>
                           <th className="p-3">Aluno / Integrante</th>
                           <th className="p-3 text-center">Entrega</th>
-                          <th className="p-3 text-center">P1 (30%)</th>
-                          <th className="p-3 text-center">P2 (40%)</th>
-                          <th className="p-3 text-center">P3 (15%)</th>
-                          <th className="p-3 text-center">P4 PDF (15%)</th>
+                          <th className="p-3 text-center">P1 (30 pts)</th>
+                          <th className="p-3 text-center">P2 (40 pts)</th>
+                          <th className="p-3 text-center">P3 (15 pts)</th>
+                          <th className="p-3 text-center">P4 PDF (15 pts)</th>
                           <th className="p-3 text-center">Nota Final</th>
                           <th className="p-3 text-center">Status / Liberação</th>
                           <th className="p-3 text-center">Ações</th>
@@ -5008,8 +5008,8 @@ export function App() {
                                 </td>
                                 <td className="p-3 text-center font-mono font-black text-slate-900">
                                   {b.entregue_na_pasta
-                                    ? `${ind.nota_final.toFixed(2)}%`
-                                    : `${ind.p4_nota.toFixed(2)}% (P4)`}
+                                    ? `${ind.nota_final.toFixed(2)} pts`
+                                    : `${ind.p4_nota.toFixed(2)} pts (P4)`}
                                 </td>
                                 <td className="p-3 text-center">
                                   {b.entregue_na_pasta ? (
