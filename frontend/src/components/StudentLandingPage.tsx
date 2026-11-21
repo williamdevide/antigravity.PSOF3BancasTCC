@@ -676,7 +676,7 @@ export function StudentLandingPage({
                             {/* Placar de Média do Grupo + Parciais P1-P4 em pts */}
                             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
                               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <span className="text-[10px] font-bold uppercase text-slate-500">
+                                <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-slate-500">
                                   Pilar 1 • Doc (30 pts)
                                 </span>
                                 <p className="mt-1 font-mono text-lg font-black text-slate-900">
@@ -685,7 +685,7 @@ export function StudentLandingPage({
                                 </p>
                               </div>
                               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <span className="text-[10px] font-bold uppercase text-slate-500">
+                                <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-slate-500">
                                   Pilar 2 • Sist (40 pts)
                                 </span>
                                 <p className="mt-1 font-mono text-lg font-black text-slate-900">
@@ -694,7 +694,7 @@ export function StudentLandingPage({
                                 </p>
                               </div>
                               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <span className="text-[10px] font-bold uppercase text-slate-500">
+                                <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-slate-500">
                                   Pilar 3 • Banca (15 pts)
                                 </span>
                                 <p className="mt-1 font-mono text-lg font-black text-slate-900">
@@ -703,7 +703,7 @@ export function StudentLandingPage({
                                 </p>
                               </div>
                               <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <span className="text-[10px] font-bold uppercase text-slate-500">
+                                <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-slate-500">
                                   Pilar 4 • Sprints (15 pts)
                                 </span>
                                 <p className="mt-1 font-mono text-lg font-black text-slate-900">
@@ -712,7 +712,7 @@ export function StudentLandingPage({
                                 </p>
                               </div>
                               <div className="col-span-2 sm:col-span-1 rounded-xl border border-red-200 bg-red-50/70 p-3 text-center">
-                                <span className="text-[10px] font-bold uppercase text-red-700">
+                                <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-red-700">
                                   Média do Grupo
                                 </span>
                                 <p className="mt-1 font-mono text-xl font-black text-red-600">

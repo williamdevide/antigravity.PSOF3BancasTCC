@@ -700,4 +700,17 @@ alem disso em todos os resultados não utilize % mas sim pts. utlize bordas colo
 3. **Considerações dos Professores nos Cards:**
    - Exibir diretamente no card da banca realizada, identificando cada professor avaliador e seu texto integral (quando houver consideração registrada na banca, sem exibir o parecer automático pré-banca da IA).
 
+---
+
+## Sessão 28 — 21/11/2026 (10:57)
+
+### Prompt 28 (21/11/2026 - 10:57)
+```text
+melhore a visualização no pilar 2
+```
+
+### Implementações — Sessão 28:
+- Abreviado o rótulo do card **Pilar 2** para `Pilar 2 • Sist (40 pts)` e aplicado `block whitespace-nowrap` nos 5 títulos dos cards do mini placar (`App.tsx`, `PainelBancaConsolidada.tsx` e `StudentLandingPage.tsx`), garantindo alinhamento horizontal perfeito em uma única linha sem quebra do valor numérico para baixo.
+
+
 

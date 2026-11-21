@@ -2110,7 +2110,7 @@ export function App() {
                               {/* Pilar 1 */}
                               <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                                 <div>
-                                  <span className="text-[11px] font-semibold text-slate-500">
+                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-slate-500">
                                     Pilar 1 • Doc (30 pts)
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-slate-900">
@@ -2143,8 +2143,8 @@ export function App() {
                               {/* Pilar 2 */}
                               <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
                                 <div>
-                                  <span className="text-[11px] font-semibold text-slate-500">
-                                    Pilar 2 • Sistema (40 pts)
+                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-slate-500">
+                                    Pilar 2 • Sist (40 pts)
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-slate-900">
                                     {(consolidadaAtual?.media_p2 ?? grupoAtual.p2_total).toFixed(2)}
@@ -2176,7 +2176,7 @@ export function App() {
                               {/* Pilar 3 */}
                               <div className="flex flex-col justify-between rounded-xl border border-amber-200 bg-amber-50/40 p-3 text-center">
                                 <div>
-                                  <span className="text-[11px] font-semibold text-amber-900">
+                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-amber-900">
                                     Pilar 3 • Banca (15 pts)
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-amber-800">
@@ -2213,7 +2213,7 @@ export function App() {
                               {/* Pilar 4 */}
                               <div className="flex flex-col justify-between rounded-xl border border-indigo-200 bg-indigo-50/40 p-3 text-center">
                                 <div>
-                                  <span className="text-[11px] font-semibold text-indigo-900">
+                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-indigo-900">
                                     Pilar 4 • Sprints (15 pts)
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-indigo-800">
@@ -2261,7 +2261,7 @@ export function App() {
                               {/* Média Final */}
                               <div className="flex flex-col justify-between rounded-xl border border-red-200 bg-red-50/50 p-3 text-center">
                                 <div>
-                                  <span className="text-[11px] font-semibold text-red-800">
+                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-red-800">
                                     {bancaJaRealizadaAtual ? 'Média Consolidada' : 'Média Calculada'}
                                   </span>
                                   <p className="mt-1 text-2xl font-extrabold text-red-700">
