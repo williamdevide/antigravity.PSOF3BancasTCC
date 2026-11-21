@@ -16,6 +16,7 @@ import {
   Download,
   Edit3,
   ExternalLink,
+  FileCheck2,
   FileSpreadsheet,
   FileText,
   FolderOpen,
@@ -65,6 +66,7 @@ import {
   encerrarEConsolidarBanca,
   atualizarPendenciasBanca,
   reabrirBancaParaEntregue,
+  sincronizarRevisaoPosBancaFirestore,
   resetarBancaGrupo,
   recalcularEConsolidarBancaAposEdicao,
   salvarAnaliseAutomaticaFirestore,
@@ -177,6 +179,7 @@ export function App() {
   const [authModalAberto, setAuthModalAberto] = useState<boolean>(false);
   const [modalReauditoriaAberto, setModalReauditoriaAberto] = useState<boolean>(false);
   const [modalArquivosAberto, setModalArquivosAberto] = useState<boolean>(false);
+  const [abaModalArquivos, setAbaModalArquivos] = useState<'originais' | 'revisados'>('originais');
   const [authPronto, setAuthPronto] = useState<boolean>(false);
   const [bancaConsolidada, setBancaConsolidada] = useState<BancaConsolidada | null>(null);
   const [sessaoAoVivo, setSessaoAoVivo] = useState<SessaoBancaAoVivo | null>(null);
@@ -1911,7 +1914,10 @@ export function App() {
                           <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => setModalArquivosAberto(true)}
+                              onClick={() => {
+                                setAbaModalArquivos('originais');
+                                setModalArquivosAberto(true);
+                              }}
                               className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-800 transition hover:bg-red-100 cursor-pointer"
                               title="Arrastar arquivos da entrega do grupo, visualizar salvos, excluir ou auditar"
                             >
@@ -1922,6 +1928,28 @@ export function App() {
                                   : 'Enviar Entrega (Arquivos)'}
                               </span>
                             </button>
+                            {bancaJaRealizadaAtual && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAbaModalArquivos('revisados');
+                                  setModalArquivosAberto(true);
+                                }}
+                                className="flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-900 transition hover:bg-emerald-100 cursor-pointer"
+                                title="Enviar arquivos corrigidos na pasta revisados/ sem substituir os originais e validar aceite"
+                              >
+                                <FileCheck2 className="h-4 w-4 text-emerald-700" />
+                                <span>Arquivos Revisados</span>
+                                {(sessaoAtual?.revisao_pos_banca?.arquivos_qtd ??
+                                  grupoAtual.revisao_pos_banca?.arquivos_qtd ??
+                                  0) > 0 && (
+                                  <span className="rounded-full bg-emerald-600 px-1.5 py-0.5 font-mono text-[10px] font-black leading-none text-white">
+                                    {sessaoAtual?.revisao_pos_banca?.arquivos_qtd ??
+                                      grupoAtual.revisao_pos_banca?.arquivos_qtd}
+                                  </span>
+                                )}
+                              </button>
+                            )}
                             {grupoAtual.entregue_na_pasta && (
                               <>
                                 <button
@@ -1973,7 +2001,10 @@ export function App() {
                               <div className="mt-4 flex justify-center">
                                 <button
                                   type="button"
-                                  onClick={() => setModalArquivosAberto(true)}
+                                  onClick={() => {
+                                    setAbaModalArquivos('originais');
+                                    setModalArquivosAberto(true);
+                                  }}
                                   className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-red-700 cursor-pointer"
                                 >
                                   <CloudUpload className="h-4 w-4" />
@@ -5249,19 +5280,45 @@ export function App() {
         }}
       />
 
-      {/* Modal de Upload / Gerenciamento de Arquivos da Entrega por Grupo */}
+      {/* Modal de Upload / Gerenciamento de Arquivos da Entrega por Grupo e Revisados Pós-Banca */}
       {grupoAtual && (
         <ModalEntregaArquivos
           aberto={modalArquivosAberto}
           onClose={() => setModalArquivosAberto(false)}
           grupo={grupoAtual}
+          abaInicial={abaModalArquivos}
           bancaConcluida={bancaJaRealizadaAtual}
           auditoriaEmAndamento={status.estado === 'running'}
+          isProfessorTitular={isProfessorTitular}
+          professorNome={
+            usuarioAuth?.displayName ||
+            avaliadorEdit ||
+            usuarioAuth?.email?.split('@')[0] ||
+            'Prof. Titular'
+          }
+          revisaoInicial={
+            sessaoAtual?.revisao_pos_banca || grupoAtual.revisao_pos_banca || null
+          }
+          statusTrabalhoAtual={statusFinalGrupoAtual as ResultadoFinalTipo}
           onAtualizarBancas={carregarTudo}
           onDispararAuditoriaGrupo={async (gid) => {
             await handleAuditarAgora([gid], null);
           }}
           onReabrirBanca={handleReabrirBancaParaEntregue}
+          onSincronizarRevisaoFirestore={async (revisao, novoStatus) => {
+            if (!usuarioAuth) return;
+            const resSync = await sincronizarRevisaoPosBancaFirestore(
+              grupoAtual,
+              sessaoAtual || null,
+              consolidadaAtual || null,
+              usuarioAuth,
+              revisao,
+              novoStatus,
+            );
+            if (!resSync.ok) {
+              setAviso({ tipo: 'erro', texto: resSync.mensagem });
+            }
+          }}
         />
       )}
     </div>

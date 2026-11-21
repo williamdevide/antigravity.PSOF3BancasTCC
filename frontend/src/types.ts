@@ -305,6 +305,8 @@ export interface AvaliacaoGrupo {
   possui_item_insuficiente_grupo: boolean;
   itens_insuficientes_grupo: string[];
   status_liberacao_nota: ResultadoFinalTipo;
+  status_liberacao_manual?: ResultadoFinalTipo | null;
+  revisao_pos_banca?: RevisaoPosBanca;
 
   parecer_tecnico: string;
   parecer_estruturado: BlocoParecerTecnico[];
@@ -414,6 +416,7 @@ export interface SessaoBancaAoVivo {
   pendencias_cumpridas?: boolean;
   pendencias_cumpridas_em?: string | null;
   pendencias_atualizado_por?: string;
+  revisao_pos_banca?: RevisaoPosBanca;
   atualizado_em: string;
 }
 
@@ -462,4 +465,33 @@ export interface ListaArquivosEntregaResponse {
   tamanho_total_bytes: number;
   arquivos: ArquivoEntregaSalvo[];
 }
+
+export type StatusRevisaoPosBanca =
+  | 'sem_revisao'
+  | 'aguardando_validacao'
+  | 'aceito'
+  | 'ajustes_pendentes';
+
+export interface RevisaoPosBanca {
+  status: StatusRevisaoPosBanca;
+  arquivos_qtd: number;
+  arquivos_nomes: string[];
+  aceito: boolean;
+  observacao_professor: string;
+  avaliado_por: string;
+  avaliado_em: string | null;
+  status_trabalho_aplicado?: ResultadoFinalTipo | null;
+  atualizado_em: string | null;
+}
+
+export interface ListaArquivosRevisadosResponse {
+  grupo_id: string;
+  pasta_grupo_nome: string;
+  pasta_revisados_caminho: string;
+  total_arquivos: number;
+  tamanho_total_bytes: number;
+  arquivos: ArquivoEntregaSalvo[];
+  revisao_pos_banca: RevisaoPosBanca;
+}
+
 

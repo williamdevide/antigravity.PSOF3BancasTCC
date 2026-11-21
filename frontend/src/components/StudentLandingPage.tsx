@@ -127,6 +127,8 @@ function resolverDadosBancaRealizada(
     (p) => Boolean(p.parecer && p.parecer.trim().length > 0),
   );
 
+  const revisaoPosBanca = sessao?.revisao_pos_banca || banca.revisao_pos_banca || null;
+
   return {
     realizada,
     emAndamento,
@@ -142,6 +144,7 @@ function resolverDadosBancaRealizada(
     pendenciasCumpridasEm: sessao?.pendencias_cumpridas_em || null,
     possuiPendencias,
     consideracoesProfessores,
+    revisaoPosBanca,
   };
 }
 
@@ -890,6 +893,59 @@ export function StudentLandingPage({
                                 </p>
                               )}
                             </div>
+
+                            {/* Sinalização de Entrega de Arquivos Revisados (Pós-Banca) */}
+                            {info.revisaoPosBanca &&
+                              (info.revisaoPosBanca.arquivos_qtd > 0 ||
+                                info.revisaoPosBanca.status !== 'sem_revisao') && (
+                                <div
+                                  className={`rounded-xl border p-3.5 text-xs ${
+                                    info.revisaoPosBanca.status === 'aceito'
+                                      ? 'border-emerald-300 bg-emerald-50/70 text-emerald-950'
+                                      : info.revisaoPosBanca.status === 'ajustes_pendentes'
+                                      ? 'border-orange-300 bg-orange-50/80 text-orange-950'
+                                      : 'border-amber-300 bg-amber-50/80 text-amber-950'
+                                  }`}
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2 font-extrabold uppercase tracking-wider text-[11px]">
+                                      <FileCheck2
+                                        className={`h-4 w-4 ${
+                                          info.revisaoPosBanca.status === 'aceito'
+                                            ? 'text-emerald-600'
+                                            : info.revisaoPosBanca.status === 'ajustes_pendentes'
+                                            ? 'text-orange-600'
+                                            : 'text-amber-700'
+                                        }`}
+                                      />
+                                      <span>
+                                        {info.revisaoPosBanca.status === 'aceito'
+                                          ? 'Revisão Pós-Banca Aceita pelo Professor'
+                                          : info.revisaoPosBanca.status === 'ajustes_pendentes'
+                                          ? 'Revisão Pós-Banca: Novos Ajustes Solicitados'
+                                          : `${info.revisaoPosBanca.arquivos_qtd} arquivo(s) revisado(s) recebido(s) — Aguardando validação do professor`}
+                                      </span>
+                                    </div>
+                                    <span className="rounded-full bg-white/80 px-2.5 py-0.5 font-mono text-[10px] font-bold text-slate-800 border border-black/10">
+                                      {info.revisaoPosBanca.arquivos_qtd} arquivo(s) extra(s) em revisão
+                                    </span>
+                                  </div>
+
+                                  {info.revisaoPosBanca.observacao_professor && (
+                                    <p className="mt-2 whitespace-pre-line rounded-lg border border-black/5 bg-white/80 p-2.5 text-xs leading-relaxed text-slate-800">
+                                      <strong>Consideração do Professor Titular:</strong>{' '}
+                                      {info.revisaoPosBanca.observacao_professor}
+                                    </p>
+                                  )}
+
+                                  {info.revisaoPosBanca.avaliado_em && info.revisaoPosBanca.avaliado_por && (
+                                    <p className="mt-1.5 text-[11px] font-semibold opacity-80">
+                                      Validado por {info.revisaoPosBanca.avaliado_por} em{' '}
+                                      {new Date(info.revisaoPosBanca.avaliado_em).toLocaleDateString('pt-BR')}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                           </div>
                         )}
 

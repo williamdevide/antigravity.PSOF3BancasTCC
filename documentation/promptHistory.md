@@ -712,5 +712,23 @@ melhore a visualização no pilar 2
 ### Implementações — Sessão 28:
 - Abreviado o rótulo do card **Pilar 2** para `Pilar 2 • Sist (40 pts)` e aplicado `block whitespace-nowrap` nos 5 títulos dos cards do mini placar (`App.tsx`, `PainelBancaConsolidada.tsx` e `StudentLandingPage.tsx`), garantindo alinhamento horizontal perfeito em uma única linha sem quebra do valor numérico para baixo.
 
+---
+
+## Sessão 29 — 21/11/2026 (11:01)
+
+### Prompt 29 (21/11/2026 - 11:01)
+```text
+/agente-orquestrador /grill-me /goal quero uma opção para enviar os arquvios corrigidos do grupo após a banca realizada (vale para qualquer um dos 3 status), importante o arquivo corrigido não substitui o original, ele é um extra, e fica em uma pasta revisados dentro da pasta do grupo e após recebidos o professor titular deve indicar se estão aceitos (se estiver o status do trabalho pode ser alterado entre os 3 possiveis)
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 29
+1. **Local de Envio & Escopo:**
+   - Exclusivamente na Área do Professor (`/professor`), em *Auditoria & Bancas*, via botão dedicado **"Arquivos Revisados"** em qualquer banca realizada (válido para os 3 status: `Nota Liberada`, `Nota Retida`, `Nova Apresentação`). Os originais permanecem intactos na pasta raiz do grupo.
+2. **Armazenamento em `revisados/` e Aceite pelo Professor Titular:**
+   - Arquivos extras gravados dentro de `./tcc/{turma}/{pasta_grupo}/revisados/`. Após recebidos, o Professor Titular indica se estão **Aceitos** ou **Pendente de Novos Ajustes**. Somente quando marcado como **Aceito**, libera o seletor para alterar o status do trabalho entre os **3 possíveis** (`Aprovado`, `Nota Retida (Pendências)` ou `Nova Chance (Data Futura)`), atualizando backend e Firestore sem alterar as notas numéricas originais.
+3. **Visibilidade na Landing Page Pública (`/`):**
+   - Exibe no card da banca realizada um aviso claro com a contagem de arquivos revisados recebidos, status da validação pelo professor e observação docente (sem links públicos de download e preservando as notas originais).
+
+
 
 

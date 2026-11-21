@@ -287,6 +287,18 @@ class AuditoriaTecnicaDetalhada(BaseModel):
     analise_qualitativa_gemini: dict[str, str] = Field(default_factory=dict)
 
 
+class RevisaoPosBancaModel(BaseModel):
+    status: Literal["sem_revisao", "aguardando_validacao", "aceito", "ajustes_pendentes"] = "sem_revisao"
+    arquivos_qtd: int = 0
+    arquivos_nomes: list[str] = Field(default_factory=list)
+    aceito: bool = False
+    observacao_professor: str = ""
+    avaliado_por: str = ""
+    avaliado_em: str | None = None
+    status_trabalho_aplicado: ResultadoFinalTipo | None = None
+    atualizado_em: str | None = None
+
+
 class AvaliacaoGrupoModel(BaseModel):
     id: str  # Ex: "I2DEV-B_Grupo08"
     ordem_apresentacao: int = 1
@@ -328,6 +340,8 @@ class AvaliacaoGrupoModel(BaseModel):
     itens_insuficientes_grupo: list[str] = Field(default_factory=list)
     status_liberacao_nota: str = "Aguardando Entrega"
     status_liberacao_manual: str | None = None
+
+    revisao_pos_banca: RevisaoPosBancaModel = Field(default_factory=RevisaoPosBancaModel)
 
     parecer_tecnico: str = ""
     parecer_estruturado: list[BlocoParecerTecnico] = Field(default_factory=list)
@@ -393,3 +407,11 @@ class ExecutarAuditoriaRequest(BaseModel):
     turma: str | None = None
     forcar_reauditoria: bool = True
     sincronizar_firebase: bool = True
+
+
+class AvaliarRevisaoPosBancaRequest(BaseModel):
+    aceito: bool
+    observacao_professor: str = ""
+    avaliador: str = "Prof. Titular"
+    novo_status_liberacao: ResultadoFinalTipo | None = None
+

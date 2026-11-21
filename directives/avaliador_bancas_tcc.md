@@ -134,5 +134,9 @@ Automatizar a auditoria técnica, documental e estrutural dos Trabalhos de Concl
    - O Professor Titular só é liberado para consolidar a média final e fechar a ata após o segundo professor ter concluído suas notas (com contingência justificada caso o 2º avaliador esteja ausente).
 6. **Upload Direto de Entregáveis & Reabertura Controlada:**
    - Na aba *Auditoria & Bancas*, qualquer grupo pode receber arquivos via drag-and-drop no modal **"Enviar / Gerenciar Arquivos"**, salvos na pasta oficial `./tcc/{turma}/BancaXX-GrupoYY-Projeto-(Integrantes)/` (mesmo padrão das entregas manuais), com opção de **Enviar e Auditar Agora**, **Apenas Salvar Arquivos**, baixar, substituir e excluir arquivos após a análise (voltando para `pendente_entrega` se a pasta ficar vazia).
-   - Se a banca já estiver **concluída**, exclusão e upload ficam bloqueados até o docente clicar em **"Reabrir Banca (Voltar para Entregue)"**, o que desmarca a conclusão mantendo o histórico de notas/rascunhos individuais em `psof3_avaliacoes_professores`.
+   - Se a banca já estiver **concluída**, exclusão e upload dos originais ficam bloqueados até o docente clicar em **"Reabrir Banca (Voltar para Entregue)"**, o que desmarca a conclusão mantendo o histórico de notas/rascunhos individuais em `psof3_avaliacoes_professores`.
+7. **Arquivos Revisados Pós-Banca (`revisados/`) & Aceite pelo Professor Titular:**
+   - Em qualquer banca já realizada (independente do status: `Aprovado`, `Nota Retida` ou `Nova Chance`), o botão **"Arquivos Revisados"** abre a aba pós-banca para enviar arquivos corrigidos extras em `./tcc/{turma}/{pasta_grupo}/revisados/` sem jamais substituir os originais.
+   - Após o recebimento em `revisados/`, o Professor Titular registra uma observação opcional e escolhe se os arquivos estão **Aceitos** ou necessitam de **Novos Ajustes**; somente quando **Aceitos**, libera a alteração do status do trabalho entre os **3 status possíveis** no backend e no Firestore (marcando `pendencias_cumpridas` automaticamente quando liberado), preservando as notas numéricas originais e exibindo a sinalização no Portal dos Alunos (`/`).
+
 

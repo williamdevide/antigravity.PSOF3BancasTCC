@@ -400,4 +400,126 @@ def test_upload_gerenciamento_arquivos_e_reabertura_banca():
         salvar_avaliacoes_salvas(salvas_rest)
 
 
+def test_arquivos_revisados_pos_banca_e_aceite_status():
+    import shutil
+    from backend.app.config_manager import ler_avaliacoes_salvas, salvar_avaliacoes_salvas
+    from backend.app.tcc_auditor import resolver_ou_criar_pasta_grupo
+
+    gid = "I2DEV-A_Grupo01"
+    salvas_orig = ler_avaliacoes_salvas()
+    registro_orig = dict(salvas_orig[gid]) if gid in salvas_orig else None
+    pasta_criada = None
+
+    try:
+        # 1. Criar entrega original e concluir a banca no status Nota Retida
+        r_orig = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[("arquivos", ("links.txt", b"CONTEUDO_ORIGINAL_BANCA", "text/plain"))],
+        )
+        assert r_orig.status_code == 200
+        pasta_criada, _, _ = resolver_ou_criar_pasta_grupo(gid, criar_se_ausente=False)
+        assert pasta_criada is not None
+
+        salvas_tmp = ler_avaliacoes_salvas()
+        salvas_tmp[gid]["banca_realizada"] = True
+        salvas_tmp[gid]["status_avaliacao"] = "avaliado_banca"
+        salvas_tmp[gid]["media_nota_final_grupo"] = 72.5
+        salvas_tmp[gid]["status_liberacao_nota"] = "Nota Retida (Pendências)"
+        salvar_avaliacoes_salvas(salvas_tmp)
+
+        # 2. Enviar arquivos corrigidos com o mesmo nome -> salva em revisados/ SEM sobrescrever o original
+        r_rev_up = client.post(
+            f"/api/bancas/{gid}/revisados",
+            files=[
+                ("arquivos", ("links.txt", b"CONTEUDO_REVISADO_POS_BANCA", "text/plain")),
+                ("arquivos", ("CTDS-2026-02-BD-Corrigido.sql", b"CREATE TABLE x (id INT PRIMARY KEY);", "text/plain")),
+            ],
+        )
+        assert r_rev_up.status_code == 200
+        d_rev = r_rev_up.json()
+        assert d_rev["revisao_pos_banca"]["arquivos_qtd"] == 2
+        assert d_rev["revisao_pos_banca"]["status"] == "aguardando_validacao"
+        assert d_rev["revisao_pos_banca"]["aceito"] is False
+
+        # Garantir que o arquivo original foi 100% preservado e que revisados/ existe isolado
+        assert (pasta_criada / "links.txt").read_bytes() == b"CONTEUDO_ORIGINAL_BANCA"
+        assert (pasta_criada / "revisados" / "links.txt").read_bytes() == b"CONTEUDO_REVISADO_POS_BANCA"
+
+        # Download de arquivo revisado
+        r_rev_dl = client.get(f"/api/bancas/{gid}/revisados/links.txt")
+        assert r_rev_dl.status_code == 200
+        assert r_rev_dl.content == b"CONTEUDO_REVISADO_POS_BANCA"
+
+        # 3. Professor indica que precisa de novos ajustes (aceito=False) -> não altera status do trabalho
+        r_recusa = client.post(
+            f"/api/bancas/{gid}/revisados/avaliar",
+            json={
+                "aceito": False,
+                "observacao_professor": "Faltou ajustar chave estrangeira.",
+                "avaliador": "Prof. William",
+                "novo_status_liberacao": None,
+            },
+        )
+        assert r_recusa.status_code == 200
+        assert r_recusa.json()["revisao_pos_banca"]["status"] == "ajustes_pendentes"
+        assert r_recusa.json()["banca"]["status_liberacao_nota"] == "Nota Retida (Pendências)"
+
+        # 4. Professor aceita arquivos revisados e altera status para Aprovado (mantendo notas numéricas)
+        r_aceite = client.post(
+            f"/api/bancas/{gid}/revisados/avaliar",
+            json={
+                "aceito": True,
+                "observacao_professor": "Correções validadas.",
+                "avaliador": "Prof. William",
+                "novo_status_liberacao": "Aprovado",
+            },
+        )
+        assert r_aceite.status_code == 200
+        d_ac = r_aceite.json()
+        assert d_ac["revisao_pos_banca"]["aceito"] is True
+        assert d_ac["revisao_pos_banca"]["status"] == "aceito"
+        assert d_ac["banca"]["status_liberacao_nota"] == "Aprovado"
+        assert d_ac["banca"]["media_nota_final_grupo"] == 72.5
+        assert all(i["resultado"] == "Aprovado" for i in d_ac["banca"]["integrantes_notas"])
+
+        # 5. Permite alternar para qualquer um dos 3 status (ex.: Nova Chance)
+        r_nova = client.post(
+            f"/api/bancas/{gid}/revisados/avaliar",
+            json={
+                "aceito": True,
+                "observacao_professor": "Necessária nova apresentação.",
+                "avaliador": "Prof. William",
+                "novo_status_liberacao": "Nova Chance (Data Futura)",
+            },
+        )
+        assert r_nova.status_code == 200
+        assert r_nova.json()["banca"]["status_liberacao_nota"] == "Nova Chance (Data Futura)"
+
+        # Garantir persistência após GET /api/bancas (recalcular_totais_avaliacao respeita status manual)
+        r_get = client.get(f"/api/bancas/{gid}")
+        assert r_get.status_code == 200
+        assert r_get.json()["status_liberacao_nota"] == "Nova Chance (Data Futura)"
+        assert r_get.json()["revisao_pos_banca"]["arquivos_qtd"] == 2
+
+        # 6. Excluir arquivos revisados não afeta o arquivo original
+        r_del1 = client.delete(f"/api/bancas/{gid}/revisados/links.txt")
+        assert r_del1.status_code == 200
+        assert r_del1.json()["revisao_pos_banca"]["arquivos_qtd"] == 1
+        r_del2 = client.delete(f"/api/bancas/{gid}/revisados/CTDS-2026-02-BD-Corrigido.sql")
+        assert r_del2.status_code == 200
+        assert r_del2.json()["revisao_pos_banca"]["status"] == "sem_revisao"
+        assert not (pasta_criada / "revisados").exists()
+        assert (pasta_criada / "links.txt").read_bytes() == b"CONTEUDO_ORIGINAL_BANCA"
+    finally:
+        if pasta_criada and pasta_criada.exists():
+            shutil.rmtree(pasta_criada, ignore_errors=True)
+        salvas_rest = ler_avaliacoes_salvas()
+        if registro_orig is not None:
+            salvas_rest[gid] = registro_orig
+        else:
+            salvas_rest.pop(gid, None)
+        salvar_avaliacoes_salvas(salvas_rest)
+
+
+
 

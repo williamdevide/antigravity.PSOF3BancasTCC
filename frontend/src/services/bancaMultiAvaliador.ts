@@ -16,6 +16,7 @@ import type {
   DraftAvaliacaoLocal,
   NivelMSEP,
   ResultadoFinalTipo,
+  RevisaoPosBanca,
   RubricaItemAvaliacao,
   NotaIndividualIntegrante,
   SessaoBancaAoVivo,
@@ -790,6 +791,70 @@ export async function reabrirBancaParaEntregue(
     return {
       ok: false,
       mensagem: formatarErroFirestore(err, 'reabrir banca para estado entregue'),
+    };
+  }
+}
+
+/**
+ * Sincroniza o estado dos arquivos revisados pós-banca (subpasta revisados/) e,
+ * quando aceitos pelo Professor Titular, aplica a alteração de status do trabalho
+ * no Firestore sem modificar as notas numéricas originais da banca.
+ */
+export async function sincronizarRevisaoPosBancaFirestore(
+  grupo: AvaliacaoGrupo,
+  sessaoAtual: SessaoBancaAoVivo | null,
+  consolidadaAtual: BancaConsolidada | null,
+  professor: User,
+  revisao: RevisaoPosBanca,
+  novoStatusLiberacao?: ResultadoFinalTipo | null,
+): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    const agora = new Date().toISOString();
+    const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupo.id);
+    const bancaOrigem = consolidadaAtual || sessaoAtual?.banca_consolidada || null;
+
+    const payload: Record<string, unknown> = {
+      grupo_id: grupo.id,
+      turma: grupo.turma,
+      projeto: grupo.projeto,
+      status: sessaoAtual?.status || 'concluida',
+      revisao_pos_banca: revisao,
+      atualizado_em: agora,
+    };
+
+    if (revisao.aceito && novoStatusLiberacao) {
+      payload.status_liberacao_final = novoStatusLiberacao;
+      if (novoStatusLiberacao === 'Aprovado') {
+        payload.pendencias_cumpridas = true;
+        payload.pendencias_cumpridas_em = sessaoAtual?.pendencias_cumpridas_em || agora;
+        payload.pendencias_atualizado_por = professor.displayName || professor.email || 'Prof. Titular';
+      } else {
+        payload.pendencias_cumpridas = false;
+        payload.pendencias_cumpridas_em = null;
+      }
+
+      if (bancaOrigem) {
+        payload.banca_consolidada = {
+          ...bancaOrigem,
+          status_liberacao_final: novoStatusLiberacao,
+          status_liberacao_manual: novoStatusLiberacao,
+          integrantes_medias: bancaOrigem.integrantes_medias.map((ind) => ({
+            ...ind,
+            resultado: novoStatusLiberacao,
+          })),
+        };
+      }
+    }
+
+    await setDoc(docSessaoRef, payload, { merge: true });
+    return {
+      ok: true,
+      mensagem: 'Revisão pós-banca sincronizada com o Firebase e Portal dos Alunos.',
+    };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      mensagem: formatarErroFirestore(err, 'sincronizar revisão pós-banca'),
     };
   }
 }

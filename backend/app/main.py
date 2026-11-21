@@ -38,6 +38,7 @@ from .models import (
     AgentStatusResponse,
     AgentSummaryModel,
     AvaliacaoGrupoModel,
+    AvaliarRevisaoPosBancaRequest,
     ConfigEnvModel,
     ExecucaoHistorico,
     ExecutarAuditoriaRequest,
@@ -51,13 +52,16 @@ from .report_generator import (
 )
 from .tcc_auditor import (
     _pasta_possui_arquivos_reais,
+    avaliar_revisao_pos_banca_backend,
     banca_esta_concluida_no_backend,
     classificar_tipo_arquivo_entrega,
     obter_meta_e_ordem_grupo,
     reabrir_banca_para_entregue_backend,
     recalcular_totais_avaliacao,
     resolver_ou_criar_pasta_grupo,
+    resolver_ou_criar_pasta_revisados,
     sincronizar_e_obter_todas_bancas,
+    sincronizar_revisao_pos_banca_grupo,
     sincronizar_status_entrega_grupo,
 )
 
@@ -117,6 +121,52 @@ def _serializar_arquivos_pasta(pasta: Path | None) -> list[dict[str, Any]]:
             }
         )
     return itens
+
+
+async def _gravar_uploads_em_pasta(
+    pasta: Path,
+    arquivos: list[UploadFile],
+) -> tuple[list[str], list[str]]:
+    """Grava uploads multipart em chunks validando extensões, path traversal e limite de 200 MB."""
+    pasta_res = pasta.resolve()
+    enviados: list[str] = []
+    substituidos: list[str] = []
+
+    for arq in arquivos:
+        nome_limpo = _sanitizar_nome_arquivo_upload(arq.filename or "", validar_extensao=True)
+        destino = (pasta_res / nome_limpo).resolve()
+        if destino.parent != pasta_res:
+            raise HTTPException(status_code=400, detail="Destino de arquivo inválido.")
+
+        ja_existia = destino.exists()
+        total_lido = 0
+        try:
+            with destino.open("wb") as out:
+                while True:
+                    chunk = await arq.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    total_lido += len(chunk)
+                    if total_lido > MAX_UPLOAD_BYTES:
+                        raise HTTPException(
+                            status_code=413,
+                            detail=f"Arquivo '{nome_limpo}' excede o limite de 200 MB por arquivo.",
+                        )
+                    out.write(chunk)
+        except HTTPException:
+            destino.unlink(missing_ok=True)
+            raise
+        except Exception as exc:
+            destino.unlink(missing_ok=True)
+            raise HTTPException(status_code=500, detail=f"Falha ao salvar '{nome_limpo}': {exc}") from exc
+        finally:
+            await arq.close()
+
+        enviados.append(nome_limpo)
+        if ja_existia:
+            substituidos.append(nome_limpo)
+
+    return enviados, substituidos
 
 
 app = FastAPI(
@@ -483,44 +533,7 @@ async def upload_arquivos_entrega_grupo(
 
     pasta, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=True)
     assert pasta is not None
-    pasta_res = pasta.resolve()
-
-    enviados: list[str] = []
-    substituidos: list[str] = []
-
-    for arq in arquivos:
-        nome_limpo = _sanitizar_nome_arquivo_upload(arq.filename or "", validar_extensao=True)
-        destino = (pasta_res / nome_limpo).resolve()
-        if destino.parent != pasta_res:
-            raise HTTPException(status_code=400, detail="Destino de arquivo inválido.")
-
-        ja_existia = destino.exists()
-        total_lido = 0
-        try:
-            with destino.open("wb") as out:
-                while True:
-                    chunk = await arq.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    total_lido += len(chunk)
-                    if total_lido > MAX_UPLOAD_BYTES:
-                        raise HTTPException(
-                            status_code=413,
-                            detail=f"Arquivo '{nome_limpo}' excede o limite de 200 MB por arquivo.",
-                        )
-                    out.write(chunk)
-        except HTTPException:
-            destino.unlink(missing_ok=True)
-            raise
-        except Exception as exc:
-            destino.unlink(missing_ok=True)
-            raise HTTPException(status_code=500, detail=f"Falha ao salvar '{nome_limpo}': {exc}") from exc
-        finally:
-            await arq.close()
-
-        enviados.append(nome_limpo)
-        if ja_existia:
-            substituidos.append(nome_limpo)
+    enviados, substituidos = await _gravar_uploads_em_pasta(pasta, arquivos)
 
     banca_atualizada = sincronizar_status_entrega_grupo(grupo_id)
     lista_final = _serializar_arquivos_pasta(pasta)
@@ -623,6 +636,123 @@ def reabrir_banca_para_entregue_endpoint(grupo_id: str) -> dict[str, Any]:
     return {
         "ok": True,
         "mensagem": f"Banca de {banca_atualizada.projeto} reaberta para o estado 'Entregue'. Agora é possível gerenciar arquivos e reauditar.",
+        "banca": banca_atualizada.model_dump(),
+    }
+
+
+@app.get("/api/bancas/{grupo_id}/revisados")
+def listar_arquivos_revisados_grupo(grupo_id: str) -> dict[str, Any]:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    pasta_rev, pasta_grupo, _, _ = resolver_ou_criar_pasta_revisados(grupo_id, criar_se_ausente=False)
+    arquivos = _serializar_arquivos_pasta(pasta_rev)
+    banca = sincronizar_revisao_pos_banca_grupo(grupo_id, redefinir_para_aguardando=False)
+    return {
+        "grupo_id": grupo_id,
+        "pasta_grupo_nome": pasta_grupo.name if pasta_grupo else "",
+        "pasta_revisados_caminho": str(pasta_rev) if pasta_rev else "",
+        "total_arquivos": len(arquivos),
+        "tamanho_total_bytes": sum(a["tamanho_bytes"] for a in arquivos),
+        "arquivos": arquivos,
+        "revisao_pos_banca": banca.revisao_pos_banca.model_dump(),
+    }
+
+
+@app.post("/api/bancas/{grupo_id}/revisados")
+async def upload_arquivos_revisados_grupo(
+    grupo_id: str,
+    arquivos: list[UploadFile] = File(...),
+) -> dict[str, Any]:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    if not arquivos:
+        raise HTTPException(status_code=400, detail="Nenhum arquivo corrigido selecionado para envio.")
+
+    pasta_rev, pasta_grupo, _, _ = resolver_ou_criar_pasta_revisados(grupo_id, criar_se_ausente=True)
+    assert pasta_rev is not None
+    enviados, substituidos = await _gravar_uploads_em_pasta(pasta_rev, arquivos)
+
+    banca_atualizada = sincronizar_revisao_pos_banca_grupo(grupo_id, redefinir_para_aguardando=True)
+    lista_final = _serializar_arquivos_pasta(pasta_rev)
+    nome_pasta = pasta_grupo.name if pasta_grupo else grupo_id
+    return {
+        "ok": True,
+        "mensagem": f"{len(enviados)} arquivo(s) corrigido(s) salvo(s) em '{nome_pasta}/revisados/'. Os originais foram preservados.",
+        "enviados": enviados,
+        "substituidos": substituidos,
+        "arquivos": lista_final,
+        "revisao_pos_banca": banca_atualizada.revisao_pos_banca.model_dump(),
+        "banca": banca_atualizada.model_dump(),
+    }
+
+
+@app.post("/api/bancas/{grupo_id}/revisados/avaliar")
+def avaliar_revisao_pos_banca_endpoint(
+    grupo_id: str,
+    payload: AvaliarRevisaoPosBancaRequest,
+) -> dict[str, Any]:
+    try:
+        banca_atualizada = avaliar_revisao_pos_banca_backend(
+            grupo_id=grupo_id,
+            aceito=payload.aceito,
+            observacao_professor=payload.observacao_professor,
+            avaliador=payload.avaliador,
+            novo_status_liberacao=payload.novo_status_liberacao,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "ok": True,
+        "mensagem": (
+            "Arquivos revisados aceitos e parecer do Professor Titular registrado!"
+            if payload.aceito
+            else "Parecer registrado: novos ajustes solicitados para os arquivos revisados."
+        ),
+        "revisao_pos_banca": banca_atualizada.revisao_pos_banca.model_dump(),
+        "banca": banca_atualizada.model_dump(),
+    }
+
+
+@app.get("/api/bancas/{grupo_id}/revisados/{nome_arquivo}")
+def baixar_arquivo_revisado_grupo(grupo_id: str, nome_arquivo: str) -> FileResponse:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    nome_limpo = _sanitizar_nome_arquivo_upload(nome_arquivo, validar_extensao=False)
+    pasta_rev, _, _, _ = resolver_ou_criar_pasta_revisados(grupo_id, criar_se_ausente=False)
+    if not pasta_rev or not pasta_rev.exists():
+        raise HTTPException(status_code=404, detail="Pasta 'revisados' do grupo não encontrada.")
+
+    pasta_res = pasta_rev.resolve()
+    alvo = (pasta_res / nome_limpo).resolve()
+    if alvo.parent != pasta_res or not alvo.is_file():
+        raise HTTPException(status_code=404, detail=f"Arquivo revisado '{nome_limpo}' não encontrado.")
+
+    media, _ = mimetypes.guess_type(str(alvo))
+    return FileResponse(path=alvo, filename=alvo.name, media_type=media or "application/octet-stream")
+
+
+@app.delete("/api/bancas/{grupo_id}/revisados/{nome_arquivo}")
+def excluir_arquivo_revisado_grupo(grupo_id: str, nome_arquivo: str) -> dict[str, Any]:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    nome_limpo = _sanitizar_nome_arquivo_upload(nome_arquivo, validar_extensao=False)
+    pasta_rev, _, _, _ = resolver_ou_criar_pasta_revisados(grupo_id, criar_se_ausente=False)
+    if not pasta_rev or not pasta_rev.exists():
+        raise HTTPException(status_code=404, detail="Pasta 'revisados' do grupo não encontrada.")
+
+    pasta_res = pasta_rev.resolve()
+    alvo = (pasta_res / nome_limpo).resolve()
+    if alvo.parent != pasta_res or not alvo.is_file():
+        raise HTTPException(status_code=404, detail=f"Arquivo revisado '{nome_limpo}' não encontrado.")
+
+    alvo.unlink()
+    banca_atualizada = sincronizar_revisao_pos_banca_grupo(grupo_id, redefinir_para_aguardando=False)
+    lista_final = _serializar_arquivos_pasta(pasta_rev if pasta_rev.exists() else None)
+    return {
+        "ok": True,
+        "mensagem": f"Arquivo revisado '{nome_limpo}' excluído com sucesso.",
+        "arquivos": lista_final,
+        "revisao_pos_banca": banca_atualizada.revisao_pos_banca.model_dump(),
         "banca": banca_atualizada.model_dump(),
     }
 

@@ -40,6 +40,7 @@ from .models import (
     NivelMSEP,
     NotaIndividualIntegrante,
     PerguntaArguicao,
+    RevisaoPosBancaModel,
     RubricaItemAvaliacao,
 )
 from .regras_msep import (
@@ -157,7 +158,9 @@ def recalcular_totais_avaliacao(avaliacao: AvaliacaoGrupoModel) -> AvaliacaoGrup
         ind.itens_insuficientes = insuf_aluno
         ind.possui_item_insuficiente = len(insuf_aluno) > 0
 
-        if ind.nota_final >= 50.0:
+        if avaliacao.status_liberacao_manual:
+            ind.resultado = avaliacao.status_liberacao_manual
+        elif ind.nota_final >= 50.0:
             if ind.possui_item_insuficiente:
                 ind.resultado = "Nota Retida (Pendências)"
             else:
@@ -192,7 +195,9 @@ def recalcular_totais_avaliacao(avaliacao: AvaliacaoGrupoModel) -> AvaliacaoGrup
     avaliacao.itens_insuficientes_grupo = todos_insuf_grupo
     avaliacao.possui_item_insuficiente_grupo = len(todos_insuf_grupo) > 0
 
-    if not avaliacao.entregue_na_pasta:
+    if avaliacao.status_liberacao_manual:
+        avaliacao.status_liberacao_nota = avaliacao.status_liberacao_manual
+    elif not avaliacao.entregue_na_pasta:
         avaliacao.status_liberacao_nota = "Nota Retida (Pendências)"
     elif avaliacao.media_nota_final_grupo >= 50.0 and avaliacao.possui_item_insuficiente_grupo:
         avaliacao.status_liberacao_nota = "Nota Retida (Pendências)"
@@ -2842,6 +2847,22 @@ def sincronizar_e_obter_todas_bancas(
                 if pasta_grupo:
                     av.nome_pasta_entregue = pasta_grupo.name
                     av.caminho_pasta = str(pasta_grupo)
+                    pasta_rev = pasta_grupo / "revisados"
+                    if pasta_rev.exists() and pasta_rev.is_dir():
+                        nomes_rev = sorted(
+                            [
+                                f.name
+                                for f in pasta_rev.iterdir()
+                                if f.is_file()
+                                and not f.name.startswith(".")
+                                and f.name.lower() != "thumbs.db"
+                            ],
+                            key=str.lower,
+                        )
+                        av.revisao_pos_banca.arquivos_qtd = len(nomes_rev)
+                        av.revisao_pos_banca.arquivos_nomes = nomes_rev
+                        if nomes_rev and av.revisao_pos_banca.status == "sem_revisao":
+                            av.revisao_pos_banca.status = "aguardando_validacao"
                 resultados.append(recalcular_totais_avaliacao(av))
             except Exception:
                 av = auditar_grupo_individual(meta, pasta_grupo, ordem_apresentacao=ordem_ap, log_cb=log_cb)
@@ -2915,6 +2936,162 @@ def sincronizar_status_entrega_grupo(grupo_id: str) -> AvaliacaoGrupoModel:
         av.status_avaliacao = "entregue_nao_auditado"
 
     av = recalcular_totais_avaliacao(av)
+    salvas[grupo_id] = av.model_dump()
+    salvar_avaliacoes_salvas(salvas)
+    return av
+
+
+def resolver_ou_criar_pasta_revisados(
+    grupo_id: str,
+    criar_se_ausente: bool = False,
+) -> tuple[Path | None, Path | None, dict[str, Any] | None, int]:
+    """
+    Resolve a subpasta isolada './tcc/{turma}/{pasta_grupo}/revisados/' para arquivos corrigidos pós-banca.
+    Nunca interfere nos arquivos originais da pasta raiz do grupo.
+    """
+    pasta_grupo, meta, ordem = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=criar_se_ausente)
+    if not pasta_grupo or not meta:
+        return None, pasta_grupo, meta, ordem
+
+    pasta_rev = pasta_grupo / "revisados"
+    if criar_se_ausente:
+        pasta_rev.mkdir(parents=True, exist_ok=True)
+    return pasta_rev, pasta_grupo, meta, ordem
+
+
+def _listar_arquivos_reais_dir(pasta: Path | None) -> list[str]:
+    """Lista nomes de arquivos visíveis diretamente dentro de um diretório."""
+    if not pasta or not pasta.exists() or not pasta.is_dir():
+        return []
+    return sorted(
+        [
+            f.name
+            for f in pasta.iterdir()
+            if f.is_file() and not f.name.startswith(".") and f.name.lower() != "thumbs.db"
+        ],
+        key=str.lower,
+    )
+
+
+def sincronizar_revisao_pos_banca_grupo(
+    grupo_id: str,
+    redefinir_para_aguardando: bool = False,
+) -> AvaliacaoGrupoModel:
+    """
+    Sincroniza a contagem e o status de validação da subpasta revisados/ sem alterar
+    os arquivos originais nem as notas numéricas da banca.
+    """
+    pasta_rev, pasta_grupo, meta, ordem = resolver_ou_criar_pasta_revisados(
+        grupo_id, criar_se_ausente=False
+    )
+    if not meta:
+        raise ValueError(f"Grupo '{grupo_id}' não encontrado no cronograma oficial.")
+
+    nomes_rev = _listar_arquivos_reais_dir(pasta_rev)
+    if not nomes_rev and pasta_rev and pasta_rev.exists():
+        try:
+            for arq_oculto in pasta_rev.iterdir():
+                if arq_oculto.is_file() and (
+                    arq_oculto.name.startswith(".") or arq_oculto.name.lower() == "thumbs.db"
+                ):
+                    arq_oculto.unlink(missing_ok=True)
+            if not any(pasta_rev.iterdir()):
+                pasta_rev.rmdir()
+        except OSError:
+            pass
+
+    salvas = ler_avaliacoes_salvas()
+    registro = salvas.get(grupo_id)
+    av: AvaliacaoGrupoModel | None = None
+    if registro:
+        try:
+            av = AvaliacaoGrupoModel(**registro)
+        except Exception:
+            av = None
+
+    if av is None:
+        pasta_orig_ativa = pasta_grupo if pasta_grupo and _pasta_possui_arquivos_reais(pasta_grupo) else None
+        av = auditar_grupo_individual(meta, pasta_orig_ativa, ordem_apresentacao=ordem)
+
+    agora = datetime.now().isoformat(timespec="seconds")
+    if not nomes_rev:
+        av.revisao_pos_banca = RevisaoPosBancaModel(
+            status="sem_revisao",
+            arquivos_qtd=0,
+            arquivos_nomes=[],
+            aceito=False,
+            atualizado_em=agora,
+        )
+    else:
+        av.revisao_pos_banca.arquivos_qtd = len(nomes_rev)
+        av.revisao_pos_banca.arquivos_nomes = nomes_rev
+        av.revisao_pos_banca.atualizado_em = agora
+        if redefinir_para_aguardando or av.revisao_pos_banca.status == "sem_revisao":
+            av.revisao_pos_banca.status = "aguardando_validacao"
+            av.revisao_pos_banca.aceito = False
+
+    salvas[grupo_id] = av.model_dump()
+    salvar_avaliacoes_salvas(salvas)
+    return av
+
+
+def avaliar_revisao_pos_banca_backend(
+    grupo_id: str,
+    aceito: bool,
+    observacao_professor: str,
+    avaliador: str,
+    novo_status_liberacao: str | None = None,
+) -> AvaliacaoGrupoModel:
+    """
+    Registra a decisão do Professor Titular sobre os arquivos recebidos em revisados/.
+    Quando aceito=True, libera a alteração do status do trabalho entre os 3 possíveis.
+    """
+    pasta_rev, pasta_grupo, meta, ordem = resolver_ou_criar_pasta_revisados(
+        grupo_id, criar_se_ausente=False
+    )
+    if not meta:
+        raise ValueError(f"Grupo '{grupo_id}' não encontrado no cronograma oficial.")
+
+    nomes_rev = _listar_arquivos_reais_dir(pasta_rev)
+    if not nomes_rev:
+        raise ValueError(
+            "Nenhum arquivo revisado encontrado na pasta 'revisados/' para registrar aceite."
+        )
+
+    salvas = ler_avaliacoes_salvas()
+    registro = salvas.get(grupo_id)
+    av: AvaliacaoGrupoModel | None = None
+    if registro:
+        try:
+            av = AvaliacaoGrupoModel(**registro)
+        except Exception:
+            av = None
+
+    if av is None:
+        pasta_orig_ativa = pasta_grupo if pasta_grupo and _pasta_possui_arquivos_reais(pasta_grupo) else None
+        av = auditar_grupo_individual(meta, pasta_orig_ativa, ordem_apresentacao=ordem)
+
+    agora = datetime.now().isoformat(timespec="seconds")
+    av.revisao_pos_banca.arquivos_qtd = len(nomes_rev)
+    av.revisao_pos_banca.arquivos_nomes = nomes_rev
+    av.revisao_pos_banca.aceito = aceito
+    av.revisao_pos_banca.status = "aceito" if aceito else "ajustes_pendentes"
+    av.revisao_pos_banca.observacao_professor = observacao_professor.strip()
+    av.revisao_pos_banca.avaliado_por = avaliador.strip() or av.avaliador
+    av.revisao_pos_banca.avaliado_em = agora
+    av.revisao_pos_banca.atualizado_em = agora
+
+    status_validos = ("Aprovado", "Nota Retida (Pendências)", "Nova Chance (Data Futura)")
+    if aceito and novo_status_liberacao in status_validos:
+        av.revisao_pos_banca.status_trabalho_aplicado = novo_status_liberacao  # type: ignore[assignment]
+        av.status_liberacao_manual = novo_status_liberacao
+        av.status_liberacao_nota = novo_status_liberacao
+        for ind in av.integrantes_notas:
+            ind.resultado = novo_status_liberacao  # type: ignore[assignment]
+        av.atualizado_em = agora
+    elif not aceito:
+        av.revisao_pos_banca.status_trabalho_aplicado = None
+
     salvas[grupo_id] = av.model_dump()
     salvar_avaliacoes_salvas(salvas)
     return av

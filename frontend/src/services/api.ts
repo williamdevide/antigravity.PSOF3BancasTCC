@@ -5,9 +5,11 @@ import type {
   ConfigEnv,
   ExecucaoHistorico,
   ListaArquivosEntregaResponse,
+  ListaArquivosRevisadosResponse,
   NotaIndividualIntegrante,
   RegrasOficiaisResponse,
   ResultadoFinalTipo,
+  RevisaoPosBanca,
   RubricaItemAvaliacao,
 } from '../types';
 
@@ -197,4 +199,70 @@ export const api = {
       `/api/bancas/${encodeURIComponent(grupoId)}/reabrir`,
       { method: 'POST' },
     ),
+
+  listarArquivosRevisadosGrupo: (grupoId: string) =>
+    request<ListaArquivosRevisadosResponse>(
+      `/api/bancas/${encodeURIComponent(grupoId)}/revisados`,
+    ),
+
+  uploadArquivosRevisadosGrupo: async (grupoId: string, arquivos: File[]) => {
+    const formData = new FormData();
+    arquivos.forEach((arq) => {
+      formData.append('arquivos', arq);
+    });
+    const resp = await fetch(
+      `${API_BASE}/api/bancas/${encodeURIComponent(grupoId)}/revisados`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+    );
+    if (!resp.ok) {
+      const erro = await resp.json().catch(() => ({ detail: resp.statusText }));
+      throw new Error(erro.detail || 'Erro ao enviar arquivos revisados');
+    }
+    return resp.json() as Promise<{
+      ok: boolean;
+      mensagem: string;
+      enviados: string[];
+      substituidos: string[];
+      arquivos: ListaArquivosRevisadosResponse['arquivos'];
+      revisao_pos_banca: RevisaoPosBanca;
+      banca: AvaliacaoGrupo;
+    }>;
+  },
+
+  getDownloadArquivoRevisadoUrl: (grupoId: string, nomeArquivo: string) =>
+    `${API_BASE}/api/bancas/${encodeURIComponent(grupoId)}/revisados/${encodeURIComponent(nomeArquivo)}`,
+
+  excluirArquivoRevisadoGrupo: (grupoId: string, nomeArquivo: string) =>
+    request<{
+      ok: boolean;
+      mensagem: string;
+      arquivos: ListaArquivosRevisadosResponse['arquivos'];
+      revisao_pos_banca: RevisaoPosBanca;
+      banca: AvaliacaoGrupo;
+    }>(
+      `/api/bancas/${encodeURIComponent(grupoId)}/revisados/${encodeURIComponent(nomeArquivo)}`,
+      { method: 'DELETE' },
+    ),
+
+  avaliarRevisaoPosBanca: (
+    grupoId: string,
+    payload: {
+      aceito: boolean;
+      observacao_professor: string;
+      avaliador: string;
+      novo_status_liberacao?: ResultadoFinalTipo | null;
+    },
+  ) =>
+    request<{
+      ok: boolean;
+      mensagem: string;
+      revisao_pos_banca: RevisaoPosBanca;
+      banca: AvaliacaoGrupo;
+    }>(`/api/bancas/${encodeURIComponent(grupoId)}/revisados/avaliar`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 };
