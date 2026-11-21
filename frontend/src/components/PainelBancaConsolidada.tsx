@@ -22,6 +22,7 @@ import {
   Save,
 } from 'lucide-react';
 import { CronometroBanca } from './CronometroBanca';
+import { obterP3TotalAvaliador } from '../services/bancaMultiAvaliador';
 
 interface PainelBancaConsolidadaProps {
   banca: BancaConsolidada | null;
@@ -417,10 +418,10 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
           {/* P1 */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-2xs">
             <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-slate-500">Pilar 1 • Doc (30 pts)</span>
-            <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-600">
-              <span>P1: {av1 ? av1.p1_total.toFixed(1) : '—'}</span>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5 text-[11px] text-slate-600">
+              <span>{av1 ? `${av1.professor_nome.split(' ')[0]}: ${av1.p1_total.toFixed(2)}` : 'P1: —'}</span>
               <span>•</span>
-              <span>P2: {av2 ? av2.p1_total.toFixed(1) : '—'}</span>
+              <span>{av2 ? `${av2.professor_nome.split(' ')[0]}: ${av2.p1_total.toFixed(2)}` : 'P2: —'}</span>
             </div>
             <p className="mt-1 text-base font-black text-slate-900">
               Média: {banca.media_p1.toFixed(2)}
@@ -430,23 +431,23 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
           {/* P2 */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-2xs">
             <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-slate-500">Pilar 2 • Sist (40 pts)</span>
-            <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-600">
-              <span>P1: {av1 ? av1.p2_total.toFixed(1) : '—'}</span>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5 text-[11px] text-slate-600">
+              <span>{av1 ? `${av1.professor_nome.split(' ')[0]}: ${av1.p2_total.toFixed(2)}` : 'P1: —'}</span>
               <span>•</span>
-              <span>P2: {av2 ? av2.p2_total.toFixed(1) : '—'}</span>
+              <span>{av2 ? `${av2.professor_nome.split(' ')[0]}: ${av2.p2_total.toFixed(2)}` : 'P2: —'}</span>
             </div>
             <p className="mt-1 text-base font-black text-slate-900">
               Média: {banca.media_p2.toFixed(2)}
             </p>
           </div>
 
-          {/* P3 */}
+          {/* P3 (completo: 3.1 arguição + 3.2 pitch + 3.3 slides) */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-2xs">
             <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-slate-500">Pilar 3 • Banca (15 pts)</span>
-            <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-600">
-              <span>P1: {av1 ? av1.p3_grupo_base.toFixed(1) : '—'}</span>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5 text-[11px] text-slate-600">
+              <span>{av1 ? `${av1.professor_nome.split(' ')[0]}: ${obterP3TotalAvaliador(av1).toFixed(2)}` : 'P1: —'}</span>
               <span>•</span>
-              <span>P2: {av2 ? av2.p3_grupo_base.toFixed(1) : '—'}</span>
+              <span>{av2 ? `${av2.professor_nome.split(' ')[0]}: ${obterP3TotalAvaliador(av2).toFixed(2)}` : 'P2: —'}</span>
             </div>
             <p className="mt-1 text-base font-black text-slate-900">
               Média: {banca.media_p3.toFixed(2)}
@@ -456,8 +457,8 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
           {/* P4 */}
           <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-2xs">
             <span className="block whitespace-nowrap text-[10px] font-bold uppercase text-slate-500">Pilar 4 • Sprints (15 pts)</span>
-            <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-slate-600">
-              <span>Oficial: {banca.media_p4.toFixed(1)}</span>
+            <div className="mt-1 flex items-center justify-center gap-1.5 text-[11px] text-slate-600">
+              <span>Oficial: {banca.media_p4.toFixed(2)}</span>
             </div>
             <p className="mt-1 text-base font-black text-indigo-700">
               Média: {banca.media_p4.toFixed(2)}
@@ -467,10 +468,10 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
           {/* Média Final */}
           <div className="rounded-xl border border-red-200 bg-red-50/70 p-3 text-center shadow-2xs">
             <span className="text-[10px] font-bold uppercase text-red-700">Nota Final da Banca</span>
-            <div className="mt-1 flex items-center justify-center gap-1.5 text-xs text-red-800">
-              <span>P1: {av1 ? av1.nota_final_grupo.toFixed(1) : '—'}</span>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-1.5 text-[11px] text-red-800">
+              <span>{av1 ? `${av1.professor_nome.split(' ')[0]}: ${av1.nota_final_grupo.toFixed(2)}` : 'P1: —'}</span>
               <span>•</span>
-              <span>P2: {av2 ? av2.nota_final_grupo.toFixed(1) : '—'}</span>
+              <span>{av2 ? `${av2.professor_nome.split(' ')[0]}: ${av2.nota_final_grupo.toFixed(2)}` : 'P2: —'}</span>
             </div>
             <p className="mt-1 text-lg font-black text-red-600">
               {banca.media_final.toFixed(2)} pts
@@ -511,28 +512,30 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
       {/* ========================================================================= */}
       {/* STATUS CONSOLIDADO DA LIBERAÇÃO DA NOTA DA BANCA + ALUNOS NA FRENTE      */}
       {/* ========================================================================= */}
-      {banca && (
+      {banca && (() => {
+        const statusEfetivo = sessaoAoVivo?.status_liberacao_final ?? banca.status_liberacao_final;
+        return (
         <div className="rounded-xl border border-slate-200 bg-linear-to-r from-slate-50 to-white p-3.5 shadow-2xs">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
               <div
                 className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black uppercase tracking-wider shadow-sm ${
-                  banca.status_liberacao_final === 'Aprovado'
+                  statusEfetivo === 'Aprovado'
                     ? 'bg-emerald-600 text-white'
-                    : banca.status_liberacao_final === 'Nota Retida (Pendências)'
+                    : statusEfetivo === 'Nota Retida (Pendências)'
                     ? 'bg-amber-500 text-slate-950'
                     : 'bg-red-600 text-white'
                 }`}
               >
-                {banca.status_liberacao_final === 'Aprovado' ? (
+                {statusEfetivo === 'Aprovado' ? (
                   <CheckCircle2 className="h-4 w-4 shrink-0" />
                 ) : (
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                 )}
                 <span>
-                  {banca.status_liberacao_final === 'Aprovado'
+                  {statusEfetivo === 'Aprovado'
                     ? '✅ NOTA LIBERADA'
-                    : banca.status_liberacao_final === 'Nota Retida (Pendências)'
+                    : statusEfetivo === 'Nota Retida (Pendências)'
                     ? '⚠️ NOTA RETIDA'
                     : '❌ NECESSÁRIO NOVA APRESENTAÇÃO'}
                 </span>
@@ -582,7 +585,8 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* GESTÃO SIMPLIFICADA DE PENDÊNCIAS & CUMPRIMENTO (PORTAL DOS ALUNOS)       */}

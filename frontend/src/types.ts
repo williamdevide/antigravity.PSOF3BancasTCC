@@ -285,6 +285,7 @@ export interface AvaliacaoGrupo {
   nome_pasta_entregue: string;
   caminho_pasta: string;
   status_avaliacao: 'pendente_entrega' | 'entregue_nao_auditado' | 'auditado_ia' | 'avaliado_banca';
+  banca_realizada?: boolean;
   auditado_em: string | null;
   atualizado_em: string | null;
   avaliador: string;
@@ -384,6 +385,7 @@ export interface AvaliacaoProfessorIndividual {
   p1_total: number;
   p2_total: number;
   p3_grupo_base: number;
+  p3_total?: number;
   nota_final_grupo: number;
   parecer_tecnico: string;
   concluido?: boolean;

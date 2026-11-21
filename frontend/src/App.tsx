@@ -59,10 +59,19 @@ import { auth, onAuthStateChanged, signOut, type User } from './services/firebas
 import {
   salvarAvaliacaoNoFirestore,
   escutarAvaliacoesGrupoFirestore,
+  escutarTodasAvaliacoesProfessoresFirestore,
   calcularMediaBanca,
+  recalcularConsolidadaExistente,
+  consolidadaDivergeDeSessao,
+  obterP3TotalAvaliador,
+  calcularNivelMsep,
+  normalizarRubricasComNivel,
+  mesclarRubricasSoberanasComBase,
+  mesclarIntegrantesSoberanosComBase,
+  aplicarAjusteConsensoBancaNoFirestore,
+  sincronizarSnapshotSessaoFirestore,
   iniciarSessaoBanca,
   escutarSessaoBanca,
-  escutarTodasSessoesAtivas,
   escutarTodasSessoesBanca,
   encerrarMinhaAvaliacao,
   encerrarEConsolidarBanca,
@@ -76,6 +85,7 @@ import {
   carregarDraftLocalStorage,
   limparDraftLocalStorage,
   limparTodosDraftsGrupoLocalStorage,
+  type DiffConsensoBanca,
 } from './services/bancaMultiAvaliador';
 import type {
   AgentStatus,
@@ -110,86 +120,8 @@ const CONFIG_INICIAL: ConfigEnv = {
   auditar_online_github_deploy: true,
 };
 
-function calcularNivel(nota: number, pesoMax: number): NivelMSEP {
-  if (pesoMax <= 0) return 'Pleno';
-  const pct = (nota / pesoMax) * 100;
-  if (pct < 50) return 'Insuficiente';
-  if (pct < 90) return 'Pleno';
-  return 'Avançado';
-}
-
-function normalizarRubricasComNivel(rubricas: RubricaItemAvaliacao[]): RubricaItemAvaliacao[] {
-  return rubricas.map((r) => {
-    const nivel =
-      r.nivel === 'Pendente'
-        ? 'Pendente'
-        : r.nivel === 'Avançado' || r.nivel === 'Pleno' || r.nivel === 'Insuficiente'
-        ? r.nivel
-        : calcularNivel(Number(r.nota || 0), r.peso_max);
-    const nivelSugerido =
-      r.nivel_sugerido_ia === 'Pendente'
-        ? 'Pendente'
-        : r.nivel_sugerido_ia === 'Avançado' ||
-          r.nivel_sugerido_ia === 'Pleno' ||
-          r.nivel_sugerido_ia === 'Insuficiente'
-        ? r.nivel_sugerido_ia
-        : calcularNivel(Number(r.nota_sugerida_ia ?? r.nota ?? 0), r.peso_max);
-    return {
-      ...r,
-      nivel,
-      nivel_sugerido_ia: nivelSugerido,
-    };
-  });
-}
-
-function mesclarRubricasSoberanasComBase(
-  soberanas: RubricaItemAvaliacao[],
-  base: RubricaItemAvaliacao[],
-): RubricaItemAvaliacao[] {
-  if (!base || base.length === 0) {
-    return normalizarRubricasComNivel(soberanas.map((r) => ({ ...r })));
-  }
-  const mapaSoberanas = new Map(soberanas.map((r) => [r.codigo, r]));
-  const mescladas = base.map((b) => {
-    const s = mapaSoberanas.get(b.codigo);
-    if (!s) return { ...b };
-    return {
-      ...b,
-      ...s,
-      nota: Number(s.nota ?? b.nota ?? 0),
-      nota_sugerida_ia: b.nota_sugerida_ia ?? s.nota_sugerida_ia,
-      nivel_sugerido_ia: b.nivel_sugerido_ia ?? s.nivel_sugerido_ia,
-      evidencias: s.evidencias && s.evidencias.length > 0 ? s.evidencias : b.evidencias,
-      justificativa_ia: s.justificativa_ia || b.justificativa_ia,
-    };
-  });
-  return normalizarRubricasComNivel(mescladas);
-}
-
-function mesclarIntegrantesSoberanosComBase(
-  soberanos: NotaIndividualIntegrante[],
-  base: NotaIndividualIntegrante[],
-): NotaIndividualIntegrante[] {
-  if (!base || base.length === 0) {
-    return soberanos.map((i) => ({ ...i }));
-  }
-  const mapaSoberanos = new Map(soberanos.map((i) => [i.nome, i]));
-  return base.map((b) => {
-    const s = mapaSoberanos.get(b.nome);
-    if (!s) return { ...b };
-    return {
-      ...b,
-      ...s,
-      nome_completo_planilha: s.nome_completo_planilha || b.nome_completo_planilha,
-      matricula: s.matricula || b.matricula,
-      nota_3_1_sugerida: b.nota_3_1_sugerida ?? s.nota_3_1_sugerida ?? 0,
-      nivel_3_1_sugerido: b.nivel_3_1_sugerido ?? s.nivel_3_1_sugerido ?? 'Pendente',
-      nota_4_1_sugerida: b.nota_4_1_sugerida ?? s.nota_4_1_sugerida,
-      nivel_4_1_sugerido: b.nivel_4_1_sugerido ?? s.nivel_4_1_sugerido,
-      nota_4_2_sugerida: b.nota_4_2_sugerida ?? s.nota_4_2_sugerida,
-      nivel_4_2_sugerido: b.nivel_4_2_sugerido ?? s.nivel_4_2_sugerido,
-    };
-  });
+function isStatusNotaRetida(status?: string | null): boolean {
+  return status === 'Nota Retida (Pendências)' || status === 'Nota Retida';
 }
 
 function badgeNivelMsep(nivel: NivelMSEP, prefixo?: string) {
@@ -282,11 +214,20 @@ export function App() {
   const [avaliacoesFirestoreGrupo, setAvaliacoesFirestoreGrupo] = useState<
     AvaliacaoProfessorIndividual[]
   >([]);
+  const [mapaAvaliacoesProfessores, setMapaAvaliacoesProfessores] = useState<
+    Record<string, AvaliacaoProfessorIndividual[]>
+  >({});
   const [sessaoAoVivo, setSessaoAoVivo] = useState<SessaoBancaAoVivo | null>(null);
   const [sessoesAtivas, setSessoesAtivas] = useState<SessaoBancaAoVivo[]>([]);
   const [mapaSessoesBanca, setMapaSessoesBanca] = useState<Record<string, SessaoBancaAoVivo>>({});
   const ultimoGrupoSyncIdRef = useRef<string | null>(null);
   const chaveEdicaoAtivaRef = useRef<string>('');
+  const rubricasEditadasSessaoRef = useRef<Set<string>>(new Set());
+  const integrantesEditadosSessaoRef = useRef<Map<string, Set<'3.1' | '4.1' | '4.2'>>>(
+    new Map(),
+  );
+  const statusAlteradoSessaoRef = useRef<boolean>(false);
+  const assinaturasAutoSyncRef = useRef<Set<string>>(new Set());
   const prevStatusEstadoRef = useRef<AgentStatus['estado']>('idle');
 
   // Estados editáveis da Ficha MSEP do grupo selecionado
@@ -307,8 +248,9 @@ export function App() {
   const [blocoTabelasAberto, setBlocoTabelasAberto] = useState<boolean>(false);
   const [blocoPilar4Aberto, setBlocoPilar4Aberto] = useState<boolean>(false);
 
-  // Estado para reabertura de edição de banca concluída / encerrada
+  // Estado para reabertura de edição de banca concluída / encerrada e escopo (individual ou consenso)
   const [modoEdicaoReaberto, setModoEdicaoReaberto] = useState<boolean>(false);
+  const [escopoEdicaoConcluida, setEscopoEdicaoConcluida] = useState<'minha' | 'consenso'>('minha');
 
   const [regrasOficiais, setRegrasOficiais] = useState<RegrasOficiaisResponse | null>(null);
   const [env, setEnv] = useState<ConfigEnv>(CONFIG_INICIAL);
@@ -439,32 +381,84 @@ export function App() {
 
   const grupoAtual = bancas.find((b) => b.id === grupoSelecionadoId) || bancas[0] || null;
 
-  const bancaConsolidada: BancaConsolidada | null = useMemo(() => {
-    if (rotaAtual !== 'professor' || !grupoAtual) return null;
-    return calcularMediaBanca(avaliacoesFirestoreGrupo, grupoAtual);
-  }, [rotaAtual, grupoAtual, avaliacoesFirestoreGrupo]);
+  // Resolve a consolidação oficial sempre recalculada a partir de psof3_avaliacoes_professores (fonte soberana)
+  const obterConsolidadaParaGrupo = (b: AvaliacaoGrupo): BancaConsolidada | null => {
+    const sessaoB =
+      mapaSessoesBanca[b.id] ||
+      (sessaoAoVivo && sessaoAoVivo.grupo_id === b.id ? sessaoAoVivo : null);
+    const doMapa = mapaAvaliacoesProfessores[b.id];
+    const avsB =
+      doMapa && doMapa.length > 0
+        ? doMapa
+        : avaliacoesFirestoreGrupo.filter((a) => a.grupo_id === b.id);
+    const statusPreservado =
+      sessaoB?.status === 'concluida' ? sessaoB.status_liberacao_final ?? null : undefined;
 
-  // Dados consolidados e sessão ao vivo pós-banca para o grupo selecionado
-  const sessaoAtual = (grupoAtual ? mapaSessoesBanca[grupoAtual.id] : null) || sessaoAoVivo;
+    if (avsB.length > 0) {
+      return calcularMediaBanca(avsB, b, statusPreservado);
+    }
+    if (sessaoB?.banca_consolidada) {
+      return recalcularConsolidadaExistente(
+        sessaoB.banca_consolidada,
+        b,
+        statusPreservado,
+      );
+    }
+    return null;
+  };
+
+  // Dados consolidados e sessão ao vivo com isolamento estrito por grupoAtual.id
+  const sessaoAtual =
+    (grupoAtual ? mapaSessoesBanca[grupoAtual.id] : null) ||
+    (sessaoAoVivo && grupoAtual && sessaoAoVivo.grupo_id === grupoAtual.id ? sessaoAoVivo : null);
   const statusSessaoBancaAtual = sessaoAtual?.status || 'aguardando_inicio';
-  const consolidadaAtual = sessaoAtual?.banca_consolidada || bancaConsolidada;
+
+  const avaliacoesDoGrupoAtual = useMemo(() => {
+    if (!grupoAtual?.id) return [];
+    const doMapa = mapaAvaliacoesProfessores[grupoAtual.id];
+    if (doMapa && doMapa.length > 0) return doMapa;
+    return avaliacoesFirestoreGrupo.filter((a) => a.grupo_id === grupoAtual.id);
+  }, [grupoAtual?.id, mapaAvaliacoesProfessores, avaliacoesFirestoreGrupo]);
+
+  const consolidadaSoberanaAtual: BancaConsolidada | null = useMemo(() => {
+    if (rotaAtual !== 'professor' || !grupoAtual) return null;
+    return obterConsolidadaParaGrupo(grupoAtual);
+  }, [
+    rotaAtual,
+    grupoAtual,
+    mapaSessoesBanca,
+    sessaoAoVivo,
+    mapaAvaliacoesProfessores,
+    avaliacoesFirestoreGrupo,
+  ]);
+
+  const consolidadaAtual: BancaConsolidada | null = useMemo(() => {
+    if (rotaAtual !== 'professor' || !grupoAtual) return null;
+    return consolidadaSoberanaAtual || calcularMediaBanca([], grupoAtual);
+  }, [rotaAtual, grupoAtual, consolidadaSoberanaAtual]);
+
+  const bancaConsolidada = consolidadaAtual;
+
   const minhaAvaliacaoNaSessao = usuarioAuth?.uid && consolidadaAtual
     ? consolidadaAtual.avaliacoes_individuais[usuarioAuth.uid]
     : null;
   const euJaEncerreiMinhaAvaliacao = Boolean(minhaAvaliacaoNaSessao?.concluido);
 
   const minhaAvaliacaoSalvaFirestore: AvaliacaoProfessorIndividual | null = useMemo(() => {
-    if (!usuarioAuth?.uid) return null;
+    if (!usuarioAuth?.uid || !grupoAtual) return null;
     return (
-      avaliacoesFirestoreGrupo.find((a) => a.professor_uid === usuarioAuth.uid) ||
+      avaliacoesDoGrupoAtual.find((a) => a.professor_uid === usuarioAuth.uid) ||
+      consolidadaSoberanaAtual?.avaliacoes_individuais?.[usuarioAuth.uid] ||
       sessaoAtual?.banca_consolidada?.avaliacoes_individuais?.[usuarioAuth.uid] ||
       null
     );
-  }, [usuarioAuth?.uid, avaliacoesFirestoreGrupo, sessaoAtual?.banca_consolidada]);
-
-  const consolidadaSoberanaAtual: BancaConsolidada | null =
-    sessaoAtual?.banca_consolidada ||
-    (avaliacoesFirestoreGrupo.length > 0 ? bancaConsolidada : null);
+  }, [
+    usuarioAuth?.uid,
+    grupoAtual?.id,
+    avaliacoesDoGrupoAtual,
+    consolidadaSoberanaAtual,
+    sessaoAtual?.banca_consolidada,
+  ]);
 
   // Regra de bloqueio de edição na Ficha MSEP:
   // NENHUM valor é alterado simplesmente por acessar a guia.
@@ -491,8 +485,8 @@ export function App() {
 
   // Escutar a sessão ao vivo da banca do grupo selecionado no Firestore
   useEffect(() => {
+    setSessaoAoVivo(null);
     if (rotaAtual !== 'professor' || !grupoAtual?.id) {
-      setSessaoAoVivo(null);
       return;
     }
     const unsub = escutarSessaoBanca(grupoAtual.id, (sessao) => {
@@ -500,6 +494,71 @@ export function App() {
     });
     return () => unsub();
   }, [rotaAtual, grupoAtual?.id]);
+
+  // Escutar TODAS as avaliações individuais em psof3_avaliacoes_professores em tempo real (fonte soberana)
+  useEffect(() => {
+    if (rotaAtual !== 'professor' || !usuarioAuth) {
+      setMapaAvaliacoesProfessores({});
+      return;
+    }
+    const unsub = escutarTodasAvaliacoesProfessoresFirestore((mapa) => {
+      setMapaAvaliacoesProfessores(mapa);
+    });
+    return () => unsub();
+  }, [rotaAtual, usuarioAuth?.uid]);
+
+  // Auto-sincronizar snapshots de bancas concluídas e backend quando divergirem das rubricas recalculadas
+  useEffect(() => {
+    if (
+      rotaAtual !== 'professor' ||
+      !usuarioAuth ||
+      modoEdicaoReaberto ||
+      salvandoFicha ||
+      bancas.length === 0
+    ) {
+      return;
+    }
+
+    bancas.forEach((b) => {
+      const sessaoB = mapaSessoesBanca[b.id];
+      if (!sessaoB || sessaoB.status !== 'concluida') return;
+
+      const cons = obterConsolidadaParaGrupo(b);
+      if (!cons || cons.rubricas_medias.length === 0) return;
+
+      const precisaSyncFirestore = consolidadaDivergeDeSessao(cons, sessaoB);
+      const precisaSyncBackend =
+        !b.banca_realizada ||
+        Math.abs(b.media_nota_final_grupo - cons.media_final) > 0.01 ||
+        Math.abs(b.p1_total - cons.media_p1) > 0.01 ||
+        Math.abs(b.p2_total - cons.media_p2) > 0.01 ||
+        b.status_liberacao_nota !== cons.status_liberacao_final;
+
+      if (!precisaSyncFirestore && !precisaSyncBackend) return;
+
+      const assinatura = `${b.id}|${cons.media_final}|${cons.media_p1}|${cons.media_p2}|${cons.media_p3}|${cons.status_liberacao_final}|${cons.rubricas_medias
+        .map((r) => `${r.codigo}:${r.nota}`)
+        .join(',')}|fb:${precisaSyncFirestore}|bk:${precisaSyncBackend}`;
+
+      if (assinaturasAutoSyncRef.current.has(assinatura)) return;
+      assinaturasAutoSyncRef.current.add(assinatura);
+
+      if (precisaSyncFirestore) {
+        void sincronizarSnapshotSessaoFirestore(b.id, cons, sessaoB);
+      }
+      if (precisaSyncBackend) {
+        void sincronizarConsolidadaNoBackend(b, sessaoB, cons);
+      }
+    });
+  }, [
+    rotaAtual,
+    usuarioAuth?.uid,
+    modoEdicaoReaberto,
+    salvandoFicha,
+    bancas,
+    mapaSessoesBanca,
+    mapaAvaliacoesProfessores,
+  ]);
 
   // Persistir a análise prévia automática no Firebase Firestore apenas quando professor autenticado na área docente
   useEffect(() => {
@@ -515,7 +574,11 @@ export function App() {
     if (grupoAtual.id !== ultimoGrupoSyncIdRef.current) {
       ultimoGrupoSyncIdRef.current = grupoAtual.id;
       chaveEdicaoAtivaRef.current = '';
+      rubricasEditadasSessaoRef.current.clear();
+      integrantesEditadosSessaoRef.current.clear();
+      statusAlteradoSessaoRef.current = false;
       setModoEdicaoReaberto(false);
+      setEscopoEdicaoConcluida('minha');
     }
 
     const modoFichaAtual =
@@ -527,7 +590,7 @@ export function App() {
         ? 'andamento_editando'
         : 'aguardando';
 
-    // 1. Banca concluída (modo leitura): carrega SEMPRE a Média Consolidada Oficial (Firestore soberano sobre IA e localStorage)
+    // 1. Banca concluída (modo leitura): carrega SEMPRE a Média Consolidada Recalculada (psof3_avaliacoes_professores soberano sobre IA e localStorage)
     if (modoFichaAtual === 'concluida_leitura') {
       chaveEdicaoAtivaRef.current = '';
       if (consolidadaSoberanaAtual && consolidadaSoberanaAtual.rubricas_medias?.length > 0) {
@@ -594,24 +657,34 @@ export function App() {
       }
     }
 
-    // 2. Banca concluída em edição ("Editar Minha Avaliação / Editar Banca"): carrega as notas individuais salvas do professor (fallback consolidada)
+    // 2. Banca concluída em edição ("Editar Banca"): carrega somente a avaliação individual OU a média de consenso conforme seletor
     if (modoFichaAtual === 'concluida_editando') {
-      const chaveEdicao = `${grupoAtual.id}|concluida_editando|${usuarioAuth?.uid || ''}|${
-        minhaAvaliacaoSalvaFirestore?.atualizado_em ||
-        consolidadaSoberanaAtual?.media_final ||
-        'none'
-      }`;
+      const chaveEdicao = `${grupoAtual.id}|concluida_editando|${escopoEdicaoConcluida}|${
+        usuarioAuth?.uid || ''
+      }|${
+        minhaAvaliacaoSalvaFirestore?.atualizado_em || 'none'
+      }|${consolidadaSoberanaAtual?.media_final || 'none'}`;
       if (chaveEdicaoAtivaRef.current === chaveEdicao) return;
       chaveEdicaoAtivaRef.current = chaveEdicao;
+      rubricasEditadasSessaoRef.current.clear();
+      integrantesEditadosSessaoRef.current.clear();
+      statusAlteradoSessaoRef.current = false;
 
-      const rubSoberanas =
-        minhaAvaliacaoSalvaFirestore?.rubricas?.length
-          ? minhaAvaliacaoSalvaFirestore.rubricas
-          : consolidadaSoberanaAtual?.rubricas_medias || [];
-      const intSoberanos =
-        minhaAvaliacaoSalvaFirestore?.integrantes_notas?.length
-          ? minhaAvaliacaoSalvaFirestore.integrantes_notas
-          : consolidadaSoberanaAtual?.integrantes_medias || [];
+      const carregarConsenso = escopoEdicaoConcluida === 'consenso';
+      const rubSoberanas = carregarConsenso
+        ? consolidadaSoberanaAtual?.rubricas_medias ||
+          minhaAvaliacaoSalvaFirestore?.rubricas ||
+          []
+        : minhaAvaliacaoSalvaFirestore?.rubricas?.length
+        ? minhaAvaliacaoSalvaFirestore.rubricas
+        : consolidadaSoberanaAtual?.rubricas_medias || [];
+      const intSoberanos = carregarConsenso
+        ? consolidadaSoberanaAtual?.integrantes_medias ||
+          minhaAvaliacaoSalvaFirestore?.integrantes_notas ||
+          []
+        : minhaAvaliacaoSalvaFirestore?.integrantes_notas?.length
+        ? minhaAvaliacaoSalvaFirestore.integrantes_notas
+        : consolidadaSoberanaAtual?.integrantes_medias || [];
 
       if (rubSoberanas.length > 0) {
         setRubricasEdit(mesclarRubricasSoberanasComBase(rubSoberanas, grupoAtual.rubricas));
@@ -620,10 +693,14 @@ export function App() {
         );
         setParecerEdit(minhaAvaliacaoSalvaFirestore?.parecer_tecnico || '');
         setStatusManualLiberacao(
-          minhaAvaliacaoSalvaFirestore?.status_liberacao_manual ??
-            consolidadaSoberanaAtual?.status_liberacao_manual ??
-            sessaoAtual?.status_liberacao_final ??
-            null,
+          carregarConsenso
+            ? sessaoAtual?.status_liberacao_final ??
+                consolidadaSoberanaAtual?.status_liberacao_manual ??
+                null
+            : minhaAvaliacaoSalvaFirestore?.status_liberacao_manual ??
+                consolidadaSoberanaAtual?.status_liberacao_manual ??
+                sessaoAtual?.status_liberacao_final ??
+                null,
         );
       } else {
         setRubricasEdit(normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r }))));
@@ -764,6 +841,7 @@ export function App() {
     usuarioAuth?.uid,
     statusSessaoBancaAtual,
     modoEdicaoReaberto,
+    escopoEdicaoConcluida,
     minhaAvaliacaoSalvaFirestore,
     consolidadaSoberanaAtual,
   ]);
@@ -800,10 +878,10 @@ export function App() {
     statusManualLiberacao,
   ]);
 
-  // Escutar avaliações dos 2 professores no Firestore em tempo real (sem closure obsoleta de grupoAtual)
+  // Escutar avaliações do grupo selecionado no Firestore em tempo real
   useEffect(() => {
+    setAvaliacoesFirestoreGrupo([]);
     if (rotaAtual !== 'professor' || !grupoAtual?.id) {
-      setAvaliacoesFirestoreGrupo([]);
       return;
     }
     const unsub = escutarAvaliacoesGrupoFirestore(grupoAtual.id, (avaliacoes) => {
@@ -862,15 +940,21 @@ export function App() {
     return { p3, p4, nf, insufInd, resultado };
   };
 
+  const selecionarStatusManualBanca = (novo: ResultadoFinalTipo | null) => {
+    statusAlteradoSessaoRef.current = true;
+    setStatusManualLiberacao(novo);
+  };
+
   const atualizarNotaRubrica = (codigo: string, novaNota: number, pesoMax: number) => {
     const limitada = Math.max(0, Math.min(pesoMax, Number(novaNota) || 0));
+    rubricasEditadasSessaoRef.current.add(codigo);
     setRubricasEdit((prev) =>
       prev.map((r) =>
         r.codigo === codigo
           ? {
               ...r,
               nota: limitada,
-              nivel: calcularNivel(limitada, pesoMax),
+              nivel: calcularNivelMsep(limitada, pesoMax),
               editado_manualmente: true,
             }
           : r,
@@ -884,6 +968,7 @@ export function App() {
   };
 
   const restaurarRubricaAutomatica = (codigo: string) => {
+    rubricasEditadasSessaoRef.current.add(codigo);
     setRubricasEdit((prev) =>
       prev.map((r) =>
         r.codigo === codigo
@@ -898,6 +983,17 @@ export function App() {
     );
   };
 
+  const registrarIntegranteEditadoSessao = (
+    nome: string,
+    campo: 'nota_3_1_arguicao' | 'nota_4_1_sprints' | 'nota_4_2_participacao',
+  ) => {
+    const chaveCampo =
+      campo === 'nota_3_1_arguicao' ? '3.1' : campo === 'nota_4_1_sprints' ? '4.1' : '4.2';
+    const atual = integrantesEditadosSessaoRef.current.get(nome) || new Set();
+    atual.add(chaveCampo);
+    integrantesEditadosSessaoRef.current.set(nome, atual);
+  };
+
   const atualizarNotaIntegrante = (
     idx: number,
     campo: 'nota_3_1_arguicao' | 'nota_4_1_sprints' | 'nota_4_2_participacao',
@@ -905,16 +1001,20 @@ export function App() {
     maxVal: number,
   ) => {
     const lim = Math.max(0, Math.min(maxVal, Number(valor) || 0));
+    const alvoNome = integrantesEdit[idx]?.nome;
+    if (alvoNome) {
+      registrarIntegranteEditadoSessao(alvoNome, campo);
+    }
     setIntegrantesEdit((prev) =>
       prev.map((ind, i) => {
         if (i !== idx) return ind;
         const novo = { ...ind, [campo]: lim };
         if (campo === 'nota_3_1_arguicao') {
-          novo.nivel_3_1 = calcularNivel(lim, 6.0);
+          novo.nivel_3_1 = calcularNivelMsep(lim, 6.0);
         } else if (campo === 'nota_4_1_sprints') {
-          novo.nivel_4_1 = calcularNivel(lim, 8.0);
+          novo.nivel_4_1 = calcularNivelMsep(lim, 8.0);
         } else if (campo === 'nota_4_2_participacao') {
-          novo.nivel_4_2 = calcularNivel(lim, 7.0);
+          novo.nivel_4_2 = calcularNivelMsep(lim, 7.0);
         }
         return novo;
       }),
@@ -935,6 +1035,10 @@ export function App() {
     idx: number,
     campo: 'nota_3_1_arguicao' | 'nota_4_1_sprints' | 'nota_4_2_participacao',
   ) => {
+    const alvoNome = integrantesEdit[idx]?.nome;
+    if (alvoNome) {
+      registrarIntegranteEditadoSessao(alvoNome, campo);
+    }
     setIntegrantesEdit((prev) =>
       prev.map((ind, i) => {
         if (i !== idx) return ind;
@@ -1091,6 +1195,13 @@ export function App() {
       const nomeProfessor =
         usuarioAuth.displayName || avaliadorEdit || usuarioAuth.email?.split('@')[0] || 'Professor Avaliador';
 
+      const mediaP3TotalCalculada = Number(
+        (
+          recalculados.reduce((acc, ind) => acc + ind.p3_nota, 0) /
+          Math.max(1, recalculados.length)
+        ).toFixed(2),
+      );
+
       const mediaFinalGrupoCalculada = Number(
         (
           recalculados.reduce((acc, ind) => acc + ind.nota_final, 0) /
@@ -1109,21 +1220,109 @@ export function App() {
         p1_total: p1TotalEdit,
         p2_total: p2TotalEdit,
         p3_grupo_base: p3BaseEdit,
+        p3_total: mediaP3TotalCalculada,
         nota_final_grupo: mediaFinalGrupoCalculada,
         parecer_tecnico: parecerEdit,
         status_liberacao_manual: statusManualLiberacao,
+        concluido:
+          minhaAvaliacaoSalvaFirestore?.concluido ??
+          (sessaoAtual?.status === 'concluida' ? true : undefined),
         atualizado_em: new Date().toISOString(),
       };
 
-      await salvarAvaliacaoNoFirestore(avaliacaoIndividual);
-
-      // Se a banca já estava concluída e foi editada, recalcula a consolidação oficial no Firestore e replica a consolidada soberana no backend
+      // Se a banca já estava concluída e foi editada, respeita o escopo ('minha' ou 'consenso' nos 2 avaliadores)
       let atualizado: AvaliacaoGrupo;
       if (sessaoAtual?.status === 'concluida') {
-        const resRecons = await recalcularEConsolidarBancaAposEdicao(grupoAtual.id, grupoAtual);
+        const avaliacoesFallbackSessao = Object.values(
+          sessaoAtual.banca_consolidada?.avaliacoes_individuais || {},
+        );
+        const statusSessaoPreservado = statusAlteradoSessaoRef.current
+          ? statusManualLiberacao
+          : sessaoAtual.status_liberacao_final ?? null;
+
+        let resRecons: { ok: boolean; mensagem: string; consolidada?: BancaConsolidada };
+        if (escopoEdicaoConcluida === 'consenso') {
+          const rubricasAlteradas = new Map<string, { nota: number; nivel: NivelMSEP }>();
+          rubricasEdit.forEach((r) => {
+            if (rubricasEditadasSessaoRef.current.has(r.codigo)) {
+              rubricasAlteradas.set(r.codigo, { nota: r.nota, nivel: r.nivel });
+            }
+          });
+
+          const integrantesAlterados: DiffConsensoBanca['integrantesAlterados'] = new Map();
+          recalculados.forEach((ind) => {
+            const campos = integrantesEditadosSessaoRef.current.get(ind.nome);
+            if (!campos || campos.size === 0) return;
+            const patch: Record<string, unknown> = {};
+            if (campos.has('3.1')) {
+              patch.nota_3_1_arguicao = ind.nota_3_1_arguicao;
+              patch.nivel_3_1 = ind.nivel_3_1;
+            }
+            if (campos.has('4.1')) {
+              patch.nota_4_1_sprints = ind.nota_4_1_sprints;
+              patch.nivel_4_1 = ind.nivel_4_1;
+            }
+            if (campos.has('4.2')) {
+              patch.nota_4_2_participacao = ind.nota_4_2_participacao;
+              patch.nivel_4_2 = ind.nivel_4_2;
+            }
+            integrantesAlterados.set(ind.nome, patch);
+          });
+
+          // Mantém a nota individual anterior do docente para rubricas não alteradas ao montar o payload quando vier de 'consenso'
+          const minhaBasePreservada: AvaliacaoProfessorIndividual = minhaAvaliacaoSalvaFirestore
+            ? {
+                ...avaliacaoIndividual,
+                rubricas: minhaAvaliacaoSalvaFirestore.rubricas.map((rm) => {
+                  if (rubricasAlteradas.has(rm.codigo)) {
+                    const novoR = rubricasEdit.find((re) => re.codigo === rm.codigo);
+                    return novoR || rm;
+                  }
+                  return rm;
+                }),
+                integrantes_notas: minhaAvaliacaoSalvaFirestore.integrantes_notas.map((im) => {
+                  const patch = integrantesAlterados.get(im.nome);
+                  return patch ? { ...im, ...patch } : im;
+                }),
+                status_liberacao_manual: statusAlteradoSessaoRef.current
+                  ? statusManualLiberacao
+                  : minhaAvaliacaoSalvaFirestore.status_liberacao_manual ?? null,
+              }
+            : avaliacaoIndividual;
+
+          resRecons = await aplicarAjusteConsensoBancaNoFirestore(
+            grupoAtual.id,
+            grupoAtual,
+            minhaBasePreservada,
+            {
+              rubricasAlteradas,
+              integrantesAlterados,
+              alterarStatusManual: statusAlteradoSessaoRef.current,
+              statusManualNovo: statusManualLiberacao,
+            },
+            { avaliacoesFallbackSessao, statusSessaoPreservado },
+          );
+        } else {
+          await salvarAvaliacaoNoFirestore(avaliacaoIndividual, grupoAtual);
+          resRecons = await recalcularEConsolidarBancaAposEdicao(
+            grupoAtual.id,
+            grupoAtual,
+            { statusSessaoPreservado, avaliacoesFallbackSessao },
+          );
+        }
+
+        if (!resRecons.ok) {
+          throw new Error(resRecons.mensagem);
+        }
+
         limparDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
         chaveEdicaoAtivaRef.current = '';
+        rubricasEditadasSessaoRef.current.clear();
+        integrantesEditadosSessaoRef.current.clear();
+        statusAlteradoSessaoRef.current = false;
         setModoEdicaoReaberto(false);
+        setEscopoEdicaoConcluida('minha');
+
         if (resRecons.consolidada) {
           atualizado = await sincronizarConsolidadaNoBackend(
             grupoAtual,
@@ -1142,6 +1341,7 @@ export function App() {
           setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
         }
       } else {
+        await salvarAvaliacaoNoFirestore(avaliacaoIndividual, grupoAtual);
         setModoEdicaoReaberto(false);
         atualizado = await api.salvarAvaliacao(grupoAtual.id, {
           avaliador: nomeProfessor,
@@ -1220,6 +1420,13 @@ export function App() {
       const nomeProfessor =
         usuarioAuth.displayName || avaliadorEdit || usuarioAuth.email?.split('@')[0] || 'Professor Avaliador';
 
+      const mediaP3TotalCalculada = Number(
+        (
+          recalculados.reduce((acc, ind) => acc + ind.p3_nota, 0) /
+          Math.max(1, recalculados.length)
+        ).toFixed(2),
+      );
+
       const mediaFinalGrupoCalculada = Number(
         (
           recalculados.reduce((acc, ind) => acc + ind.nota_final, 0) /
@@ -1237,6 +1444,7 @@ export function App() {
         p1_total: p1TotalEdit,
         p2_total: p2TotalEdit,
         p3_grupo_base: p3BaseEdit,
+        p3_total: mediaP3TotalCalculada,
         nota_final_grupo: mediaFinalGrupoCalculada,
         parecer_tecnico: parecerEdit,
         status_liberacao_manual: statusManualLiberacao,
@@ -1397,7 +1605,12 @@ export function App() {
     try {
       const res = await resetarBancaGrupo(grupoAtual, usuarioAuth);
       if (res.ok) {
-        setBancaConsolidada(null);
+        setAvaliacoesFirestoreGrupo([]);
+        setMapaAvaliacoesProfessores((prev) => {
+          const prox = { ...prev };
+          delete prox[grupoAtual.id];
+          return prox;
+        });
         setStatusManualLiberacao(null);
         setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
         setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
@@ -1425,11 +1638,16 @@ export function App() {
   const sincronizarBancaSeNecessarioAntesDeExportar = async (grupoId: string) => {
     const sessaoAlvo = mapaSessoesBanca[grupoId];
     const bAlvo = bancas.find((b) => b.id === grupoId);
-    if (!bAlvo || sessaoAlvo?.status !== 'concluida' || !sessaoAlvo.banca_consolidada) return;
-    const mediaCons =
-      sessaoAlvo.media_final_consolidada ?? sessaoAlvo.banca_consolidada.media_final;
-    if (!bAlvo.banca_realizada || Math.abs(bAlvo.media_nota_final_grupo - mediaCons) > 0.05) {
-      await sincronizarConsolidadaNoBackend(bAlvo, sessaoAlvo);
+    if (!bAlvo || sessaoAlvo?.status !== 'concluida') return;
+    const cons = obterConsolidadaParaGrupo(bAlvo);
+    if (!cons || cons.rubricas_medias.length === 0) return;
+    if (
+      !bAlvo.banca_realizada ||
+      Math.abs(bAlvo.media_nota_final_grupo - cons.media_final) > 0.01 ||
+      Math.abs(bAlvo.p2_total - cons.media_p2) > 0.01 ||
+      Math.abs(bAlvo.p1_total - cons.media_p1) > 0.01
+    ) {
+      await sincronizarConsolidadaNoBackend(bAlvo, sessaoAlvo, cons);
     }
   };
 
@@ -1552,7 +1770,6 @@ export function App() {
   const totalEntregues = bancas.filter((b) => b.entregue_na_pasta).length;
   const entreguesI2DEVA = bancas.filter((b) => b.turma === 'I2DEV-A' && b.entregue_na_pasta).length;
   const entreguesI2DEVB = bancas.filter((b) => b.turma === 'I2DEV-B' && b.entregue_na_pasta).length;
-  const totalApresentados = Object.values(mapaSessoesBanca).filter((s) => s.status === 'concluida').length;
 
   const formatarDataHoraEfetivaBanca = (
     iniciadoEm: string | null | undefined,
@@ -1668,8 +1885,8 @@ export function App() {
       'Aprovado')
     : (grupoAtual?.status_liberacao_nota ?? 'Aprovado');
   const mediaFinalGrupoAtual = bancaJaRealizadaAtual
-    ? (sessaoAtual?.media_final_consolidada ??
-      consolidadaAtual?.media_final ??
+    ? (consolidadaAtual?.media_final ??
+      sessaoAtual?.media_final_consolidada ??
       grupoAtual?.media_nota_final_grupo ??
       0)
     : (grupoAtual?.media_nota_final_grupo ?? 0);
@@ -2288,14 +2505,19 @@ export function App() {
                             const selecionado = grupoAtual?.id === b.id;
                             const sessaoB = mapaSessoesBanca[b.id];
                             const bancaJaRealizada = sessaoB?.status === 'concluida';
-                            const mediaFinalApresentada =
-                              sessaoB?.media_final_consolidada ??
-                              sessaoB?.banca_consolidada?.media_final ??
-                              b.media_nota_final_grupo;
-                            const statusFinalApresentado =
-                              sessaoB?.status_liberacao_final ??
-                              sessaoB?.banca_consolidada?.status_liberacao_final ??
-                              b.status_liberacao_nota;
+                            const consB = bancaJaRealizada ? obterConsolidadaParaGrupo(b) : null;
+                            const mediaFinalApresentada = bancaJaRealizada
+                              ? (consB?.media_final ??
+                                sessaoB?.media_final_consolidada ??
+                                sessaoB?.banca_consolidada?.media_final ??
+                                b.media_nota_final_grupo)
+                              : b.media_nota_final_grupo;
+                            const statusFinalApresentado = bancaJaRealizada
+                              ? (sessaoB?.status_liberacao_final ??
+                                consB?.status_liberacao_final ??
+                                sessaoB?.banca_consolidada?.status_liberacao_final ??
+                                b.status_liberacao_nota)
+                              : b.status_liberacao_nota;
                             const emAndamentoCard = sessaoB?.status === 'em_andamento';
                             const cardBordaCor = emAndamentoCard
                               ? 'border-2 border-red-600 bg-red-50/25'
@@ -2303,8 +2525,7 @@ export function App() {
                               ? 'border-2 border-yellow-400 bg-white'
                               : statusFinalApresentado === 'Aprovado'
                               ? 'border-2 border-emerald-500 bg-emerald-50/20'
-                              : statusFinalApresentado === 'Nota Retida (Pendências)' ||
-                                statusFinalApresentado === 'Nota Retida'
+                              : isStatusNotaRetida(statusFinalApresentado)
                               ? 'border-2 border-orange-500 bg-orange-50/20'
                               : 'border-2 border-red-600 bg-red-50/20';
 
@@ -2369,9 +2590,7 @@ export function App() {
                                           className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[9px] font-bold ${
                                             statusFinalApresentado === 'Aprovado'
                                               ? 'bg-emerald-100 text-emerald-800'
-                                              : statusFinalApresentado ===
-                                                  'Nota Retida (Pendências)' ||
-                                                statusFinalApresentado === 'Nota Retida'
+                                              : isStatusNotaRetida(statusFinalApresentado)
                                               ? 'bg-orange-100 text-orange-800'
                                               : 'bg-red-100 text-red-800'
                                           }`}
@@ -2677,13 +2896,22 @@ export function App() {
                                   <p className="text-base font-extrabold text-blue-950">{grupoAtual.media_nota_final_grupo.toFixed(1)} pts</p>
                                 </div>
                               </div>
-                            ) : (
+                            ) : (() => {
+                              const pendenciasBancaRealizada =
+                                sessaoAtual?.pendencias_descricao?.trim() ||
+                                Array.from(
+                                  new Set(
+                                    (consolidadaAtual?.integrantes_medias || []).flatMap(
+                                      (i) => i.itens_insuficientes || [],
+                                    ),
+                                  ),
+                                ).join(', ');
+                              return (
                               <div
                                 className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
                                   statusFinalGrupoAtual === 'Aprovado'
                                     ? 'border-emerald-300 bg-emerald-50/70 text-emerald-950'
-                                    : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
-                                      statusFinalGrupoAtual === 'Nota Retida'
+                                    : isStatusNotaRetida(statusFinalGrupoAtual)
                                     ? 'border-amber-300 bg-amber-50/80 text-amber-950'
                                     : 'border-red-300 bg-red-50/80 text-red-950'
                                 }`}
@@ -2691,8 +2919,7 @@ export function App() {
                                 <div className="flex items-start gap-3">
                                   {statusFinalGrupoAtual === 'Aprovado' ? (
                                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
-                                  ) : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
-                                    statusFinalGrupoAtual === 'Nota Retida' ? (
+                                  ) : isStatusNotaRetida(statusFinalGrupoAtual) ? (
                                     <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
                                   ) : (
                                     <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
@@ -2707,21 +2934,23 @@ export function App() {
                                         ? `Banca concluída com média final de ${mediaFinalGrupoAtual.toFixed(
                                             2,
                                           )} pts (>= 50) e sem itens insuficientes bloqueantes. Nota final liberada!`
-                                        : statusFinalGrupoAtual === 'Nota Retida (Pendências)' ||
-                                          statusFinalGrupoAtual === 'Nota Retida'
+                                        : isStatusNotaRetida(statusFinalGrupoAtual)
                                         ? `A média final oficial (${mediaFinalGrupoAtual.toFixed(
                                             2,
-                                          )} pts >= 50) está calculada, porém a liberação da nota fica RETIDA até a regularização dos itens Insuficientes: [${grupoAtual.itens_insuficientes_grupo.join(
-                                            ', ',
-                                          )}].`
+                                          )} pts >= 50) está calculada, porém a liberação da nota fica RETIDA até a regularização das pendências${
+                                            pendenciasBancaRealizada
+                                              ? `: [${pendenciasBancaRealizada}]`
+                                              : ' apontadas pela banca'
+                                          }.`
                                         : `Média final de ${mediaFinalGrupoAtual.toFixed(
                                             2,
-                                          )} pts inferior a 50,0 pontos. Aluno(s) necessitam de nova oportunidade de apresentação em data futura.`}
+                                          )} pts inferior a 50,0 pontos ou com pendência crítica definida pela banca. Aluno(s) necessitam de nova oportunidade de apresentação em data futura.`}
                                     </p>
                                   </div>
                                 </div>
                               </div>
-                            )}
+                              );
+                            })()}
 
                             {/* Mini Placar dos 4 Pilares + Média (5 Cards) */}
                             {(() => {
@@ -2763,7 +2992,7 @@ export function App() {
                                         <span className="text-xs font-normal text-slate-400"> / 30</span>
                                       </p>
                                       <div className="mt-1.5 flex justify-center">
-                                        {badgeNivelMsep(calcularNivel(valorP1Exibido, 30))}
+                                        {badgeNivelMsep(calcularNivelMsep(valorP1Exibido, 30))}
                                       </div>
                                     </div>
                                     {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
@@ -2799,7 +3028,7 @@ export function App() {
                                         <span className="text-xs font-normal text-slate-400"> / 40</span>
                                       </p>
                                       <div className="mt-1.5 flex justify-center">
-                                        {badgeNivelMsep(calcularNivel(valorP2Exibido, 40))}
+                                        {badgeNivelMsep(calcularNivelMsep(valorP2Exibido, 40))}
                                       </div>
                                     </div>
                                     {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
@@ -2836,9 +3065,9 @@ export function App() {
                                       </p>
                                       <div className="mt-1.5 flex justify-center">
                                         {temAvaliacoesDocentes
-                                          ? badgeNivelMsep(calcularNivel(valorP3Exibido, 15))
+                                          ? badgeNivelMsep(calcularNivelMsep(valorP3Exibido, 15))
                                           : badgeNivelMsep(
-                                              calcularNivel(nota33Atual, 4),
+                                              calcularNivelMsep(nota33Atual, 4),
                                               '3.3',
                                             )}
                                       </div>
@@ -2857,7 +3086,7 @@ export function App() {
                                               {av.professor_nome.split(' ')[0]}:
                                             </span>
                                             <span className="font-bold">
-                                              {av.p3_grupo_base.toFixed(2)}
+                                              {obterP3TotalAvaliador(av).toFixed(2)}
                                             </span>
                                           </div>
                                         ))}
@@ -2880,7 +3109,7 @@ export function App() {
                                         <span className="text-xs font-normal text-indigo-400"> / 15</span>
                                       </p>
                                       <div className="mt-1.5 flex justify-center">
-                                        {badgeNivelMsep(calcularNivel(valorP4Exibido, 15))}
+                                        {badgeNivelMsep(calcularNivelMsep(valorP4Exibido, 15))}
                                       </div>
                                     </div>
                                     {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
@@ -4359,16 +4588,14 @@ export function App() {
                                                   className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold whitespace-nowrap ${
                                                     resultadoSoberano === 'Aprovado'
                                                       ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                      : resultadoSoberano === 'Nota Retida (Pendências)' ||
-                                                        resultadoSoberano === 'Nota Retida'
+                                                      : isStatusNotaRetida(resultadoSoberano)
                                                       ? 'bg-amber-100 text-amber-900 border border-amber-200'
                                                       : 'bg-red-100 text-red-800 border border-red-200'
                                                   }`}
                                                 >
                                                   {resultadoSoberano === 'Aprovado'
                                                     ? 'Aprovado'
-                                                    : resultadoSoberano === 'Nota Retida (Pendências)' ||
-                                                      resultadoSoberano === 'Nota Retida'
+                                                    : isStatusNotaRetida(resultadoSoberano)
                                                     ? 'Nota Retida'
                                                     : 'Nova Chance'}
                                                 </span>
@@ -4434,9 +4661,11 @@ export function App() {
                         .map((b) => {
                           const sessaoB = mapaSessoesBanca[b.id];
                           const concluidaB = sessaoB?.status === 'concluida';
+                          const consB = concluidaB ? obterConsolidadaParaGrupo(b) : null;
                           const mediaExibidaSel = concluidaB
-                            ? (sessaoB.media_final_consolidada ??
-                              sessaoB.banca_consolidada?.media_final ??
+                            ? (consB?.media_final ??
+                              sessaoB?.media_final_consolidada ??
+                              sessaoB?.banca_consolidada?.media_final ??
                               b.media_nota_final_grupo)
                             : b.media_nota_final_grupo;
                           return (
@@ -4574,38 +4803,77 @@ export function App() {
                 )}
 
                 {modoEdicaoReaberto && (
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-amber-400 bg-amber-100 p-4 text-xs text-amber-950 shadow-md">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-300 text-amber-950 shrink-0">
-                        <Edit3 className="h-5 w-5" />
+                  <div className="space-y-3 rounded-xl border-2 border-amber-400 bg-amber-100 p-4 text-xs text-amber-950 shadow-md">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-300 text-amber-950 shrink-0">
+                          <Edit3 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-amber-950">
+                            Modo de Edição Ativo (Banca Reaberta)
+                          </p>
+                          <p className="text-xs text-amber-900">
+                            {escopoEdicaoConcluida === 'consenso'
+                              ? 'Ajuste de Consenso ativo: os critérios alterados agora serão aplicados nos 2 avaliadores preservando demais notas e pareceres individuais.'
+                              : 'Ajuste Individual ativo: as alterações serão salvas na sua avaliação individual e recalculadas na média simples da banca.'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-black text-amber-950">
-                          Modo de Edição Ativo (Banca Reaberta)
-                        </p>
-                        <p className="text-xs text-amber-900">
-                          Faça os ajustes desejados nas rubricas, notas e parecer técnico. Ao salvar, as médias e descrições serão recalculadas e reconsolidadas automaticamente no Firebase.
-                        </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModoEdicaoReaberto(false);
+                            setEscopoEdicaoConcluida('minha');
+                          }}
+                          className="rounded-lg border border-amber-400 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                        >
+                          Cancelar Edição
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleSalvarFicha()}
+                          disabled={salvandoFicha}
+                          className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 cursor-pointer"
+                        >
+                          <Save className="h-4 w-4" />
+                          Salvar Alterações &amp; Recalcular Médias
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setModoEdicaoReaberto(false)}
-                        className="rounded-lg border border-amber-400 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
-                      >
-                        Cancelar Edição
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleSalvarFicha()}
-                        disabled={salvandoFicha}
-                        className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 cursor-pointer"
-                      >
-                        <Save className="h-4 w-4" />
-                        Salvar Alterações &amp; Recalcular Médias
-                      </button>
-                    </div>
+
+                    {statusSessaoBancaAtual === 'concluida' && (
+                      <div className="flex flex-wrap items-center gap-2 border-t border-amber-300/70 pt-2.5">
+                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-950">
+                          Escopo da Alteração:
+                        </span>
+                        <div className="inline-flex rounded-lg border border-amber-400 bg-white p-0.5 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => setEscopoEdicaoConcluida('minha')}
+                            className={`rounded-md px-3 py-1 text-[11px] font-bold transition cursor-pointer ${
+                              escopoEdicaoConcluida === 'minha'
+                                ? 'bg-slate-900 text-white'
+                                : 'text-slate-700 hover:bg-amber-50'
+                            }`}
+                          >
+                            Editar somente minha avaliação
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEscopoEdicaoConcluida('consenso')}
+                            className={`rounded-md px-3 py-1 text-[11px] font-bold transition cursor-pointer ${
+                              escopoEdicaoConcluida === 'consenso'
+                                ? 'bg-indigo-700 text-white'
+                                : 'text-slate-700 hover:bg-indigo-50'
+                            }`}
+                          >
+                            Aplicar ajuste de consenso nos 2 avaliadores
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -4707,8 +4975,8 @@ export function App() {
                           </span>
                           <div className="flex flex-wrap items-center gap-2">
                             {bloco.pilar === 3 && rubrica32?.nivel === 'Pendente'
-                              ? badgeNivelMsep(calcularNivel(nota33, 4), '3.3')
-                              : badgeNivelMsep(calcularNivel(bloco.total, bloco.max))}
+                              ? badgeNivelMsep(calcularNivelMsep(nota33, 4), '3.3')
+                              : badgeNivelMsep(calcularNivelMsep(bloco.total, bloco.max))}
                             <span className="rounded bg-red-600 px-2.5 py-0.5 text-xs font-bold">
                               Subtotal Coletivo: {bloco.total.toFixed(2)} / {bloco.max},00
                             </span>
@@ -4980,13 +5248,13 @@ export function App() {
                                   <td className="p-3 text-center font-mono">
                                     <div>{p1TotalEdit.toFixed(2)}</div>
                                     <span className="block text-[9px] font-bold text-slate-500">
-                                      ({calcularNivel(p1TotalEdit, 30)})
+                                      ({calcularNivelMsep(p1TotalEdit, 30)})
                                     </span>
                                   </td>
                                   <td className="p-3 text-center font-mono">
                                     <div>{p2TotalEdit.toFixed(2)}</div>
                                     <span className="block text-[9px] font-bold text-slate-500">
-                                      ({calcularNivel(p2TotalEdit, 40)})
+                                      ({calcularNivelMsep(p2TotalEdit, 40)})
                                     </span>
                                   </td>
 
@@ -5085,8 +5353,8 @@ export function App() {
                                     <span className="block text-[9px] font-bold text-slate-500">
                                       (
                                       {pendente31 || rubrica32?.nivel === 'Pendente'
-                                        ? `${calcularNivel(nota33, 4)} 3.3`
-                                        : calcularNivel(calc.p3, 15)}
+                                        ? `${calcularNivelMsep(nota33, 4)} 3.3`
+                                        : calcularNivelMsep(calc.p3, 15)}
                                       )
                                     </span>
                                   </td>
@@ -5200,7 +5468,7 @@ export function App() {
                                   <td className="p-3 text-center font-mono font-semibold">
                                     <div>{calc.p4.toFixed(2)}</div>
                                     <span className="block text-[9px] font-bold text-slate-500">
-                                      ({calcularNivel(calc.p4, 15)})
+                                      ({calcularNivelMsep(calc.p4, 15)})
                                     </span>
                                   </td>
                                   <td className="p-3 text-center font-mono text-sm font-black text-slate-900">
@@ -5402,7 +5670,7 @@ export function App() {
                                 <button
                                   type="button"
                                   disabled={!podeEditarFicha}
-                                  onClick={() => setStatusManualLiberacao('Aprovado')}
+                                  onClick={() => selecionarStatusManualBanca('Aprovado')}
                                   className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
                                     !podeEditarFicha ? 'cursor-not-allowed' : 'cursor-pointer'
                                   } ${
@@ -5418,7 +5686,7 @@ export function App() {
                                 <button
                                   type="button"
                                   disabled={!podeEditarFicha}
-                                  onClick={() => setStatusManualLiberacao('Nota Retida (Pendências)')}
+                                  onClick={() => selecionarStatusManualBanca('Nota Retida (Pendências)')}
                                   className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
                                     !podeEditarFicha ? 'cursor-not-allowed' : 'cursor-pointer'
                                   } ${
@@ -5434,7 +5702,7 @@ export function App() {
                                 <button
                                   type="button"
                                   disabled={!podeEditarFicha}
-                                  onClick={() => setStatusManualLiberacao('Nova Chance (Data Futura)')}
+                                  onClick={() => selecionarStatusManualBanca('Nova Chance (Data Futura)')}
                                   className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
                                     !podeEditarFicha ? 'cursor-not-allowed' : 'cursor-pointer'
                                   } ${
@@ -5455,7 +5723,7 @@ export function App() {
                               <button
                                 type="button"
                                 disabled={!podeEditarFicha}
-                                onClick={() => setStatusManualLiberacao(null)}
+                                onClick={() => selecionarStatusManualBanca(null)}
                                 className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-indigo-700 shadow-2xs transition hover:bg-indigo-50 hover:border-indigo-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Reverter a escolha manual e restaurar o status calculado automaticamente pelo sistema"
                               >
@@ -5676,7 +5944,7 @@ export function App() {
                           .flatMap((b) => {
                             const sessaoB = mapaSessoesBanca[b.id];
                             const bancaConcluidaB = sessaoB?.status === 'concluida';
-                            const consB = bancaConcluidaB ? sessaoB.banca_consolidada : null;
+                            const consB = bancaConcluidaB ? obterConsolidadaParaGrupo(b) : null;
                             const integrantesSoberanosB =
                               consB?.integrantes_medias?.length
                                 ? mesclarIntegrantesSoberanosComBase(
@@ -5685,7 +5953,7 @@ export function App() {
                                   )
                                 : b.integrantes_notas;
                             const statusSoberanoB = bancaConcluidaB
-                              ? (sessaoB.status_liberacao_final ??
+                              ? (sessaoB?.status_liberacao_final ??
                                 consB?.status_liberacao_final ??
                                 b.status_liberacao_nota)
                               : null;

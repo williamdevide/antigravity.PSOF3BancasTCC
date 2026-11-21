@@ -11,8 +11,7 @@ import {
   Users,
   Calendar,
 } from 'lucide-react';
-import type { AvaliacaoGrupo } from '../types';
-import type { SessaoBancaAoVivo } from '../services/bancaMultiAvaliador';
+import type { AvaliacaoGrupo, SessaoBancaAoVivo } from '../types';
 
 interface ModalReauditoriaProps {
   aberto: boolean;

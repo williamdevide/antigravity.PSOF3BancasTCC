@@ -14,27 +14,45 @@ import type {
   AvaliacaoProfessorIndividual,
   BancaConsolidada,
   DraftAvaliacaoLocal,
-  NivelMSEP,
   RegistroHistoricoPendencia,
   ResultadoFinalTipo,
   RevisaoPosBanca,
-  RubricaItemAvaliacao,
-  NotaIndividualIntegrante,
   SessaoBancaAoVivo,
 } from '../types';
 import type { User } from './firebase';
+import {
+  aplicarDiffConsensoNaAvaliacao,
+  calcularMediaBanca,
+  calcularNivelMsep,
+  consolidadaDivergeDeSessao,
+  mesclarIntegrantesSoberanosComBase,
+  mesclarRubricasSoberanasComBase,
+  normalizarRubricasComNivel,
+  obterP3TotalAvaliador,
+  recalcularAvaliacaoProfessor,
+  recalcularConsolidadaExistente,
+  round2,
+  type DiffConsensoBanca,
+} from './calculoBanca';
+
+export {
+  aplicarDiffConsensoNaAvaliacao,
+  calcularMediaBanca,
+  calcularNivelMsep,
+  consolidadaDivergeDeSessao,
+  mesclarIntegrantesSoberanosComBase,
+  mesclarRubricasSoberanasComBase,
+  normalizarRubricasComNivel,
+  obterP3TotalAvaliador,
+  recalcularAvaliacaoProfessor,
+  recalcularConsolidadaExistente,
+  round2,
+  type DiffConsensoBanca,
+};
 
 export const COLECAO_AVALIACOES_PROFESSORES = 'psof3_avaliacoes_professores';
 export const COLECAO_SESSOES_BANCA = 'psof3_sessoes_banca';
 export const COLECAO_ANALISES_AUTOMATICAS = 'psof3_analises_automaticas';
-
-function calcularNivel(nota: number, max: number): NivelMSEP {
-  if (nota <= 0) return 'Insuficiente';
-  const pct = (nota / max) * 100;
-  if (pct >= 90) return 'Avançado';
-  if (pct >= 50) return 'Pleno';
-  return 'Insuficiente';
-}
 
 function formatarErroFirestore(err: unknown, acao: string): string {
   const msg = err instanceof Error ? err.message : String(err);
@@ -47,200 +65,21 @@ function formatarErroFirestore(err: unknown, acao: string): string {
   return `Erro ao ${acao}: ${msg}`;
 }
 
-export function calcularMediaBanca(
-  avaliacoes: AvaliacaoProfessorIndividual[],
-  grupoBase: AvaliacaoGrupo,
-): BancaConsolidada {
-  if (avaliacoes.length === 0) {
-    return {
-      grupo_id: grupoBase.id,
-      status_banca: 'pendente',
-      avaliadores_concluidos: [],
-      avaliacoes_individuais: {},
-      media_p1: grupoBase.p1_total,
-      media_p2: grupoBase.p2_total,
-      media_p3: grupoBase.p3_grupo_base,
-      media_p4:
-        grupoBase.integrantes_notas.length > 0
-          ? grupoBase.integrantes_notas.reduce((a, b) => a + b.p4_nota, 0) /
-            grupoBase.integrantes_notas.length
-          : 0,
-      media_final: grupoBase.media_nota_final_grupo,
-      rubricas_medias: grupoBase.rubricas,
-      integrantes_medias: grupoBase.integrantes_notas,
-      pareceres_professores: [],
-      status_liberacao_final: grupoBase.status_liberacao_nota,
-    };
-  }
-
-  const mapaIndividuais: Record<string, AvaliacaoProfessorIndividual> = {};
-  const pareceres = avaliacoes.map((av) => {
-    mapaIndividuais[av.professor_uid] = av;
-    return {
-      professor_nome: av.professor_nome,
-      parecer: av.parecer_tecnico,
-      atualizado_em: av.atualizado_em,
-    };
-  });
-
-  const nomes = avaliacoes.map((a) => a.professor_nome);
-
-  if (avaliacoes.length === 1) {
-    const av = avaliacoes[0];
-    const mediaP4 =
-      av.integrantes_notas.length > 0
-        ? av.integrantes_notas.reduce((acc, curr) => acc + curr.p4_nota, 0) /
-          av.integrantes_notas.length
-        : 0;
-
-    const statusLiberacaoCalculado: ResultadoFinalTipo =
-      av.nota_final_grupo >= 50
-        ? av.integrantes_notas.some((i) => i.possui_item_insuficiente)
-          ? 'Nota Retida (Pendências)'
-          : 'Aprovado'
-        : 'Nova Chance (Data Futura)';
-
-    const statusEfetivo = av.status_liberacao_manual || statusLiberacaoCalculado;
-    const integrantesComStatusEfetivo = av.status_liberacao_manual
-      ? av.integrantes_notas.map((i) => ({ ...i, resultado: av.status_liberacao_manual as ResultadoFinalTipo }))
-      : av.integrantes_notas;
-
-    return {
-      grupo_id: grupoBase.id,
-      status_banca: 'aguardando_segundo_avaliador',
-      avaliadores_concluidos: nomes,
-      avaliacoes_individuais: mapaIndividuais,
-      media_p1: av.p1_total,
-      media_p2: av.p2_total,
-      media_p3: av.p3_grupo_base,
-      media_p4: Number(mediaP4.toFixed(2)),
-      media_final: av.nota_final_grupo,
-      rubricas_medias: av.rubricas,
-      integrantes_medias: integrantesComStatusEfetivo,
-      pareceres_professores: pareceres,
-      status_liberacao_final: statusEfetivo,
-      status_liberacao_manual: av.status_liberacao_manual || null,
-    };
-  }
-
-  // Dois ou mais avaliadores: calcula a média simples exata
-  const av1 = avaliacoes[0];
-  const av2 = avaliacoes[1];
-
-  const mediaP1 = Number(((av1.p1_total + av2.p1_total) / 2).toFixed(2));
-  const mediaP2 = Number(((av1.p2_total + av2.p2_total) / 2).toFixed(2));
-  const mediaP3Base = Number(((av1.p3_grupo_base + av2.p3_grupo_base) / 2).toFixed(2));
-  const mediaFinal = Number(((av1.nota_final_grupo + av2.nota_final_grupo) / 2).toFixed(2));
-
-  // Média simples de cada rubrica
-  const rubricasMedias: RubricaItemAvaliacao[] = av1.rubricas.map((r1) => {
-    const r2 = av2.rubricas.find((r) => r.codigo === r1.codigo) || r1;
-    const notaMedia = Number(((r1.nota + r2.nota) / 2).toFixed(2));
-    const nivel = calcularNivel(notaMedia, r1.peso_max);
-    return {
-      ...r1,
-      nota: notaMedia,
-      nivel,
-      editado_manualmente: true,
-      justificativa_ia: `Média Simples da Banca: Prof. ${av1.professor_nome} (${r1.nota.toFixed(
-        1,
-      )}) + Prof. ${av2.professor_nome} (${r2.nota.toFixed(1)}) = ${notaMedia.toFixed(1)} pts.`,
-    };
-  });
-
-  // Média simples de cada integrante
-  const integrantesMedias: NotaIndividualIntegrante[] = av1.integrantes_notas.map((i1) => {
-    const i2 = av2.integrantes_notas.find((i) => i.nome === i1.nome) || i1;
-    const nota31Media = Number(((i1.nota_3_1_arguicao + i2.nota_3_1_arguicao) / 2).toFixed(2));
-    const nivel31 = calcularNivel(nota31Media, 6.0);
-    const p3Media = Number((nota31Media + mediaP3Base).toFixed(2));
-    const p4Media = Number(((i1.p4_nota + i2.p4_nota) / 2).toFixed(2));
-    const finalMedia = Number((mediaP1 + mediaP2 + p3Media + p4Media).toFixed(2));
-
-    const insuf: string[] = [];
-    rubricasMedias.forEach((r) => {
-      // Regra SENAI: Notas insuficientes no Pilar 4 NÃO retêm nota
-      if (r.pilar !== 4 && r.codigo !== '3.1' && r.nivel === 'Insuficiente') {
-        insuf.push(`${r.titulo} (${r.nota.toFixed(1)}/${r.peso_max.toFixed(1)})`);
-      }
-    });
-    if (nivel31 === 'Insuficiente') {
-      insuf.push(`3.1 Arguição Técnica — ${i1.nome} (${nota31Media.toFixed(1)}/6.0)`);
-    }
-
-    let resultado: ResultadoFinalTipo = 'Aprovado';
-    if (finalMedia >= 50.0) {
-      resultado = insuf.length > 0 ? 'Nota Retida (Pendências)' : 'Aprovado';
-    } else {
-      resultado = 'Nova Chance (Data Futura)';
-    }
-
-    return {
-      ...i1,
-      nota_3_1_arguicao: nota31Media,
-      nivel_3_1: nivel31,
-      p1_nota: mediaP1,
-      p2_nota: mediaP2,
-      p3_nota: p3Media,
-      p4_nota: p4Media,
-      nota_final: finalMedia,
-      possui_item_insuficiente: insuf.length > 0,
-      itens_insuficientes: insuf,
-      resultado,
-    };
-  });
-
-  const mediaP4 =
-    integrantesMedias.length > 0
-      ? integrantesMedias.reduce((a, b) => a + b.p4_nota, 0) / integrantesMedias.length
-      : 0;
-
-  const possuiInsufGrupo = integrantesMedias.some((i) => i.possui_item_insuficiente);
-  let statusFinal: ResultadoFinalTipo = 'Aprovado';
-  if (mediaFinal >= 50.0) {
-    statusFinal = possuiInsufGrupo ? 'Nota Retida (Pendências)' : 'Aprovado';
-  } else {
-    statusFinal = 'Nova Chance (Data Futura)';
-  }
-
-  const statusManualConsolidado = av1.status_liberacao_manual || av2.status_liberacao_manual || null;
-  if (statusManualConsolidado) {
-    statusFinal = statusManualConsolidado;
-  }
-
-  const integrantesFinais = statusManualConsolidado
-    ? integrantesMedias.map((i) => ({ ...i, resultado: statusManualConsolidado }))
-    : integrantesMedias;
-
-  return {
-    grupo_id: grupoBase.id,
-    status_banca: 'banca_concluida',
-    avaliadores_concluidos: nomes,
-    avaliacoes_individuais: mapaIndividuais,
-    media_p1: mediaP1,
-    media_p2: mediaP2,
-    media_p3: mediaP3Base,
-    media_p4: Number(mediaP4.toFixed(2)),
-    media_final: mediaFinal,
-    rubricas_medias: rubricasMedias,
-    integrantes_medias: integrantesFinais,
-    pareceres_professores: pareceres,
-    status_liberacao_final: statusFinal,
-    status_liberacao_manual: statusManualConsolidado,
-  };
-}
-
 export async function salvarAvaliacaoNoFirestore(
   avaliacao: AvaliacaoProfessorIndividual,
+  grupoBase?: AvaliacaoGrupo,
 ): Promise<{ ok: boolean; mensagem: string }> {
   try {
+    const avaliacaoNormalizada = grupoBase
+      ? recalcularAvaliacaoProfessor(avaliacao, grupoBase)
+      : avaliacao;
     const docRef = doc(
       db,
       COLECAO_AVALIACOES_PROFESSORES,
-      `${avaliacao.grupo_id}_${avaliacao.professor_uid}`,
+      `${avaliacaoNormalizada.grupo_id}_${avaliacaoNormalizada.professor_uid}`,
     );
-    await setDoc(docRef, avaliacao, { merge: true });
-    return { ok: true, mensagem: `Avaliação do Prof. ${avaliacao.professor_nome} salva no Firebase!` };
+    await setDoc(docRef, avaliacaoNormalizada, { merge: true });
+    return { ok: true, mensagem: `Avaliação do Prof. ${avaliacaoNormalizada.professor_nome} salva no Firebase!` };
   } catch (err: unknown) {
     return { ok: false, mensagem: formatarErroFirestore(err, 'salvar avaliação individual no Firestore') };
   }
@@ -268,6 +107,40 @@ export function escutarAvaliacoesGrupoFirestore(
       },
     );
 
+    return unsubscribe;
+  } catch (e: unknown) {
+    if (onError && e instanceof Error) onError(e);
+    return () => {};
+  }
+}
+
+/**
+ * Escuta em tempo real TODAS as avaliações individuais dos docentes agrupadas por grupo_id,
+ * garantindo que cards, consolidado e troca de grupo tenham sempre os dados soberanos recalculados.
+ */
+export function escutarTodasAvaliacoesProfessoresFirestore(
+  onUpdate: (mapa: Record<string, AvaliacaoProfessorIndividual[]>) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  try {
+    const colRef = collection(db, COLECAO_AVALIACOES_PROFESSORES);
+    const q = query(colRef);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const mapa: Record<string, AvaliacaoProfessorIndividual[]> = {};
+        snapshot.docs.forEach((d) => {
+          const av = d.data() as AvaliacaoProfessorIndividual;
+          if (!av?.grupo_id) return;
+          if (!mapa[av.grupo_id]) mapa[av.grupo_id] = [];
+          mapa[av.grupo_id].push(av);
+        });
+        onUpdate(mapa);
+      },
+      (error) => {
+        if (onError) onError(error);
+      },
+    );
     return unsubscribe;
   } catch (e: unknown) {
     if (onError && e instanceof Error) onError(e);
@@ -643,28 +516,70 @@ export async function resetarBancaGrupo(
 }
 
 /**
- * Recalcula as médias consolidadas da banca e atualiza a ata no Firestore após edição pós-fechamento
+ * Recalcula cada avaliação individual direto de suas rubricas, cura documentos defasados
+ * em psof3_avaliacoes_professores e reconsolida a sessão no Firestore após edição pós-fechamento.
  */
 export async function recalcularEConsolidarBancaAposEdicao(
   grupoId: string,
   grupoBase: AvaliacaoGrupo,
+  opcoes?: {
+    statusSessaoPreservado?: ResultadoFinalTipo | null;
+    avaliacoesFallbackSessao?: AvaliacaoProfessorIndividual[];
+  },
 ): Promise<{ ok: boolean; mensagem: string; consolidada?: BancaConsolidada }> {
   try {
     const colRef = collection(db, COLECAO_AVALIACOES_PROFESSORES);
     const q = query(colRef, where('grupo_id', '==', grupoId));
     const snap = await getDocs(q);
-    const avaliacoes: AvaliacaoProfessorIndividual[] = [];
+    const porUid = new Map<string, AvaliacaoProfessorIndividual>();
     snap.forEach((d) => {
-      avaliacoes.push(d.data() as AvaliacaoProfessorIndividual);
+      const av = d.data() as AvaliacaoProfessorIndividual;
+      if (av?.professor_uid) porUid.set(av.professor_uid, av);
     });
 
-    const consolidada = calcularMediaBanca(avaliacoes, grupoBase);
+    // Preserva avaliadores vindos do snapshot caso ainda não tenham doc individual separado
+    (opcoes?.avaliacoesFallbackSessao || []).forEach((avFb) => {
+      if (avFb?.professor_uid && !porUid.has(avFb.professor_uid)) {
+        porUid.set(avFb.professor_uid, avFb);
+      }
+    });
+
+    const listaBruta = Array.from(porUid.values());
+    const consolidada = calcularMediaBanca(
+      listaBruta,
+      grupoBase,
+      opcoes?.statusSessaoPreservado,
+    );
     const agora = new Date().toISOString();
+
+    // Auto-cura em psof3_avaliacoes_professores caso algum avaliador tivesse totais defasados
+    const promessasCura: Promise<void>[] = [];
+    Object.values(consolidada.avaliacoes_individuais).forEach((avRecalc) => {
+      const avOrig = porUid.get(avRecalc.professor_uid);
+      const precisaAtualizar =
+        !avOrig ||
+        Math.abs(Number(avOrig.p1_total ?? -1) - avRecalc.p1_total) > 0.01 ||
+        Math.abs(Number(avOrig.p2_total ?? -1) - avRecalc.p2_total) > 0.01 ||
+        Math.abs(Number(avOrig.p3_total ?? -1) - Number(avRecalc.p3_total ?? 0)) > 0.01 ||
+        Math.abs(Number(avOrig.nota_final_grupo ?? -1) - avRecalc.nota_final_grupo) > 0.01;
+      if (precisaAtualizar) {
+        const docAvRef = doc(
+          db,
+          COLECAO_AVALIACOES_PROFESSORES,
+          `${grupoId}_${avRecalc.professor_uid}`,
+        );
+        promessasCura.push(setDoc(docAvRef, avRecalc, { merge: true }));
+      }
+    });
+    if (promessasCura.length > 0) {
+      await Promise.all(promessasCura);
+    }
 
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
     await setDoc(
       docSessaoRef,
       {
+        status: 'concluida',
         media_final_consolidada: consolidada.media_final,
         status_liberacao_final: consolidada.status_liberacao_final,
         banca_consolidada: consolidada,
@@ -680,6 +595,146 @@ export async function recalcularEConsolidarBancaAposEdicao(
     };
   } catch (err: unknown) {
     return { ok: false, mensagem: formatarErroFirestore(err, 'recalcular e consolidar banca após edição') };
+  }
+}
+
+/**
+ * Aplica alterações de consenso (somente rubricas e campos tocados na edição) aos 2 avaliadores
+ * em psof3_avaliacoes_professores, recalculando cada professor e a média geral consolidada.
+ */
+export async function aplicarAjusteConsensoBancaNoFirestore(
+  grupoId: string,
+  grupoBase: AvaliacaoGrupo,
+  avaliacaoMinhaCompleta: AvaliacaoProfessorIndividual,
+  diff: DiffConsensoBanca,
+  opcoes?: {
+    avaliacoesFallbackSessao?: AvaliacaoProfessorIndividual[];
+    statusSessaoPreservado?: ResultadoFinalTipo | null;
+  },
+): Promise<{ ok: boolean; mensagem: string; consolidada?: BancaConsolidada }> {
+  try {
+    const colRef = collection(db, COLECAO_AVALIACOES_PROFESSORES);
+    const q = query(colRef, where('grupo_id', '==', grupoId));
+    const snap = await getDocs(q);
+
+    const porUid = new Map<string, AvaliacaoProfessorIndividual>();
+    snap.forEach((d) => {
+      const av = d.data() as AvaliacaoProfessorIndividual;
+      if (av?.professor_uid) porUid.set(av.professor_uid, av);
+    });
+    (opcoes?.avaliacoesFallbackSessao || []).forEach((avFb) => {
+      if (avFb?.professor_uid && !porUid.has(avFb.professor_uid)) {
+        porUid.set(avFb.professor_uid, avFb);
+      }
+    });
+
+    const agora = new Date().toISOString();
+    const minhaRecalc = recalcularAvaliacaoProfessor(
+      {
+        ...avaliacaoMinhaCompleta,
+        concluido: true,
+        atualizado_em: agora,
+      },
+      grupoBase,
+    );
+    porUid.set(minhaRecalc.professor_uid, minhaRecalc);
+
+    // Atualiza os demais avaliadores aplicando somente o diff de consenso e preservando seu parecer
+    const todosAtualizados: AvaliacaoProfessorIndividual[] = [];
+    for (const [uid, av] of porUid.entries()) {
+      if (uid === minhaRecalc.professor_uid) {
+        todosAtualizados.push(minhaRecalc);
+      } else {
+        const avOutroAtualizada = aplicarDiffConsensoNaAvaliacao(av, grupoBase, {
+          ...diff,
+          atualizadoEm: agora,
+        });
+        todosAtualizados.push({
+          ...avOutroAtualizada,
+          concluido: av.concluido ?? true,
+        });
+      }
+    }
+
+    await Promise.all(
+      todosAtualizados.map((avItem) =>
+        setDoc(
+          doc(db, COLECAO_AVALIACOES_PROFESSORES, `${grupoId}_${avItem.professor_uid}`),
+          avItem,
+          { merge: true },
+        ),
+      ),
+    );
+
+    const statusManualEfetivo = diff.alterarStatusManual
+      ? diff.statusManualNovo ?? null
+      : opcoes?.statusSessaoPreservado;
+
+    const consolidada = calcularMediaBanca(
+      todosAtualizados,
+      grupoBase,
+      statusManualEfetivo,
+    );
+
+    await setDoc(
+      doc(db, COLECAO_SESSOES_BANCA, grupoId),
+      {
+        status: 'concluida',
+        media_final_consolidada: consolidada.media_final,
+        status_liberacao_final: consolidada.status_liberacao_final,
+        banca_consolidada: consolidada,
+        atualizado_em: agora,
+      },
+      { merge: true },
+    );
+
+    return {
+      ok: true,
+      mensagem:
+        'Ajuste de consenso aplicado nos avaliadores com recálculo integral de todas as médias no Firebase!',
+      consolidada,
+    };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      mensagem: formatarErroFirestore(err, 'aplicar ajuste de consenso na banca'),
+    };
+  }
+}
+
+/**
+ * Sincroniza o snapshot psof3_sessoes_banca quando divergir dos cálculos derivados de
+ * psof3_avaliacoes_professores, preservando pendências, revisões e status já homologados.
+ */
+export async function sincronizarSnapshotSessaoFirestore(
+  grupoId: string,
+  consolidada: BancaConsolidada,
+  sessaoAtual: SessaoBancaAoVivo,
+): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    const agora = new Date().toISOString();
+    const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
+    const statusPreservado = sessaoAtual.status_liberacao_final ?? consolidada.status_liberacao_final;
+    const bancaSincronizada: BancaConsolidada = {
+      ...consolidada,
+      status_liberacao_final: statusPreservado,
+    };
+    await setDoc(
+      docSessaoRef,
+      {
+        status: sessaoAtual.status || 'concluida',
+        media_final_consolidada: bancaSincronizada.media_final,
+        banca_consolidada: bancaSincronizada,
+        atualizado_em: agora,
+      },
+      { merge: true },
+    );
+    return { ok: true, mensagem: 'Snapshot da sessão sincronizado.' };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      mensagem: formatarErroFirestore(err, 'sincronizar snapshot da sessão'),
+    };
   }
 }
 
@@ -705,7 +760,8 @@ export async function atualizarPendenciasBanca(
     const autorNome = professor.displayName || professor.email || 'Docente';
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
 
-    const bancaOrigem = consolidadaAtual || sessaoAtual?.banca_consolidada || null;
+    const bancaBruta = consolidadaAtual || sessaoAtual?.banca_consolidada || null;
+    const bancaOrigem = bancaBruta ? { ...bancaBruta } : null;
     const bancaAtualizada: BancaConsolidada | undefined = bancaOrigem
       ? {
           ...bancaOrigem,

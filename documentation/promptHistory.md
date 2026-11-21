@@ -783,6 +783,22 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
    - Em leitura na *Ficha MSEP & Arguição* concluída, carrega sempre a **Média Consolidada Oficial da Banca** (Firestore `banca_consolidada`) sobrepondo o cálculo automático da IA e qualquer `localStorage` obsoleto.
    - Ao clicar em *"Editar Minha Avaliação / Editar Banca"*, carrega automaticamente as notas e pareceres individuais salvos pelo avaliador logado no Firestore (com fallback para a consolidada) e, ao salvar/consolidar/exportar PDF ou XLSX, replica os dados consolidados soberanos para o backend FastAPI (`PUT /api/bancas/{id}/avaliacao`) e para todas as visões (*Auditoria & Bancas*, *Consolidado Turmas*, seletores e cabeçalho da Ficha).
 
+---
+
+## Sessão 33 — 21/11/2026 (14:47)
+
+### Prompt 33 (21/11/2026 - 14:47)
+```text
+/agente-orquestrador /grill-me /goal preciso que recarregue tambem as outras parciais que tenhamos alterado (por exemplo em alguns grupos mudamos o 2.3 de insuficiente para avançado ou pleno e não recarregou essa informação). outra coisa, recarregou as parciais que alteramos, mas não recalculou a nota dada por cada professor e nem a média geral. corrrija
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 33
+1. **Fonte de Verdade Soberana & Recálculo Integral:**
+   - Priorizar sempre `psof3_avaliacoes_professores` como fonte de verdade, recalculando deterministicamente `P1`, `P2`, `P3` (completo com `3.1`, máx. 15 pts), `P4`, a nota final de **cada professor**, as **notas individuais dos alunos** e a **média geral** diretamente a partir das rubricas salvas, com auto-sincronização automática para `psof3_sessoes_banca` e backend quando houver divergência.
+2. **Edição Pós-Fechamento em Consenso (`Editar Banca`):**
+   - Oferecer seletor claro ao reabrir uma banca concluída: **`Editar somente minha avaliação`** (padrão) ou **`Aplicar ajuste de consenso nos 2 avaliadores`** (aplica apenas as rubricas/campos efetivamente alterados na sessão de edição sobre todos os avaliadores da banca, preservando demais critérios e pareceres individuais intactos, e recalculando notas e média geral).
+
+
 
 
 

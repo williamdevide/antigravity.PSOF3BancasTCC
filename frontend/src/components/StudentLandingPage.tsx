@@ -21,6 +21,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { APP_VERSION } from '../config/version';
+import { recalcularConsolidadaExistente } from '../services/bancaMultiAvaliador';
 import type {
   AvaliacaoGrupo,
   NotaIndividualIntegrante,
@@ -75,7 +76,13 @@ function resolverDadosBancaRealizada(
 ) {
   const realizada = sessao?.status === 'concluida' || Boolean(banca.banca_realizada);
   const emAndamento = sessao?.status === 'em_andamento';
-  const consolidada = sessao?.banca_consolidada;
+  const consolidada = sessao?.banca_consolidada
+    ? recalcularConsolidadaExistente(
+        sessao.banca_consolidada,
+        banca,
+        sessao.status_liberacao_final ?? null,
+      )
+    : undefined;
 
   const p1 = consolidada?.media_p1 ?? banca.p1_total;
   const p2 = consolidada?.media_p2 ?? banca.p2_total;
@@ -87,8 +94,8 @@ function resolverDadosBancaRealizada(
       : 0;
   const p4 = consolidada?.media_p4 ?? mediaP4Backend;
   const mediaFinal =
-    sessao?.media_final_consolidada ??
     consolidada?.media_final ??
+    sessao?.media_final_consolidada ??
     banca.media_nota_final_grupo;
 
   const integrantes: NotaIndividualIntegrante[] =
