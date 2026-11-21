@@ -53,21 +53,29 @@ import { BannerBancaAoVivo } from './components/BannerBancaAoVivo';
 import { FileExplorerView } from './components/FileExplorerView';
 import { ModalAdiamentoDataFutura } from './components/ModalAdiamentoDataFutura';
 import { ModalEntregaArquivos } from './components/ModalEntregaArquivos';
+import { ModalGestaoDocentes } from './components/ModalGestaoDocentes';
 import { ModalReauditoria } from './components/ModalReauditoria';
 import { PainelBancaConsolidada } from './components/PainelBancaConsolidada';
 import { StudentLandingPage } from './components/StudentLandingPage';
+import { TelaAguardandoAutorizacao } from './components/TelaAguardandoAutorizacao';
 import { APP_VERSION } from './config/version';
 import { api } from './services/api';
 import {
   auth,
-  DOMINIO_DOCENTE_AUTORIZADO,
   EMAIL_PROFESSOR_TITULAR,
-  isUsuarioDocenteAutorizado,
+  isEmailPreAutorizadoConvidado,
   isUsuarioProfessorTitular,
   onAuthStateChanged,
+  resolverStatusAcessoDocente,
   signOut,
   type User,
 } from './services/firebase';
+import {
+  escutarMeuRegistroDocenteFirestore,
+  escutarTodosDocentesAutorizadosFirestore,
+  garantirSeedPreAutorizadosFirestore,
+  registrarSolicitacaoAcessoDocente,
+} from './services/docentesAutorizados';
 import {
   salvarAvaliacaoNoFirestore,
   escutarAvaliacoesGrupoFirestore,
@@ -112,6 +120,7 @@ import type {
   AvaliacaoProfessorIndividual,
   BancaConsolidada,
   ConfigEnv,
+  DocenteAutorizacaoRegistro,
   ItemPersistenciaForaBD,
   NivelMSEP,
   NotaIndividualIntegrante,
@@ -335,6 +344,15 @@ export function App() {
   const [modalAdiamentoAberto, setModalAdiamentoAberto] = useState<boolean>(false);
   const [salvandoAdiamento, setSalvandoAdiamento] = useState<boolean>(false);
   const [authPronto, setAuthPronto] = useState<boolean>(false);
+  const [meuRegistroDocente, setMeuRegistroDocente] =
+    useState<DocenteAutorizacaoRegistro | null>(null);
+  const [autorizacaoDocentePronta, setAutorizacaoDocentePronta] = useState<boolean>(false);
+  const [listaDocentesAutorizados, setListaDocentesAutorizados] = useState<
+    DocenteAutorizacaoRegistro[]
+  >([]);
+  const [modalDocentesAberto, setModalDocentesAberto] = useState<boolean>(false);
+  const seedDocentesExecutadoUidRef = useRef<string | null>(null);
+  const solicitacaoRegistradaChaveRef = useRef<string | null>(null);
   const [avaliacoesFirestoreGrupo, setAvaliacoesFirestoreGrupo] = useState<
     AvaliacaoProfessorIndividual[]
   >([]);
@@ -459,25 +477,9 @@ export function App() {
     return () => window.removeEventListener('popstate', aoNavegarHistorico);
   }, []);
 
-  // Monitorar estado de autenticação Firebase dos Professores Avaliadores (Domínio Institucional @docente.senai.br obrigatório)
+  // Monitorar estado de autenticação Firebase dos Professores (Google ou E-mail/Senha, com aprovação do Titular)
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user && !isUsuarioDocenteAutorizado(user)) {
-        const emailNegado = user.email || 'conta sem e-mail';
-        try {
-          await signOut(auth);
-        } catch {
-          // Ignora erro eventual de signOut
-        }
-        setUsuarioAuth(null);
-        setAuthPronto(true);
-        setErroAuthModal(
-          `Acesso restrito a docentes com e-mail institucional ${DOMINIO_DOCENTE_AUTORIZADO}. A conta '${emailNegado}' foi desconectada.`,
-        );
-        setAuthModalAberto(true);
-        return;
-      }
-
+    const unsub = onAuthStateChanged(auth, (user) => {
       setErroAuthModal(null);
       setUsuarioAuth(user);
       setAuthPronto(true);
@@ -486,6 +488,13 @@ export function App() {
         if (user.displayName) {
           setAvaliadorEdit(user.displayName);
         }
+      } else {
+        setMeuRegistroDocente(null);
+        setAutorizacaoDocentePronta(false);
+        setListaDocentesAutorizados([]);
+        setModalDocentesAberto(false);
+        seedDocentesExecutadoUidRef.current = null;
+        solicitacaoRegistradaChaveRef.current = null;
       }
     });
     return () => unsub();
@@ -616,8 +625,68 @@ export function App() {
     ? (!euJaEncerreiMinhaAvaliacao || modoEdicaoReaberto)
     : (statusSessaoBancaAtual === 'concluida' && modoEdicaoReaberto);
 
-  // Somente a conta institucional oficial do Prof. Titular possui poderes administrativos e de consolidação
+  // Somente a conta oficial do Prof. Titular (williamdevide@gmail.com) possui poderes administrativos e aprovação
   const isProfessorTitular = isUsuarioProfessorTitular(usuarioAuth);
+  const statusAcessoDocente = resolverStatusAcessoDocente(usuarioAuth, meuRegistroDocente);
+  const isDocenteAutorizadoAtual =
+    statusAcessoDocente === 'titular' || statusAcessoDocente === 'autorizado';
+  const docentesPendentes = useMemo(
+    () => listaDocentesAutorizados.filter((d) => d.status === 'pendente'),
+    [listaDocentesAutorizados],
+  );
+
+  // Escutar autorização em tempo real em psof3_docentes_autorizados e registrar pedido pendente de novos docentes
+  useEffect(() => {
+    if (!usuarioAuth) {
+      setMeuRegistroDocente(null);
+      setAutorizacaoDocentePronta(false);
+      setListaDocentesAutorizados([]);
+      return;
+    }
+
+    if (isProfessorTitular) {
+      setAutorizacaoDocentePronta(true);
+      if (seedDocentesExecutadoUidRef.current !== usuarioAuth.uid) {
+        seedDocentesExecutadoUidRef.current = usuarioAuth.uid;
+        void garantirSeedPreAutorizadosFirestore(usuarioAuth);
+      }
+      const unsubTodos = escutarTodosDocentesAutorizadosFirestore((lista) => {
+        setListaDocentesAutorizados(lista);
+      });
+      return () => unsubTodos();
+    }
+
+    setListaDocentesAutorizados([]);
+    setAutorizacaoDocentePronta(false);
+    const emailNorm = (usuarioAuth.email || '').trim().toLowerCase();
+    const chaveSolic = `${usuarioAuth.uid}|${emailNorm}`;
+
+    const unsubMeu = escutarMeuRegistroDocenteFirestore(
+      usuarioAuth.email,
+      (reg) => {
+        setMeuRegistroDocente(reg);
+        if (
+          !reg &&
+          emailNorm &&
+          !isEmailPreAutorizadoConvidado(emailNorm) &&
+          emailNorm !== EMAIL_PROFESSOR_TITULAR
+        ) {
+          if (solicitacaoRegistradaChaveRef.current !== chaveSolic) {
+            solicitacaoRegistradaChaveRef.current = chaveSolic;
+            void registrarSolicitacaoAcessoDocente(usuarioAuth);
+          }
+        } else if (reg?.status === 'pendente' && solicitacaoRegistradaChaveRef.current !== chaveSolic) {
+          solicitacaoRegistradaChaveRef.current = chaveSolic;
+          void registrarSolicitacaoAcessoDocente(usuarioAuth);
+        }
+        setAutorizacaoDocentePronta(true);
+      },
+      () => {
+        setAutorizacaoDocentePronta(true);
+      },
+    );
+    return () => unsubMeu();
+  }, [usuarioAuth?.uid, usuarioAuth?.email, isProfessorTitular]);
 
   // Escutar avaliações consolidadas oficiais em psof3_avaliacoes_tcc no Firestore (consumido no Portal e Área Docente)
   useEffect(() => {
@@ -637,23 +706,28 @@ export function App() {
     return () => unsub();
   }, []);
 
-  // Escutar a sessão ao vivo da banca do grupo selecionado no Firestore
+  // Escutar a sessão ao vivo da banca do grupo selecionado no Firestore (somente após autorização)
   useEffect(() => {
     setSessaoAoVivo(null);
-    if (rotaAtual !== 'professor' || !grupoAtual?.id) {
+    if (rotaAtual !== 'professor' || !isDocenteAutorizadoAtual || !grupoAtual?.id) {
       return;
     }
     const unsub = escutarSessaoBanca(grupoAtual.id, (sessao) => {
       setSessaoAoVivo(sessao);
     });
     return () => unsub();
-  }, [rotaAtual, grupoAtual?.id]);
+  }, [rotaAtual, isDocenteAutorizadoAtual, grupoAtual?.id]);
 
   // Escutar rascunho individual em nuvem (psof3_rascunhos_professores) — zero localStorage
   useEffect(() => {
     setRascunhoFirestoreGrupo(null);
     setRascunhoFirestorePronto(false);
-    if (rotaAtual !== 'professor' || !grupoAtual?.id || !usuarioAuth?.uid) {
+    if (
+      rotaAtual !== 'professor' ||
+      !isDocenteAutorizadoAtual ||
+      !grupoAtual?.id ||
+      !usuarioAuth?.uid
+    ) {
       return;
     }
     const unsub = escutarRascunhoFirestore(
@@ -668,11 +742,11 @@ export function App() {
       },
     );
     return () => unsub();
-  }, [rotaAtual, grupoAtual?.id, usuarioAuth?.uid]);
+  }, [rotaAtual, isDocenteAutorizadoAtual, grupoAtual?.id, usuarioAuth?.uid]);
 
-  // Escutar TODAS as avaliações individuais em psof3_avaliacoes_professores em tempo real (fonte soberana)
+  // Escutar TODAS as avaliações individuais em psof3_avaliacoes_professores em tempo real (somente docente autorizado)
   useEffect(() => {
-    if (rotaAtual !== 'professor' || !usuarioAuth) {
+    if (rotaAtual !== 'professor' || !isDocenteAutorizadoAtual || !usuarioAuth) {
       setMapaAvaliacoesProfessores({});
       return;
     }
@@ -680,7 +754,7 @@ export function App() {
       setMapaAvaliacoesProfessores(mapa);
     });
     return () => unsub();
-  }, [rotaAtual, usuarioAuth?.uid]);
+  }, [rotaAtual, isDocenteAutorizadoAtual, usuarioAuth?.uid]);
 
   // Auto-sincronizar snapshots de bancas concluídas e backend quando divergirem (somente Prof. Titular)
   useEffect(() => {
@@ -1116,17 +1190,17 @@ export function App() {
     statusManualLiberacao,
   ]);
 
-  // Escutar avaliações do grupo selecionado no Firestore em tempo real
+  // Escutar avaliações do grupo selecionado no Firestore em tempo real (somente docente autorizado)
   useEffect(() => {
     setAvaliacoesFirestoreGrupo([]);
-    if (rotaAtual !== 'professor' || !grupoAtual?.id) {
+    if (rotaAtual !== 'professor' || !isDocenteAutorizadoAtual || !grupoAtual?.id) {
       return;
     }
     const unsub = escutarAvaliacoesGrupoFirestore(grupoAtual.id, (avaliacoes) => {
       setAvaliacoesFirestoreGrupo(avaliacoes);
     });
     return () => unsub();
-  }, [rotaAtual, grupoAtual?.id]);
+  }, [rotaAtual, isDocenteAutorizadoAtual, grupoAtual?.id]);
 
   // Recalcular notas em tempo real na Ficha MSEP
   const p1TotalEdit = Number(
@@ -2318,8 +2392,66 @@ export function App() {
         bancas={bancas}
         mapaSessoesBanca={mapaSessoesBanca}
         carregando={carregando}
-        usuarioAutenticado={Boolean(usuarioAuth)}
+        usuarioAutenticado={Boolean(usuarioAuth && isDocenteAutorizadoAtual)}
         onIrParaProfessor={() => navegarPara('professor')}
+      />
+    );
+  }
+
+  // Bloqueio estrito na rota /professor: nenhuma página docente é acessível sem login e autorização do Titular
+  if (!authPronto) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm font-semibold text-slate-300">
+        Verificando sessão de autenticação...
+      </div>
+    );
+  }
+
+  if (!usuarioAuth) {
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <AuthModal
+          aberto={true}
+          obrigatorio={true}
+          erroExterno={erroAuthModal}
+          onVoltarPortal={() => navegarPara('alunos')}
+          onSucesso={(usuario: User) => {
+            setErroAuthModal(null);
+            setUsuarioAuth(usuario);
+            setAuthModalAberto(false);
+            if (usuario.displayName) {
+              setAvaliadorEdit(usuario.displayName);
+            }
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (!autorizacaoDocentePronta) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm font-semibold text-slate-300">
+        Consultando autorização de acesso no Cloud Firestore...
+      </div>
+    );
+  }
+
+  if (!isDocenteAutorizadoAtual) {
+    return (
+      <TelaAguardandoAutorizacao
+        usuario={usuarioAuth}
+        status={
+          statusAcessoDocente === 'recusado' || statusAcessoDocente === 'revogado'
+            ? statusAcessoDocente
+            : 'pendente'
+        }
+        registro={meuRegistroDocente}
+        titularEmail={EMAIL_PROFESSOR_TITULAR}
+        onVoltarPortal={() => navegarPara('alunos')}
+        onSair={async () => {
+          await signOut(auth);
+          setUsuarioAuth(null);
+        }}
       />
     );
   }
@@ -2496,6 +2628,27 @@ export function App() {
               <span>Portal dos Alunos</span>
             </button>
 
+            {isProfessorTitular && (
+              <button
+                type="button"
+                onClick={() => setModalDocentesAberto(true)}
+                className={`relative flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition cursor-pointer ${
+                  docentesPendentes.length > 0
+                    ? 'border-amber-400 bg-amber-400/20 text-amber-200 hover:bg-amber-400/30'
+                    : 'border-slate-700 bg-slate-800 text-slate-200 hover:border-amber-400/50 hover:bg-slate-700 hover:text-white'
+                }`}
+                title="Autorizar novos professores e gerenciar convidados no Firestore"
+              >
+                <Users className="h-4 w-4 text-amber-300" />
+                <span>Docentes</span>
+                {docentesPendentes.length > 0 && (
+                  <span className="ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-black text-white animate-pulse">
+                    {docentesPendentes.length}
+                  </span>
+                )}
+              </button>
+            )}
+
             {/* Identificação do Professor Avaliador (Firebase Auth com Google e E-mail) */}
             {usuarioAuth ? (
               <div className="flex items-center gap-2.5 rounded-lg border border-emerald-500/40 bg-emerald-950/60 px-3 py-1.5 text-xs">
@@ -2522,7 +2675,7 @@ export function App() {
                       </span>
                     ) : (
                       <span className="inline-flex items-center rounded-full border border-emerald-400/60 bg-emerald-900/70 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200">
-                        Docente Avaliador
+                        Prof. Convidado
                       </span>
                     )}
                   </div>
@@ -2556,6 +2709,31 @@ export function App() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-6 space-y-5">
+        {isProfessorTitular && docentesPendentes.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-amber-400 bg-amber-50 px-4 py-3 text-xs text-amber-950 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-black text-white animate-pulse">
+                {docentesPendentes.length}
+              </span>
+              <span>
+                <strong>
+                  {docentesPendentes.length === 1
+                    ? '1 professor aguardando autorização'
+                    : `${docentesPendentes.length} professores aguardando autorização`}
+                </strong>{' '}
+                ({docentesPendentes.map((d) => d.email).join(', ')})
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalDocentesAberto(true)}
+              className="rounded-lg bg-slate-900 px-3.5 py-1.5 text-xs font-extrabold text-white transition hover:bg-slate-800 cursor-pointer"
+            >
+              Revisar e Autorizar
+            </button>
+          </div>
+        )}
+
         {/* Banner Global de Alerta de Banca Ao Vivo em Execução */}
         <BannerBancaAoVivo
           sessoesAtivas={sessoesAtivas}
@@ -6776,7 +6954,7 @@ export function App() {
 
                 {!isProfessorTitular && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-950">
-                    <strong>Modo Leitura (Docente Avaliador):</strong> Somente o Professor Titular (
+                    <strong>Modo Leitura (Prof. Convidado):</strong> Somente o Professor Titular (
                     <code>{EMAIL_PROFESSOR_TITULAR}</code>) pode editar as configurações do servidor <code>.env</code>.
                   </div>
                 )}
@@ -6903,6 +7081,17 @@ export function App() {
           </>
         )}
       </main>
+
+      {/* Modal de Gestão e Autorização Permanente de Professores Convidados (Exclusivo Titular) */}
+      {isProfessorTitular && usuarioAuth && (
+        <ModalGestaoDocentes
+          aberto={modalDocentesAberto}
+          onClose={() => setModalDocentesAberto(false)}
+          docentes={listaDocentesAutorizados}
+          titularUser={usuarioAuth}
+          onFeedback={(tipo, texto) => setAviso({ tipo, texto })}
+        />
+      )}
 
       {/* Modal de Autenticação / Identificação do Professor Avaliador */}
       <AuthModal

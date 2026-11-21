@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import {
-  DOMINIO_DOCENTE_AUTORIZADO,
+  CONVIDADOS_PRE_AUTORIZADOS_META,
   EMAIL_PROFESSOR_TITULAR,
-  isEmailDocenteSenai,
-  isUsuarioDocenteAutorizado,
+  EMAILS_CONVIDADOS_PRE_AUTORIZADOS,
+  isDocenteComAcessoLiberado,
+  isEmailFormatoValido,
+  isEmailPreAutorizadoConvidado,
   isUsuarioProfessorTitular,
+  resolverStatusAcessoDocente,
 } from '../src/services/authPolicy.ts';
 import {
   aplicarDiffConsensoNaAvaliacao,
@@ -421,70 +424,86 @@ function criarGrupoBase(): AvaliacaoGrupo {
   assert.equal(rubCorrigidas[0].nivel, 'Pleno');
 }
 
-// 5. Política institucional de acesso docente (@docente.senai.br) e Professor Titular exclusivo
+// 5. Política de acesso flexível (Titular williamdevide@gmail.com, pré-autorizados João/Edivan e convidados aprovados)
 {
-  assert.equal(DOMINIO_DOCENTE_AUTORIZADO, '@docente.senai.br');
-  assert.equal(EMAIL_PROFESSOR_TITULAR, 'william.komel@docente.senai.br');
+  assert.equal(EMAIL_PROFESSOR_TITULAR, 'williamdevide@gmail.com');
+  assert.deepEqual([...EMAILS_CONVIDADOS_PRE_AUTORIZADOS], [
+    'edivan.andrade2025@gmail.com',
+    'joaopaulooliveiira@hotmail.com',
+  ]);
+  assert.equal(CONVIDADOS_PRE_AUTORIZADOS_META.length, 2);
 
-  assert.equal(isEmailDocenteSenai('william.komel@docente.senai.br'), true);
-  assert.equal(isEmailDocenteSenai('  Edivan.Souza@DOCENTE.SENAI.BR '), true);
-  assert.equal(isEmailDocenteSenai('williamdevide@gmail.com'), false);
-  assert.equal(isEmailDocenteSenai('aluno@aluno.senai.br'), false);
-  assert.equal(isEmailDocenteSenai('docente.senai.br@gmail.com'), false);
-  assert.equal(isEmailDocenteSenai(null), false);
+  assert.equal(isEmailFormatoValido('williamdevide@gmail.com'), true);
+  assert.equal(isEmailFormatoValido('edivan@docente.senai.br'), true);
+  assert.equal(isEmailFormatoValido('invalido'), false);
 
+  assert.equal(isEmailPreAutorizadoConvidado('Edivan.Andrade2025@GMAIL.COM'), true);
+  assert.equal(isEmailPreAutorizadoConvidado('joaopaulooliveiira@hotmail.com'), true);
+  assert.equal(isEmailPreAutorizadoConvidado('outro@gmail.com'), false);
+
+  // Titular exclusivo: williamdevide@gmail.com verificado
   assert.equal(
-    isUsuarioDocenteAutorizado({
-      email: 'professor@docente.senai.br',
-      emailVerified: true,
-    }),
+    isUsuarioProfessorTitular({ email: 'WilliamDevide@gmail.com', emailVerified: true }),
     true,
   );
   assert.equal(
-    isUsuarioDocenteAutorizado({
-      email: 'professor@docente.senai.br',
-      emailVerified: false,
-    }),
+    isUsuarioProfessorTitular({ email: 'williamdevide@gmail.com', emailVerified: false }),
     false,
   );
   assert.equal(
-    isUsuarioDocenteAutorizado({
-      email: 'williamdevide@gmail.com',
-      emailVerified: true,
-    }),
+    isUsuarioProfessorTitular({ email: 'edivan.andrade2025@gmail.com', emailVerified: true }),
+    false,
+  );
+  assert.equal(
+    resolverStatusAcessoDocente({ email: 'williamdevide@gmail.com', emailVerified: true }, null),
+    'titular',
+  );
+  assert.equal(
+    resolverStatusAcessoDocente({ email: 'williamdevide@gmail.com', emailVerified: false }, null),
+    'pendente',
+  );
+
+  // Pré-autorizados João e Edivan entram sem precisar aguardar, mas respeitam revogação no Firestore
+  assert.equal(
+    resolverStatusAcessoDocente({ email: 'edivan.andrade2025@gmail.com', emailVerified: true }, null),
+    'autorizado',
+  );
+  assert.equal(
+    resolverStatusAcessoDocente({ email: 'joaopaulooliveiira@hotmail.com', emailVerified: false }, null),
+    'autorizado',
+  );
+  assert.equal(
+    resolverStatusAcessoDocente(
+      { email: 'edivan.andrade2025@gmail.com', emailVerified: true },
+      { status: 'revogado' },
+    ),
+    'revogado',
+  );
+  assert.equal(
+    isDocenteComAcessoLiberado(
+      { email: 'edivan.andrade2025@gmail.com', emailVerified: true },
+      { status: 'revogado' },
+    ),
     false,
   );
 
-  // Apenas william.komel@docente.senai.br (e-mail verificado) é Professor Titular
-  assert.equal(
-    isUsuarioProfessorTitular({
-      email: 'William.Komel@docente.senai.br',
-      emailVerified: true,
-    }),
-    true,
-  );
-  assert.equal(
-    isUsuarioProfessorTitular({
-      email: 'william.komel@docente.senai.br',
-      emailVerified: false,
-    }),
-    false,
-  );
-  assert.equal(
-    isUsuarioProfessorTitular({
-      email: 'outro.docente@docente.senai.br',
-      emailVerified: true,
-    }),
-    false,
-  );
-  assert.equal(
-    isUsuarioProfessorTitular({
-      email: 'williamdevide@gmail.com',
-      emailVerified: true,
-    }),
-    false,
-  );
-  assert.equal(isUsuarioProfessorTitular(null), false);
+  // Qualquer novo @gmail.com ou @docente.senai.br começa como 'pendente' até aprovação única
+  const novoGmail = { email: 'novo.professor@gmail.com', emailVerified: true };
+  const novoSenai = { email: 'docente.novo@docente.senai.br', emailVerified: true };
+  assert.equal(resolverStatusAcessoDocente(novoGmail, null), 'pendente');
+  assert.equal(resolverStatusAcessoDocente(novoSenai, { status: 'pendente' }), 'pendente');
+  assert.equal(isDocenteComAcessoLiberado(novoGmail, null), false);
+
+  // Uma vez autorizado no Firestore, o acesso como Convidado fica liberado
+  assert.equal(resolverStatusAcessoDocente(novoGmail, { status: 'autorizado' }), 'autorizado');
+  assert.equal(resolverStatusAcessoDocente(novoSenai, { status: 'autorizado' }), 'autorizado');
+  assert.equal(isDocenteComAcessoLiberado(novoGmail, { status: 'autorizado' }), true);
+  assert.equal(isDocenteComAcessoLiberado(novoSenai, { status: 'autorizado' }), true);
+
+  // Recusa mantém bloqueio
+  assert.equal(resolverStatusAcessoDocente(novoGmail, { status: 'recusado' }), 'recusado');
+  assert.equal(isDocenteComAcessoLiberado(novoGmail, { status: 'recusado' }), false);
+  assert.equal(resolverStatusAcessoDocente(null, null), 'nao_autenticado');
 }
 
 console.log('✅ Todos os testes unitários (calculoBanca + authPolicy) passaram com 100% de exatidão!');

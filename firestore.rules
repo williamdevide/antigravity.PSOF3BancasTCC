@@ -4,74 +4,93 @@ rules_version = '2';
 // Modelo de Dados Presumido (Assumed Data Model)
 // ===============================================================
 //
-// 1. Coleção: psof3_sessoes_banca/{grupoId}
-//    Documento representativo da sessão ao vivo da banca examinadora de cada grupo de TCC.
-//    Campos principais:
-//      - grupo_id: string (ID único do grupo / slug)
-//      - turma: string (ex: 'I2DEV-A' ou 'I2DEV-B')
-//      - projeto: string (Nome do projeto do TCC)
-//      - status: string ('aguardando_inicio' | 'pendente' | 'em_andamento' | 'concluida')
-//      - titular_uid: string (UID do professor titular responsável pela banca)
-//      - titular_nome: string (Nome de exibição do professor titular)
-//      - titular_email: string (Opcional - e-mail institucional do titular)
-//      - iniciado_em: string | null (ISO 8601 do início da contagem do cronômetro)
-//      - encerrado_em: string | null (ISO 8601 do término oficial)
-//      - duracao_segundos: number (Tempo total acumulado em segundos)
-//      - duracao_formatada: string (Tempo formatado mm:ss)
-//      - avaliadores_presentes: list (Nomes/UIDs dos avaliadores presentes na sala)
-//      - avaliacoes_concluidas: list (UIDs dos professores que finalizaram a avaliação)
-//      - contingencia_um_avaliador: bool (Opcional - ativação de contingência)
-//      - justificativa_contingencia: string (Opcional)
-//      - media_final_consolidada: number (Opcional - média final consolidada)
-//      - status_liberacao_final: string (Opcional - resultado final consolidado)
-//      - banca_consolidada: map (Opcional - espelho dos cálculos e notas consolidadas)
-//      - possui_pendencias, pendencias_descricao, pendencias_cumpridas,
-//        pendencias_cumpridas_em, pendencias_atualizado_por (Opcionais - pendências)
-//      - revisao_pos_banca, adiamento_data_futura, historico_pendencias (Opcionais)
-//      - atualizado_em: string (ISO 8601 do timestamp da última atualização)
+// Este arquivo de regras de segurança pressupõe as seguintes estruturas no Cloud Firestore:
 //
-// 2. Coleção: psof3_avaliacoes_professores/{docId}
+// 1. Coleção: psof3_docentes_autorizados/{emailDocId}
+//    ID do documento: endereço de e-mail normalizado em minúsculas (ex.: 'edivan.andrade2025@gmail.com')
+//    Controla solicitações de acesso, pré-autorizações, aprovações permanentes, recusas e revogações.
+//    Campos:
+//      - email: string (Opcional na criação pelo Titular, obrigatório e igual ao token na auto-solicitação; 3..254 chars, imutável para usuário comum)
+//      - uid: string | null (Obrigatório e igual a request.auth.uid na auto-solicitação/atualização pendente; <= 128 chars)
+//      - nome: string | null (Nome de exibição do docente; <= 150 chars)
+//      - foto_url: string | null (URL http/https da foto de perfil ou string vazia; <= 1024 chars)
+//      - status: string (Obrigatório: 'autorizado' | 'pendente' | 'recusado' | 'revogado')
+//      - provedor, origem: string | null (Opcionais - provedor de login / origem do cadastro; <= 64 chars)
+//      - email_verificado, pre_autorizado: bool | null (Opcionais)
+//      - criado_em, solicitado_em, ultimo_acesso_em, atualizado_em,
+//        autorizado_em, aprovado_em, recusado_em, revogado_em, decidido_em: string | timestamp | null (<= 64 chars se string)
+//      - criado_por, atualizado_por, autorizado_por, aprovado_por,
+//        recusado_por, revogado_por, decidido_por: string | null (Opcionais; <= 254 chars)
+//      - observacao, motivo: string | null (Opcionais; <= 500 chars)
+//
+// 2. Coleção: psof3_sessoes_banca/{grupoId}
+//    ID do documento: {grupoId} (slug do grupo de TCC, ex.: 'I2DEV-B_Grupo08')
+//    Sessão ao vivo da banca examinadora, cronômetro, consolidação e pendências pós-banca.
+//    Campos:
+//      - status: string (Obrigatório: 'aguardando_inicio' | 'pendente' | 'em_andamento' | 'concluida')
+//      - grupo_id: string (<= 128 chars), turma: string (<= 64 chars), projeto: string (<= 300 chars)
+//      - titular_uid: string (<= 128 chars), titular_nome: string (<= 150 chars), titular_email: string (<= 254 chars)
+//      - iniciado_em, encerrado_em, pendencias_cumpridas_em, reaberto_em, atualizado_em: string | timestamp | null
+//      - duracao_segundos: number (0..864000), duracao_formatada: string (<= 32 chars)
+//      - avaliadores_presentes: list (<= 20 itens), avaliacoes_concluidas: list (<= 20 itens)
+//      - contingencia_um_avaliador: bool, justificativa_contingencia: string | null (<= 5000 chars)
+//      - media_final_consolidada: number (0..100), status_liberacao_final: string | null (<= 64 chars)
+//      - banca_consolidada: map | null (<= 30 chaves)
+//      - possui_pendencias, pendencias_cumpridas: bool
+//      - pendencias_descricao: string | null (<= 20000 chars), pendencias_atualizado_por, reaberto_por: string | null (<= 150 chars)
+//      - revisao_pos_banca: map | null (<= 20 chaves), adiamento_data_futura: map | null (<= 20 chaves)
+//      - historico_pendencias: list (<= 200 itens)
+//
+// 3. Coleção: psof3_avaliacoes_professores/{docId}
 //    ID do documento: {grupo_id}_{professor_uid}
-//    Avaliação individual emitida por cada professor docente para a banca.
-//    Campos principais:
-//      - grupo_id: string (Obrigatório para vínculo do documento)
-//      - professor_uid: string (UID do autor da avaliação, igual ao sufixo de docId)
-//      - professor_nome: string
-//      - professor_email: string
-//      - rubricas: list (Pontuação detalhada dos itens MSEP)
-//      - integrantes_notas: list (Notas individuais de cada integrante)
-//      - p1_total, p2_total, p3_grupo_base, p3_total, nota_final_grupo: number
-//      - parecer_tecnico: string (Considerações do professor)
-//      - concluido: bool (Opcional - true quando o professor encerra sua avaliação)
-//      - status_liberacao_manual: string | null (Opcional)
-//      - atualizado_em: string (ISO 8601)
+//    Avaliação individual emitida por cada professor docente autorizado para a banca.
+//    Campos:
+//      - grupo_id: string (Obrigatório, imutável na atualização; 1..128 chars)
+//      - professor_uid: string (Obrigatório, igual ao sufixo de docId, imutável na atualização; 1..128 chars)
+//      - professor_nome: string | null (<= 150 chars), professor_email: string | null (<= 254 chars)
+//      - rubricas: list (<= 50 itens), integrantes_notas: list (<= 20 itens)
+//      - p1_total, p2_total, p3_grupo_base, p3_total, nota_final_grupo: number (0..100)
+//      - parecer_tecnico: string | null (<= 50000 chars)
+//      - concluido: bool | null, status_liberacao_manual: string | null (<= 64 chars)
+//      - atualizado_em: string | timestamp | null
 //
-// 3. Coleção: psof3_rascunhos_professores/{docId}
+// 4. Coleção: psof3_rascunhos_professores/{docId}
 //    ID do documento: {grupo_id}_{professor_uid}
 //    Rascunhos individuais de avaliação salvos pelos docentes antes da conclusão.
-//    Campos principais:
-//      - grupo_id: string (Obrigatório para vínculo do documento)
-//      - professor_uid: string (UID do docente proprietário, igual ao sufixo de docId)
-//      - rubricas: list
-//      - integrantes_notas: list
-//      - parecer_tecnico: string
-//      - status_liberacao_manual: string | null (Opcional)
-//      - auditado_em_base: string | null (Opcional)
-//      - salvo_em / atualizado_em: string (ISO 8601)
+//    Campos:
+//      - grupo_id: string (Obrigatório, imutável na atualização; 1..128 chars)
+//      - professor_uid: string (Obrigatório, igual ao sufixo de docId, imutável na atualização; 1..128 chars)
+//      - professor_email: string | null (<= 254 chars)
+//      - rubricas: list (<= 50 itens), integrantes_notas: list (<= 20 itens)
+//      - parecer_tecnico: string | null (<= 50000 chars)
+//      - status_liberacao_manual: string | null (<= 64 chars)
+//      - auditado_em_base, salvo_em, atualizado_em: string | timestamp | null
 //
-// 4. Coleção: psof3_analises_automaticas/{grupoId}
+// 5. Coleção: psof3_analises_automaticas/{grupoId}
+//    ID do documento: {grupoId}
 //    Auditoria prévia determinística calculada pelo backend e espelhada no Firestore.
-//    Campos principais: grupo_id, turma, projeto, tema, integrantes, data_banca,
-//    horario, ordem_apresentacao, p1_total, p2_total, p3_grupo_base,
-//    media_nota_final_grupo, rubricas, integrantes_notas, parecer_tecnico,
-//    status_liberacao_nota, atualizado_em.
+//    Campos:
+//      - grupo_id: string (Obrigatório e igual a grupoId; 1..128 chars)
+//      - turma: string (<= 64 chars), projeto: string (<= 300 chars), tema: string (<= 1000 chars)
+//      - integrantes: list (<= 20 itens), data_banca, horario, status_liberacao_nota: string (<= 64 chars)
+//      - ordem_apresentacao: number (0..1000)
+//      - p1_total, p2_total, p3_grupo_base, media_nota_final_grupo: number (0..100)
+//      - rubricas: list (<= 50 itens), integrantes_notas: list (<= 20 itens)
+//      - parecer_tecnico: string | null (<= 50000 chars), atualizado_em: string | timestamp | null
 //
-// 5. Coleção: psof3_avaliacoes_tcc/{docId}
-//    Registros consolidados gerados pelo backend/serviço FastAPI para relatórios e backup.
-//    Campos principais: id, turma, grupo, projeto, tema, data_banca, horario,
-//    integrantes, entregue_na_pasta, status_avaliacao, avaliador, p1_total,
-//    p2_total, p3_grupo_base, media_nota_final_grupo, parecer_tecnico,
-//    atualizado_em, payload_json.
+// 6. Coleção: psof3_avaliacoes_tcc/{docId}
+//    ID do documento: {docId} (igual a id do grupo)
+//    Registros consolidados gerados pelo frontend/backend FastAPI para consulta pública e backup.
+//    Campos:
+//      - id: string (Obrigatório e igual a docId; 1..128 chars)
+//      - turma, grupo, data_banca, horario, status_avaliacao, status_liberacao_nota: string (<= 64 chars)
+//      - projeto: string (<= 300 chars), tema: string (<= 1000 chars), avaliador: string (<= 150 chars)
+//      - integrantes: list (<= 20 itens), entregue_na_pasta, banca_realizada: bool
+//      - p1_total, p2_total, p3_grupo_base, media_nota_final_grupo: number (0..100)
+//      - adiamento_data_futura, revisao_pos_banca: map | null (<= 20 chaves)
+//      - historico_pendencias: list (<= 200 itens)
+//      - parecer_tecnico: string | null (<= 50000 chars), atualizado_em: string | timestamp | null
+//      - payload_json: string (<= 900000 chars)
 //
 // ===============================================================
 
@@ -79,108 +98,626 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // ===============================================================
-    // Funções Auxiliares Globais (Security Helpers)
+    // Funções Auxiliares Globais (Security & Validation Helpers)
     // ===============================================================
 
-    // Verifica se o usuário está autenticado com e-mail verificado
-    // pertencente exclusivamente ao domínio docente oficial do SENAI (@docente.senai.br).
-    function isSenaiDocente() {
-      return request.auth != null
+    // Verifica se há usuário autenticado no Firebase Auth.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Verifica se há usuário autenticado com e-mail válido no token JWT.
+    function isAuthenticatedWithEmail() {
+      return isAuthenticated()
+        && 'email' in request.auth.token
         && request.auth.token.email != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email.lower().matches('^[^@\\s]+@docente\\.senai\\.br$');
+        && request.auth.token.email is string
+        && request.auth.token.email.size() > 0;
     }
 
-    // Verifica se o usuário autenticado é o Professor Titular autorizado
-    // (exige aprovação prévia em isSenaiDocente()).
+    // 1. Professor Titular único: exige e-mail verificado e igual a williamdevide@gmail.com.
     function isProfessorTitular() {
-      return isSenaiDocente()
-        && request.auth.token.email.lower() == 'william.komel@docente.senai.br';
+      return isAuthenticatedWithEmail()
+        && 'email_verified' in request.auth.token
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() == 'williamdevide@gmail.com';
+    }
+
+    // 2. Professores Convidados Pré-Autorizados (não exige @docente.senai.br nem email_verified,
+    //    permitindo revogação imediata caso exista registro com status != 'autorizado').
+    function isPreAuthorizedProfessor() {
+      return isAuthenticatedWithEmail()
+        && request.auth.token.email.lower() in [
+          'edivan.andrade2025@gmail.com',
+          'joaopaulooliveiira@hotmail.com'
+        ]
+        && (
+          !exists(/databases/$(database)/documents/psof3_docentes_autorizados/$(request.auth.token.email.lower()))
+          || get(/databases/$(database)/documents/psof3_docentes_autorizados/$(request.auth.token.email.lower())).data.status == 'autorizado'
+        );
+    }
+
+    // 3. Docentes Aprovados no Registro permanente psof3_docentes_autorizados.
+    //    Bloqueia o e-mail do Titular sem verificação para impedir elevação sem email_verified.
+    function isApprovedInRegistry() {
+      return isAuthenticatedWithEmail()
+        && request.auth.token.email.lower() != 'williamdevide@gmail.com'
+        && exists(/databases/$(database)/documents/psof3_docentes_autorizados/$(request.auth.token.email.lower()))
+        && get(/databases/$(database)/documents/psof3_docentes_autorizados/$(request.auth.token.email.lower())).data.status == 'autorizado';
+    }
+
+    // 4. Função unificada para professores autorizados (Titular, Pré-autorizado ou Aprovado).
+    function isAuthorizedDocente() {
+      return isProfessorTitular()
+        || isPreAuthorizedProfessor()
+        || isApprovedInRegistry();
+    }
+
+    // Verifica se campos imutáveis permaneceram intactos na atualização.
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Valida formato básico de e-mail.
+    function isValidEmail(email) {
+      return email is string
+        && email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    }
+
+    // Valida URL iniciada por https:// ou http://.
+    function isValidUrl(url) {
+      return url is string
+        && (url.matches('^https://.*') || url.matches('^http://.*'));
+    }
+
+    // Valida string opcional ou nula com limite máximo de tamanho (proteção anti-DoS).
+    function isValidOptionalNullableString(data, field, maxLen) {
+      return !(field in data)
+        || data[field] == null
+        || (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    // Valida campo de data opcional/nulo (string ISO <= 64 chars ou timestamp nativo).
+    function isValidOptionalDateOrTimestamp(data, field) {
+      return !(field in data)
+        || data[field] == null
+        || (data[field] is string && data[field].size() <= 64)
+        || data[field] is timestamp;
+    }
+
+    // Valida número opcional/nulo dentro de faixa permitida.
+    function isValidOptionalNumberRange(data, field, minVal, maxVal) {
+      return !(field in data)
+        || data[field] == null
+        || (data[field] is number && data[field] >= minVal && data[field] <= maxVal);
+    }
+
+    // Valida booleano opcional/nulo.
+    function isValidOptionalBool(data, field) {
+      return !(field in data)
+        || data[field] == null
+        || data[field] is bool;
+    }
+
+    // Valida lista opcional com limite máximo de itens (proteção contra exaustão).
+    function isValidOptionalList(data, field, maxSize) {
+      return !(field in data)
+        || data[field] == null
+        || (data[field] is list && data[field].size() <= maxSize);
+    }
+
+    // Valida mapa opcional com limite máximo de chaves.
+    function isValidOptionalMap(data, field, maxKeys) {
+      return !(field in data)
+        || data[field] == null
+        || (data[field] is map && data[field].keys().size() <= maxKeys);
     }
 
     // ===============================================================
-    // 1. Coleção: psof3_sessoes_banca (Sessões e Cronômetro Ao Vivo)
+    // Validadores de Domínio (Aplicados em create e update)
+    // ===============================================================
+
+    // Valida o documento da coleção psof3_docentes_autorizados.
+    function isValidDocenteAutorizado(data, emailDocId) {
+      return data.keys().hasOnly([
+          'email',
+          'uid',
+          'nome',
+          'foto_url',
+          'status',
+          'provedor',
+          'origem',
+          'email_verificado',
+          'pre_autorizado',
+          'criado_em',
+          'criado_por',
+          'solicitado_em',
+          'ultimo_acesso_em',
+          'atualizado_em',
+          'atualizado_por',
+          'autorizado_em',
+          'autorizado_por',
+          'aprovado_em',
+          'aprovado_por',
+          'recusado_em',
+          'recusado_por',
+          'revogado_em',
+          'revogado_por',
+          'decidido_em',
+          'decidido_por',
+          'observacao',
+          'motivo'
+        ])
+        && emailDocId is string
+        && emailDocId.size() >= 3
+        && emailDocId.size() <= 254
+        && 'status' in data
+        && data.status is string
+        && data.status in ['autorizado', 'pendente', 'recusado', 'revogado']
+        && (!('email' in data) || (isValidEmail(data.email) && data.email.size() <= 254 && data.email.lower() == emailDocId.lower()))
+        && (!('uid' in data) || data.uid == null || (data.uid is string && data.uid.size() <= 128))
+        && (!('nome' in data) || data.nome == null || (data.nome is string && data.nome.size() <= 150))
+        && (!('foto_url' in data) || data.foto_url == null || (data.foto_url is string && data.foto_url.size() <= 1024 && (data.foto_url == '' || isValidUrl(data.foto_url))))
+        && isValidOptionalNullableString(data, 'provedor', 64)
+        && isValidOptionalNullableString(data, 'origem', 64)
+        && isValidOptionalBool(data, 'email_verificado')
+        && isValidOptionalBool(data, 'pre_autorizado')
+        && isValidOptionalDateOrTimestamp(data, 'criado_em')
+        && isValidOptionalNullableString(data, 'criado_por', 254)
+        && isValidOptionalDateOrTimestamp(data, 'solicitado_em')
+        && isValidOptionalDateOrTimestamp(data, 'ultimo_acesso_em')
+        && isValidOptionalDateOrTimestamp(data, 'atualizado_em')
+        && isValidOptionalNullableString(data, 'atualizado_por', 254)
+        && isValidOptionalDateOrTimestamp(data, 'autorizado_em')
+        && isValidOptionalNullableString(data, 'autorizado_por', 254)
+        && isValidOptionalDateOrTimestamp(data, 'aprovado_em')
+        && isValidOptionalNullableString(data, 'aprovado_por', 254)
+        && isValidOptionalDateOrTimestamp(data, 'recusado_em')
+        && isValidOptionalNullableString(data, 'recusado_por', 254)
+        && isValidOptionalDateOrTimestamp(data, 'revogado_em')
+        && isValidOptionalNullableString(data, 'revogado_por', 254)
+        && isValidOptionalDateOrTimestamp(data, 'decidido_em')
+        && isValidOptionalNullableString(data, 'decidido_por', 254)
+        && isValidOptionalNullableString(data, 'observacao', 500)
+        && isValidOptionalNullableString(data, 'motivo', 500);
+    }
+
+    // Valida o documento da coleção psof3_sessoes_banca.
+    function isValidSessaoBanca(data) {
+      return data.keys().hasOnly([
+          'grupo_id',
+          'turma',
+          'projeto',
+          'status',
+          'titular_uid',
+          'titular_nome',
+          'titular_email',
+          'iniciado_em',
+          'encerrado_em',
+          'duracao_segundos',
+          'duracao_formatada',
+          'avaliadores_presentes',
+          'avaliacoes_concluidas',
+          'contingencia_um_avaliador',
+          'justificativa_contingencia',
+          'media_final_consolidada',
+          'status_liberacao_final',
+          'banca_consolidada',
+          'possui_pendencias',
+          'pendencias_descricao',
+          'pendencias_cumpridas',
+          'pendencias_cumpridas_em',
+          'pendencias_atualizado_por',
+          'revisao_pos_banca',
+          'adiamento_data_futura',
+          'historico_pendencias',
+          'reaberto_por',
+          'reaberto_em',
+          'atualizado_em'
+        ])
+        && 'status' in data
+        && data.status is string
+        && data.status in ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida']
+        && isValidOptionalNullableString(data, 'grupo_id', 128)
+        && isValidOptionalNullableString(data, 'turma', 64)
+        && isValidOptionalNullableString(data, 'projeto', 300)
+        && isValidOptionalNullableString(data, 'titular_uid', 128)
+        && isValidOptionalNullableString(data, 'titular_nome', 150)
+        && isValidOptionalNullableString(data, 'titular_email', 254)
+        && isValidOptionalDateOrTimestamp(data, 'iniciado_em')
+        && isValidOptionalDateOrTimestamp(data, 'encerrado_em')
+        && isValidOptionalNumberRange(data, 'duracao_segundos', 0, 864000)
+        && isValidOptionalNullableString(data, 'duracao_formatada', 32)
+        && isValidOptionalList(data, 'avaliadores_presentes', 20)
+        && isValidOptionalList(data, 'avaliacoes_concluidas', 20)
+        && isValidOptionalBool(data, 'contingencia_um_avaliador')
+        && isValidOptionalNullableString(data, 'justificativa_contingencia', 5000)
+        && isValidOptionalNumberRange(data, 'media_final_consolidada', 0, 100)
+        && isValidOptionalNullableString(data, 'status_liberacao_final', 64)
+        && isValidOptionalMap(data, 'banca_consolidada', 30)
+        && isValidOptionalBool(data, 'possui_pendencias')
+        && isValidOptionalNullableString(data, 'pendencias_descricao', 20000)
+        && isValidOptionalBool(data, 'pendencias_cumpridas')
+        && isValidOptionalDateOrTimestamp(data, 'pendencias_cumpridas_em')
+        && isValidOptionalNullableString(data, 'pendencias_atualizado_por', 150)
+        && isValidOptionalMap(data, 'revisao_pos_banca', 20)
+        && isValidOptionalMap(data, 'adiamento_data_futura', 20)
+        && isValidOptionalList(data, 'historico_pendencias', 200)
+        && isValidOptionalNullableString(data, 'reaberto_por', 150)
+        && isValidOptionalDateOrTimestamp(data, 'reaberto_em')
+        && isValidOptionalDateOrTimestamp(data, 'atualizado_em');
+    }
+
+    // Valida o documento da coleção psof3_avaliacoes_professores.
+    function isValidAvaliacaoProfessor(data) {
+      return data.keys().hasOnly([
+          'grupo_id',
+          'professor_uid',
+          'professor_nome',
+          'professor_email',
+          'rubricas',
+          'integrantes_notas',
+          'p1_total',
+          'p2_total',
+          'p3_grupo_base',
+          'p3_total',
+          'nota_final_grupo',
+          'parecer_tecnico',
+          'concluido',
+          'status_liberacao_manual',
+          'atualizado_em'
+        ])
+        && 'grupo_id' in data
+        && data.grupo_id is string
+        && data.grupo_id.size() > 0
+        && data.grupo_id.size() <= 128
+        && 'professor_uid' in data
+        && data.professor_uid is string
+        && data.professor_uid.size() > 0
+        && data.professor_uid.size() <= 128
+        && isValidOptionalNullableString(data, 'professor_nome', 150)
+        && isValidOptionalNullableString(data, 'professor_email', 254)
+        && isValidOptionalList(data, 'rubricas', 50)
+        && isValidOptionalList(data, 'integrantes_notas', 20)
+        && isValidOptionalNumberRange(data, 'p1_total', 0, 100)
+        && isValidOptionalNumberRange(data, 'p2_total', 0, 100)
+        && isValidOptionalNumberRange(data, 'p3_grupo_base', 0, 100)
+        && isValidOptionalNumberRange(data, 'p3_total', 0, 100)
+        && isValidOptionalNumberRange(data, 'nota_final_grupo', 0, 100)
+        && isValidOptionalNullableString(data, 'parecer_tecnico', 50000)
+        && isValidOptionalBool(data, 'concluido')
+        && isValidOptionalNullableString(data, 'status_liberacao_manual', 64)
+        && isValidOptionalDateOrTimestamp(data, 'atualizado_em');
+    }
+
+    // Valida o documento da coleção psof3_rascunhos_professores.
+    function isValidRascunhoProfessor(data) {
+      return data.keys().hasOnly([
+          'grupo_id',
+          'professor_uid',
+          'professor_email',
+          'rubricas',
+          'integrantes_notas',
+          'parecer_tecnico',
+          'status_liberacao_manual',
+          'auditado_em_base',
+          'salvo_em',
+          'atualizado_em'
+        ])
+        && 'grupo_id' in data
+        && data.grupo_id is string
+        && data.grupo_id.size() > 0
+        && data.grupo_id.size() <= 128
+        && 'professor_uid' in data
+        && data.professor_uid is string
+        && data.professor_uid.size() > 0
+        && data.professor_uid.size() <= 128
+        && isValidOptionalNullableString(data, 'professor_email', 254)
+        && isValidOptionalList(data, 'rubricas', 50)
+        && isValidOptionalList(data, 'integrantes_notas', 20)
+        && isValidOptionalNullableString(data, 'parecer_tecnico', 50000)
+        && isValidOptionalNullableString(data, 'status_liberacao_manual', 64)
+        && isValidOptionalDateOrTimestamp(data, 'auditado_em_base')
+        && isValidOptionalDateOrTimestamp(data, 'salvo_em')
+        && isValidOptionalDateOrTimestamp(data, 'atualizado_em');
+    }
+
+    // Valida o documento da coleção psof3_analises_automaticas.
+    function isValidAnaliseAutomatica(data, grupoId) {
+      return data.keys().hasOnly([
+          'grupo_id',
+          'turma',
+          'projeto',
+          'tema',
+          'integrantes',
+          'data_banca',
+          'horario',
+          'ordem_apresentacao',
+          'p1_total',
+          'p2_total',
+          'p3_grupo_base',
+          'media_nota_final_grupo',
+          'rubricas',
+          'integrantes_notas',
+          'parecer_tecnico',
+          'status_liberacao_nota',
+          'atualizado_em'
+        ])
+        && 'grupo_id' in data
+        && data.grupo_id is string
+        && data.grupo_id == grupoId
+        && data.grupo_id.size() > 0
+        && data.grupo_id.size() <= 128
+        && isValidOptionalNullableString(data, 'turma', 64)
+        && isValidOptionalNullableString(data, 'projeto', 300)
+        && isValidOptionalNullableString(data, 'tema', 1000)
+        && isValidOptionalList(data, 'integrantes', 20)
+        && isValidOptionalNullableString(data, 'data_banca', 64)
+        && isValidOptionalNullableString(data, 'horario', 64)
+        && isValidOptionalNumberRange(data, 'ordem_apresentacao', 0, 1000)
+        && isValidOptionalNumberRange(data, 'p1_total', 0, 100)
+        && isValidOptionalNumberRange(data, 'p2_total', 0, 100)
+        && isValidOptionalNumberRange(data, 'p3_grupo_base', 0, 100)
+        && isValidOptionalNumberRange(data, 'media_nota_final_grupo', 0, 100)
+        && isValidOptionalList(data, 'rubricas', 50)
+        && isValidOptionalList(data, 'integrantes_notas', 20)
+        && isValidOptionalNullableString(data, 'parecer_tecnico', 50000)
+        && isValidOptionalNullableString(data, 'status_liberacao_nota', 64)
+        && isValidOptionalDateOrTimestamp(data, 'atualizado_em');
+    }
+
+    // Valida o documento da coleção psof3_avaliacoes_tcc.
+    function isValidAvaliacaoTcc(data, docId) {
+      return data.keys().hasOnly([
+          'id',
+          'turma',
+          'grupo',
+          'projeto',
+          'tema',
+          'data_banca',
+          'horario',
+          'integrantes',
+          'entregue_na_pasta',
+          'status_avaliacao',
+          'banca_realizada',
+          'avaliador',
+          'p1_total',
+          'p2_total',
+          'p3_grupo_base',
+          'media_nota_final_grupo',
+          'status_liberacao_nota',
+          'adiamento_data_futura',
+          'revisao_pos_banca',
+          'historico_pendencias',
+          'parecer_tecnico',
+          'atualizado_em',
+          'payload_json'
+        ])
+        && 'id' in data
+        && data.id is string
+        && data.id == docId
+        && data.id.size() > 0
+        && data.id.size() <= 128
+        && isValidOptionalNullableString(data, 'turma', 64)
+        && isValidOptionalNullableString(data, 'grupo', 64)
+        && isValidOptionalNullableString(data, 'projeto', 300)
+        && isValidOptionalNullableString(data, 'tema', 1000)
+        && isValidOptionalNullableString(data, 'data_banca', 64)
+        && isValidOptionalNullableString(data, 'horario', 64)
+        && isValidOptionalList(data, 'integrantes', 20)
+        && isValidOptionalBool(data, 'entregue_na_pasta')
+        && isValidOptionalNullableString(data, 'status_avaliacao', 64)
+        && isValidOptionalBool(data, 'banca_realizada')
+        && isValidOptionalNullableString(data, 'avaliador', 150)
+        && isValidOptionalNumberRange(data, 'p1_total', 0, 100)
+        && isValidOptionalNumberRange(data, 'p2_total', 0, 100)
+        && isValidOptionalNumberRange(data, 'p3_grupo_base', 0, 100)
+        && isValidOptionalNumberRange(data, 'media_nota_final_grupo', 0, 100)
+        && isValidOptionalNullableString(data, 'status_liberacao_nota', 64)
+        && isValidOptionalMap(data, 'adiamento_data_futura', 20)
+        && isValidOptionalMap(data, 'revisao_pos_banca', 20)
+        && isValidOptionalList(data, 'historico_pendencias', 200)
+        && isValidOptionalNullableString(data, 'parecer_tecnico', 50000)
+        && isValidOptionalDateOrTimestamp(data, 'atualizado_em')
+        && isValidOptionalNullableString(data, 'payload_json', 900000);
+    }
+
+    // ===============================================================
+    // 1. Coleção: psof3_docentes_autorizados (Registro de Autorização)
+    // ===============================================================
+    // Leitura: Professor Titular pode listar/ler todos; usuário autenticado só lê
+    //          o próprio documento pelo emailDocId (bloqueia listagem de PII).
+    // Criação:
+    //   - Professor Titular: cria com qualquer status permitido;
+    //   - Usuário comum: só cria o próprio documento estritamente como 'pendente'.
+    // Atualização:
+    //   - Professor Titular: aprova, recusa, revoga ou redefine status permitido;
+    //   - Usuário comum: só atualiza metadados próprios enquanto status == 'pendente',
+    //     sem auto-aprovação e sem reabrir 'recusado' ou 'revogado'.
+    // Exclusão: Exclusiva do Professor Titular.
+    match /psof3_docentes_autorizados/{emailDocId} {
+      allow read: if isProfessorTitular()
+        || (isAuthenticatedWithEmail() && emailDocId == request.auth.token.email.lower());
+
+      allow create: if isValidDocenteAutorizado(request.resource.data, emailDocId)
+        && (
+          isProfessorTitular()
+          || (
+            isAuthenticatedWithEmail()
+            && emailDocId == request.auth.token.email.lower()
+            && request.resource.data.email == request.auth.token.email.lower()
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.status == 'pendente'
+            && (!('pre_autorizado' in request.resource.data) || request.resource.data.pre_autorizado == false)
+            && (!('autorizado_por' in request.resource.data) || request.resource.data.autorizado_por == null)
+            && (!('autorizado_em' in request.resource.data) || request.resource.data.autorizado_em == null)
+            && (!('aprovado_por' in request.resource.data) || request.resource.data.aprovado_por == null)
+            && (!('aprovado_em' in request.resource.data) || request.resource.data.aprovado_em == null)
+          )
+        );
+
+      allow update: if isValidDocenteAutorizado(request.resource.data, emailDocId)
+        && (
+          isProfessorTitular()
+          || (
+            isAuthenticatedWithEmail()
+            && emailDocId == request.auth.token.email.lower()
+            && resource.data.status == 'pendente'
+            && request.resource.data.status == 'pendente'
+            && (!('email' in resource.data) || request.resource.data.email == resource.data.email)
+            && request.resource.data.uid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'nome',
+              'foto_url',
+              'uid',
+              'ultimo_acesso_em',
+              'atualizado_em'
+            ])
+          )
+        );
+
+      allow delete: if isProfessorTitular();
+    }
+
+    // ===============================================================
+    // 2. Coleção: psof3_sessoes_banca (Sessões e Cronômetro Ao Vivo)
     // ===============================================================
     // Leitura: Pública e aberta para o Portal Público dos Alunos e painel ao vivo.
-    // Criação: Exclusiva do Professor Titular, exigindo status permitido.
+    // Criação: Exclusiva do Professor Titular, com validação estrita de esquema e status.
     // Atualização:
-    //   - Professor Titular: atualização completa mantendo status válido;
-    //   - Demais docentes SENAI: permitida apenas com sessão 'em_andamento' e
-    //     restrita aos campos avaliacoes_concluidas, avaliadores_presentes e atualizado_em.
+    //   - Professor Titular: atualização completa validada mantendo status permitido;
+    //   - Docentes autorizados: permitida apenas com sessão 'em_andamento' e restrita
+    //     aos campos avaliacoes_concluidas, avaliadores_presentes e atualizado_em,
+    //     impedindo remoção de registros prévios ou inclusão de UID de terceiros.
     // Exclusão: Exclusiva do Professor Titular.
     match /psof3_sessoes_banca/{grupoId} {
       allow read: if true;
 
       allow create: if isProfessorTitular()
-        && request.resource.data.status in ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida'];
+        && isValidSessaoBanca(request.resource.data);
 
-      allow update: if (isProfessorTitular()
-          && request.resource.data.status in ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida'])
-        || (isSenaiDocente()
-          && resource.data.status == 'em_andamento'
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avaliacoes_concluidas', 'avaliadores_presentes', 'atualizado_em']));
+      allow update: if isValidSessaoBanca(request.resource.data)
+        && (
+          isProfessorTitular()
+          || (
+            isAuthorizedDocente()
+            && resource.data.status == 'em_andamento'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'avaliacoes_concluidas',
+              'avaliadores_presentes',
+              'atualizado_em'
+            ])
+            && request.resource.data.avaliacoes_concluidas is list
+            && request.resource.data.avaliacoes_concluidas.size() <= 20
+            && request.auth.uid in request.resource.data.avaliacoes_concluidas
+            && (
+              !('avaliacoes_concluidas' in resource.data)
+              || (
+                resource.data.avaliacoes_concluidas is list
+                && request.resource.data.avaliacoes_concluidas.hasAll(resource.data.avaliacoes_concluidas)
+                && request.resource.data.avaliacoes_concluidas.size() <= resource.data.avaliacoes_concluidas.size() + 1
+              )
+            )
+            && request.resource.data.avaliadores_presentes is list
+            && request.resource.data.avaliadores_presentes.size() <= 20
+            && (
+              !('avaliadores_presentes' in resource.data)
+              || (
+                resource.data.avaliadores_presentes is list
+                && request.resource.data.avaliadores_presentes.hasAll(resource.data.avaliadores_presentes)
+                && request.resource.data.avaliadores_presentes.size() <= resource.data.avaliadores_presentes.size() + 1
+              )
+            )
+          )
+        );
 
       allow delete: if isProfessorTitular();
     }
 
     // ===============================================================
-    // 2. Coleção: psof3_avaliacoes_professores (Notas Individuais)
+    // 3. Coleção: psof3_avaliacoes_professores (Notas Individuais)
     // ===============================================================
-    // Leitura: Restrita a docentes SENAI com e-mail verificado.
+    // Leitura: Restrita a docentes autorizados (Titular, pré-autorizados ou aprovados).
     // Criação/Atualização:
-    //   - Professor Titular: pode salvar/ajustar qualquer avaliação da banca;
-    //   - Demais docentes SENAI: apenas o próprio documento no formato {grupo_id}_{uid}.
-    // Exclusão: Exclusiva do Professor Titular (ex.: reset completo da banca).
+    //   - Professor Titular: pode salvar/ajustar qualquer avaliação da banca validada;
+    //   - Demais docentes autorizados: apenas o próprio documento {grupo_id}_{uid},
+    //     mantendo grupo_id e professor_uid imutáveis na atualização.
+    // Exclusão: Exclusiva do Professor Titular.
     match /psof3_avaliacoes_professores/{docId} {
-      allow read: if isSenaiDocente();
+      allow read: if isAuthorizedDocente();
 
-      allow create, update: if isProfessorTitular()
-        || (isSenaiDocente()
-          && request.resource.data.grupo_id is string
-          && request.resource.data.professor_uid == request.auth.uid
-          && docId == (request.resource.data.grupo_id + '_' + request.auth.uid));
+      allow create: if isValidAvaliacaoProfessor(request.resource.data)
+        && (
+          isProfessorTitular()
+          || (
+            isAuthorizedDocente()
+            && request.resource.data.professor_uid == request.auth.uid
+            && docId == (request.resource.data.grupo_id + '_' + request.auth.uid)
+          )
+        );
+
+      allow update: if isValidAvaliacaoProfessor(request.resource.data)
+        && (
+          isProfessorTitular()
+          || (
+            isAuthorizedDocente()
+            && request.resource.data.professor_uid == request.auth.uid
+            && docId == (request.resource.data.grupo_id + '_' + request.auth.uid)
+            && areImmutableFieldsUnchanged(['grupo_id', 'professor_uid'])
+          )
+        );
 
       allow delete: if isProfessorTitular();
     }
 
     // ===============================================================
-    // 3. Coleção: psof3_rascunhos_professores (Rascunhos Individuais)
+    // 4. Coleção: psof3_rascunhos_professores (Rascunhos Individuais)
     // ===============================================================
-    // Leitura: Professor Titular ou o próprio docente identificado pelo sufixo _{uid}.
-    // Criação/Atualização: Docente SENAI autenticado, exclusivamente para o próprio
-    //                      documento no padrão {grupo_id}_{uid}.
-    // Exclusão: Professor Titular ou o próprio docente identificado pelo sufixo _{uid}.
+    // Leitura: Professor Titular ou o próprio docente autorizado (sufixo _{uid}).
+    // Criação/Atualização: Docente autorizado, exclusivamente para o próprio
+    //                      documento {grupo_id}_{uid}, com grupo_id/professor_uid imutáveis.
+    // Exclusão: Professor Titular ou o próprio docente autorizado (sufixo _{uid}).
     match /psof3_rascunhos_professores/{docId} {
       allow read: if isProfessorTitular()
-        || (isSenaiDocente() && docId.matches('^.+_' + request.auth.uid + '$'));
+        || (isAuthorizedDocente() && docId.matches('^.+_' + request.auth.uid + '$'));
 
-      allow create, update: if isSenaiDocente()
-        && request.resource.data.grupo_id is string
+      allow create: if isAuthorizedDocente()
+        && isValidRascunhoProfessor(request.resource.data)
         && request.resource.data.professor_uid == request.auth.uid
         && docId == (request.resource.data.grupo_id + '_' + request.auth.uid);
 
+      allow update: if isAuthorizedDocente()
+        && isValidRascunhoProfessor(request.resource.data)
+        && request.resource.data.professor_uid == request.auth.uid
+        && docId == (request.resource.data.grupo_id + '_' + request.auth.uid)
+        && areImmutableFieldsUnchanged(['grupo_id', 'professor_uid']);
+
       allow delete: if isProfessorTitular()
-        || (isSenaiDocente() && docId.matches('^.+_' + request.auth.uid + '$'));
+        || (isAuthorizedDocente() && docId.matches('^.+_' + request.auth.uid + '$'));
     }
 
     // ===============================================================
-    // 4. Coleção: psof3_analises_automaticas (Auditoria Automática)
+    // 5. Coleção: psof3_analises_automaticas (Auditoria Automática)
     // ===============================================================
     // Leitura: Pública e aberta para consulta das análises prévias do TCC.
     // Criação/Atualização/Exclusão: Exclusiva do Professor Titular.
     match /psof3_analises_automaticas/{grupoId} {
       allow read: if true;
-      allow create, update, delete: if isProfessorTitular();
+      allow create, update: if isProfessorTitular()
+        && isValidAnaliseAutomatica(request.resource.data, grupoId);
+      allow delete: if isProfessorTitular();
     }
 
     // ===============================================================
-    // 5. Coleção: psof3_avaliacoes_tcc (Histórico e Registros Gerais)
+    // 6. Coleção: psof3_avaliacoes_tcc (Histórico e Registros Gerais)
     // ===============================================================
     // Leitura: Pública e aberta para consulta e geração de relatórios.
     // Criação/Atualização/Exclusão: Exclusiva do Professor Titular.
     match /psof3_avaliacoes_tcc/{docId} {
       allow read: if true;
-      allow create, update, delete: if isProfessorTitular();
+      allow create, update: if isProfessorTitular()
+        && isValidAvaliacaoTcc(request.resource.data, docId);
+      allow delete: if isProfessorTitular();
     }
 
     // ===============================================================

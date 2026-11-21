@@ -58,7 +58,7 @@ export const COLECAO_ANALISES_AUTOMATICAS = 'psof3_analises_automaticas';
 export const COLECAO_RASCUNHOS_PROFESSORES = 'psof3_rascunhos_professores';
 export const COLECAO_AVALIACOES_TCC = 'psof3_avaliacoes_tcc';
 
-function formatarErroFirestore(err: unknown, acao: string): string {
+export function formatarErroFirestore(err: unknown, acao: string): string {
   const msg = err instanceof Error ? err.message : String(err);
   if (
     msg.toLowerCase().includes('permission-denied') ||

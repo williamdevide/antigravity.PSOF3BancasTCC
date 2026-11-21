@@ -154,15 +154,17 @@ Automatizar a auditoria técnica, documental e estrutural dos Trabalhos de Concl
 
 ---
 
-## 7. Segurança Institucional (`@docente.senai.br`), Professor Titular e Persistência 100% Firestore (Zero `localStorage`)
+## 7. Segurança, Autorização Permanente de Docentes e Persistência 100% Firestore (Zero `localStorage`)
 
-1. **Autenticação Institucional Obrigatória:**
-   - O acesso à área docente (`/professor`) exige login via **Google Institucional `@docente.senai.br`** (`emailVerified == true`), sendo rejeitada qualquer outra conta (inclusive `@gmail.com`).
-2. **Segregação de Privilégios (`william.komel@docente.senai.br`):**
-   - Somente **`william.komel@docente.senai.br`** atua como **Professor Titular / Presidente da Banca**, detendo exclusividade sobre sessão ao vivo (iniciar/consolidar/reabrir/resetar), consenso dos 2 avaliadores, pendências, arquivos revisados, adiamento ("Data Futura"), upload/exclusão/reauditoria de entregáveis e configurações `.env`.
-   - Demais contas verificadas `@docente.senai.br` atuam como avaliadores convidados, com permissão restrita à visualização e ao lançamento/edição/encerramento de sua própria avaliação individual.
+1. **Autenticação Flexível e Aprovação pelo Professor Titular:**
+   - O acesso à área docente (`/professor`) aceita login via **Google** (sem restrição de domínio `hd`, aceitando `@gmail.com`, `@docente.senai.br`, etc.) e via **E-mail e Senha**, utilizando **Firebase Auth** (sem atalhos de senha hardcoded).
+   - Todo novo e-mail autenticado que ainda não esteja autorizado registra solicitação em `psof3_docentes_autorizados/{email}` com `status: 'pendente'` e permanece estritamente bloqueado na **Tela Aguardando Autorização** (sem acesso a nenhuma aba ou dado docente), sendo liberado automaticamente em tempo real via `onSnapshot` assim que o Titular aprovar.
+   - Uma vez aprovado pelo Titular (`status: 'autorizado'`), o acesso do e-mail como **Professor Convidado** permanece salvo definitivamente no Firestore até eventual revogação explícita.
+2. **Segregaço de Privilégios (`williamdevide@gmail.com`) e Pré-Autorizados:**
+   - Somente **`williamdevide@gmail.com`** (`emailVerified == true`) atua como **Professor Titular / Presidente da Banca**, detendo exclusividade sobre aprovação/revogação/pré-autorização de docentes (`ModalGestaoDocentes`), sessão ao vivo (iniciar/consolidar/reabrir/resetar), consenso dos 2 avaliadores, pendências, arquivos revisados, adiamento ("Data Futura"), upload/exclusão/reauditoria de entregáveis e configurações `.env`.
+   - Os docentes convidados **Prof. Edivan Andrade (`edivan.andrade2025@gmail.com`)** e **Prof. João Paulo Oliveira (`joaopaulooliveiira@hotmail.com`)** já iniciam pré-autorizados como **Professor Convidado**, podendo visualizar auditorias, arquivos e fichas e lançar/editar/encerrar exclusivamente sua própria avaliação individual e seu rascunho.
 3. **Persistência 100% Firestore (`localStorage` eliminado):**
-   - Nenhum dado da aplicação é armazenado em `localStorage`/`sessionStorage`; os rascunhos da Ficha MSEP em andamento são salvos em **`psof3_rascunhos_professores`**, avaliações individuais em **`psof3_avaliacoes_professores`**, sessões ao vivo e pós-banca em **`psof3_sessoes_banca`**, análises em **`psof3_analises_automaticas`** e espelho geral autenticado via ID Token em **`psof3_avaliacoes_tcc`**.
+   - Nenhum dado da aplicação é armazenado em `localStorage`/`sessionStorage`; rascunhos da Ficha MSEP em andamento são salvos em **`psof3_rascunhos_professores`**, avaliações individuais em **`psof3_avaliacoes_professores`**, sessões ao vivo e pós-banca em **`psof3_sessoes_banca`**, autorizações de professores em **`psof3_docentes_autorizados`**, análises em **`psof3_analises_automaticas`** e espelho geral autenticado via ID Token em **`psof3_avaliacoes_tcc`**.
    - Tanto na guia *Ficha MSEP & Arguição* (durante ou após a banca) quanto na aba *Arquivos Revisados*, o painel **Controle de Pendências & Cumprimento (Portal dos Alunos)** registra mensagens cronológicas com data/hora e origem (`Durante a Banca` vs `Arquivos Revisados`) em `historico_pendencias`, permitindo atualizar pendências e status entre os 3 possíveis (mantendo a exigência de aceite explícito para alterações vinculadas ao parecer da revisão).
    - Os cards da fila de grupos em *Auditoria & Bancas* seguem exatamente o mesmo código de bordas semânticas da Landing Page pública (amarelo = aguardando, verde = nota liberada, laranja = nota retida, vermelho = nova apresentação ou ao vivo).
    - A guia **Gestão de Arquivos** na navegação principal exibe a árvore completa de `./tcc` com visualizador rico por tipo de arquivo (texto/código, PDF embutido, imagem, DOCX/PPTX extraído e inspeção interna de `.zip`), além de download e exclusão segura (protegendo `./tcc/regras/` e planilhas oficiais).

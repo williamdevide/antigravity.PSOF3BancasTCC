@@ -583,5 +583,22 @@ export interface PreviewArquivoResponse {
   entrada_zip_atual?: string | null;
 }
 
+export type StatusAutorizacaoDocente = 'autorizado' | 'pendente' | 'recusado' | 'revogado';
+
+export interface DocenteAutorizacaoRegistro {
+  email: string;
+  uid?: string | null;
+  nome: string;
+  foto_url?: string | null;
+  status: StatusAutorizacaoDocente;
+  origem?: 'titular' | 'pre_autorizado' | 'solicitacao' | 'manual_titular';
+  solicitado_em?: string | null;
+  autorizado_em?: string | null;
+  autorizado_por?: string | null;
+  ultimo_acesso_em?: string | null;
+  atualizado_em: string;
+}
+
+
 
 

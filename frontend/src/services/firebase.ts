@@ -5,6 +5,9 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   type User,
 } from 'firebase/auth';
 import {
@@ -21,12 +24,16 @@ import {
   arrayUnion,
 } from 'firebase/firestore';
 import {
-  DOMINIO_DOCENTE_AUTORIZADO,
+  CONVIDADOS_PRE_AUTORIZADOS_META,
+  DOMINIOS_RECOMENDADOS_DOCENTE,
   EMAIL_PROFESSOR_TITULAR,
-  normalizarEmailDocente,
-  isEmailDocenteSenai,
-  isUsuarioDocenteAutorizado,
+  EMAILS_CONVIDADOS_PRE_AUTORIZADOS,
+  isDocenteComAcessoLiberado,
+  isEmailFormatoValido,
+  isEmailPreAutorizadoConvidado,
   isUsuarioProfessorTitular,
+  normalizarEmailDocente,
+  resolverStatusAcessoDocente,
 } from './authPolicy';
 
 const firebaseConfig = {
@@ -43,26 +50,19 @@ export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfi
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Provedor Google institucional restrito ao domínio @docente.senai.br
+// Provedor Google sem trava de domínio (aceita @gmail.com, @docente.senai.br e demais contas Google)
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account',
-  hd: 'docente.senai.br',
 });
 
 /**
- * Realiza autenticação via Popup exigindo estritamente conta Google Institucional @docente.senai.br verificada.
+ * Autenticação via Google Popup.
+ * Novos e-mails entram autenticados e ficam em tela de espera até liberação pelo Titular.
  */
 export async function loginComGoogle(): Promise<User> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    if (!isUsuarioDocenteAutorizado(result.user)) {
-      const emailInformado = result.user.email || 'desconhecido';
-      await signOut(auth);
-      throw new Error(
-        `Acesso negado para "${emailInformado}". Entre exclusivamente com uma conta Google Institucional verificada (${DOMINIO_DOCENTE_AUTORIZADO}).`,
-      );
-    }
     return result.user;
   } catch (err: unknown) {
     const error = err as { code?: string; message?: string };
@@ -77,7 +77,72 @@ export async function loginComGoogle(): Promise<User> {
         'Este domínio ainda não foi autorizado no Firebase Console. Adicione este host em Authentication > Settings > Authorized domains.',
       );
     }
-    throw new Error(error.message || 'Erro ao realizar login com conta Google @docente.senai.br.');
+    throw new Error(error.message || 'Erro ao realizar login com o Google.');
+  }
+}
+
+/**
+ * Autenticação com E-mail e Senha para docentes cadastrados no Firebase Auth.
+ */
+export async function loginComEmailSenha(email: string, senha: string): Promise<User> {
+  const emailLimpo = normalizarEmailDocente(email);
+  if (!isEmailFormatoValido(emailLimpo)) {
+    throw new Error('Informe um endereço de e-mail válido.');
+  }
+  try {
+    const cred = await signInWithEmailAndPassword(auth, emailLimpo, senha);
+    return cred.user;
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    if (
+      error.code === 'auth/invalid-credential' ||
+      error.code === 'auth/wrong-password' ||
+      error.code === 'auth/user-not-found'
+    ) {
+      throw new Error('E-mail ou senha inválidos. Verifique os dados ou crie uma conta primeiro.');
+    }
+    if (error.code === 'auth/invalid-email') {
+      throw new Error('Formato de e-mail inválido.');
+    }
+    if (error.code === 'auth/too-many-requests') {
+      throw new Error('Muitas tentativas seguidas. Aguarde alguns instantes e tente novamente.');
+    }
+    throw new Error(error.message || 'Não foi possível entrar com e-mail e senha.');
+  }
+}
+
+/**
+ * Cadastro de novo docente com E-mail e Senha no Firebase Auth (fica pendente até o Titular aprovar).
+ */
+export async function cadastrarComEmailSenha(
+  nome: string,
+  email: string,
+  senha: string,
+): Promise<User> {
+  const emailLimpo = normalizarEmailDocente(email);
+  const nomeLimpo = nome.trim();
+  if (!nomeLimpo) {
+    throw new Error('Informe o nome completo do professor.');
+  }
+  if (!isEmailFormatoValido(emailLimpo)) {
+    throw new Error('Informe um endereço de e-mail válido.');
+  }
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, emailLimpo, senha);
+    await updateProfile(cred.user, { displayName: nomeLimpo });
+    return cred.user;
+  } catch (err: unknown) {
+    const error = err as { code?: string; message?: string };
+    if (error.code === 'auth/email-already-in-use') {
+      throw new Error('Este e-mail já possui cadastro. Use a aba "Entrar" para acessar.');
+    }
+    if (error.code === 'auth/weak-password') {
+      throw new Error('A senha deve ter pelo menos 6 caracteres.');
+    }
+    if (error.code === 'auth/invalid-email') {
+      throw new Error('Formato de e-mail inválido.');
+    }
+    throw new Error(error.message || 'Erro ao cadastrar conta de docente.');
   }
 }
 
@@ -95,12 +160,16 @@ export async function obterTokenIdUsuarioAtual(): Promise<string | null> {
 }
 
 export {
-  DOMINIO_DOCENTE_AUTORIZADO,
+  CONVIDADOS_PRE_AUTORIZADOS_META,
+  DOMINIOS_RECOMENDADOS_DOCENTE,
   EMAIL_PROFESSOR_TITULAR,
-  normalizarEmailDocente,
-  isEmailDocenteSenai,
-  isUsuarioDocenteAutorizado,
+  EMAILS_CONVIDADOS_PRE_AUTORIZADOS,
+  isDocenteComAcessoLiberado,
+  isEmailFormatoValido,
+  isEmailPreAutorizadoConvidado,
   isUsuarioProfessorTitular,
+  normalizarEmailDocente,
+  resolverStatusAcessoDocente,
   signOut,
   onAuthStateChanged,
   signInWithPopup,

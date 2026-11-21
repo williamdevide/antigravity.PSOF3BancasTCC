@@ -869,3 +869,24 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
    - Eliminar integralmente todas as leituras e gravações em `localStorage` (`psof3_draft_*`).
    - Migrar rascunhos ao vivo para a coleção `psof3_rascunhos_professores/{grupoId}_{professorUid}` no Firestore.
    - Encaminhar `Authorization: Bearer <Firebase ID Token>` do frontend ao backend para que `psof3_avaliacoes_tcc` grave/leia autenticado como Professor Titular sem HTTP 403 e seja consumido em tempo real na interface, respaldado por `firestore.rules` atualizado.
+
+
+---
+
+## Sessão 37 — Login Flexível (`@gmail.com` / `@docente.senai.br`), Autorização em Tempo Real (`psof3_docentes_autorizados`) e Titular `williamdevide@gmail.com` (21/11/2026)
+
+### Prompt 37
+```text
+/agente-orquestrador /grill-me /goal errei uma coisa. o email não precisa necessariamente ser @docente.senai.br, basta ser @gmail.com, mas também pode ser @docente.senai.br, o que importa é que meu email (titular) é williamdevide@gmail.com e qualquer um que tentar acessar como professor deve inicialmente ficar como aguardando autorização (sem poder acessar nenhuma pagina), dai assim que eu autorizar, ai sim pode agir como professor convidado. (depois que autorizar uma vez o email, esta autorizado para sempre) (considere o email dos professores joão e edivan já autorizados)
+```
+
+### Decisões Consolidadas (/grill-me)
+1. **Métodos de Login e Pré-Autorizados Reais do Firestore:**
+   - Permitir **Google (sem trava `hd`) + E-mail e Senha** no `AuthModal.tsx` (sem atalhos com senha fixa `senai@2026`), aceitando `@gmail.com`, `@docente.senai.br` e e-mails pré-autorizados.
+   - **Professor Titular:** `williamdevide@gmail.com` (com `emailVerified === true`).
+   - **Pré-autorizados permanentes:** `edivan.andrade2025@gmail.com` (Prof. Edivan Andrade) e `joaopaulooliveiira@hotmail.com` (Prof. João Paulo Oliveira).
+2. **Aprovação em Tempo Real e Bloqueio Total Antes da Liberação:**
+   - Novos e-mails autenticados gravam pedido `status: 'pendente'` na coleção `psof3_docentes_autorizados/{email}` e ficam retidos na tela dedicada `TelaAguardandoAutorizacao` (sem acesso a nenhuma página docente), liberando automaticamente via `onSnapshot` assim que o Titular autorizar.
+   - O Titular possui botão exclusivo **"Docentes"** no cabeçalho (com contador pulsante de pedidos pendentes) que abre `ModalGestaoDocentes` para aprovar, recusar, revogar ou pré-autorizar manualmente qualquer e-mail permanentemente.
+3. **Permissões do Professor Convidado:**
+   - Mantém exatamente o perfil de convidado: leitura em auditorias/arquivos/fichas e criação/edição/encerramento apenas da própria avaliação individual (`psof3_avaliacoes_professores`) e rascunho (`psof3_rascunhos_professores`), preservando gestão/consolidação/arquivos/configurações/aprovação de docentes exclusivos para `williamdevide@gmail.com`.

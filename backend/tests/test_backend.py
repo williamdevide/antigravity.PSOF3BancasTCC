@@ -1041,7 +1041,7 @@ def test_adiamento_data_futura_fluxo_completo():
         salvar_avaliacoes_salvas(salvas_rest)
 
 
-def test_autenticacao_docente_senai_e_titular_backend(monkeypatch):
+def test_autenticacao_titular_e_convidados_autorizados_backend(monkeypatch):
     import backend.app.firebase_service as fb_svc
     from fastapi import HTTPException
 
@@ -1054,8 +1054,9 @@ def test_autenticacao_docente_senai_e_titular_backend(monkeypatch):
             return self._data
 
     class FakeClient:
-        def __init__(self, users):
+        def __init__(self, users, firestore_docs=None):
             self.users = users
+            self.firestore_docs = firestore_docs or {}
 
         def __enter__(self):
             return self
@@ -1066,34 +1067,23 @@ def test_autenticacao_docente_senai_e_titular_backend(monkeypatch):
         def post(self, url, json=None):
             return FakeResp(200, {"users": self.users})
 
+        def get(self, url, headers=None):
+            doc_email = (
+                url.split("/psof3_docentes_autorizados/")[-1]
+                .split("?")[0]
+                .replace("%40", "@")
+                .lower()
+            )
+            if doc_email in self.firestore_docs:
+                return FakeResp(
+                    200,
+                    {"fields": {"status": {"stringValue": self.firestore_docs[doc_email]}}},
+                )
+            return FakeResp(404, {"error": {"code": 404}})
+
     monkeypatch.setattr(fb_svc, "obter_credenciais_firebase", lambda: ("proj-id", "fake-api-key"))
     monkeypatch.setenv("EXIGIR_AUTH_FIREBASE_BACKEND", "true")
 
-    # Conta @gmail.com deve ser rejeitada com HTTP 403
-    monkeypatch.setattr(
-        fb_svc.httpx,
-        "Client",
-        lambda timeout=10.0: FakeClient([{"email": "williamdevide@gmail.com", "emailVerified": True}]),
-    )
-    try:
-        fb_svc.verificar_id_token_firebase("tok-gmail")
-        raise AssertionError("Conta @gmail.com deveria ser bloqueada com 403.")
-    except HTTPException as exc:
-        assert exc.status_code == 403
-
-    # Conta @docente.senai.br sem verificação deve falhar com HTTP 403
-    monkeypatch.setattr(
-        fb_svc.httpx,
-        "Client",
-        lambda timeout=10.0: FakeClient([{"email": "edivan@docente.senai.br", "emailVerified": False}]),
-    )
-    try:
-        fb_svc.verificar_id_token_firebase("tok-unverified")
-        raise AssertionError("Conta não verificada deveria ser bloqueada com 403.")
-    except HTTPException as exc:
-        assert exc.status_code == 403
-
-    # Sem token -> endpoints mutáveis retornam 401
     cfg_payload = {
         "escola": "X",
         "disciplina": "Y",
@@ -1104,6 +1094,15 @@ def test_autenticacao_docente_senai_e_titular_backend(monkeypatch):
         "github_token_preview": "",
         "gemini_api_key": "",
     }
+    eval_payload = {
+        "avaliador": "Prof. Convidado",
+        "rubricas": [],
+        "integrantes_notas": [],
+        "parecer_tecnico": "",
+        "sincronizar_firebase": False,
+    }
+
+    # 1. Sem token -> endpoints mutáveis retornam 401
     assert client.put("/api/config", json=cfg_payload).status_code == 401
     assert client.post("/api/bancas/auditar", json={}).status_code == 401
     assert client.post(
@@ -1111,40 +1110,89 @@ def test_autenticacao_docente_senai_e_titular_backend(monkeypatch):
         json={"ativo": True, "motivo": "Teste"},
     ).status_code == 401
 
-    # Outro docente @docente.senai.br verificado: pode avaliar sua ficha, mas recebe 403 em ações de Titular
+    # 2. Novo @gmail.com ainda não autorizado (sem registro no Firestore) -> 403 em tudo (inclusive PUT /avaliacao)
     monkeypatch.setattr(
         fb_svc.httpx,
         "Client",
-        lambda timeout=10.0: FakeClient([{"email": "edivan@docente.senai.br", "emailVerified": True}]),
+        lambda timeout=10.0: FakeClient([{"email": "novo.professor@gmail.com", "emailVerified": True}]),
     )
-    headers_docente = {"Authorization": "Bearer tok-edivan"}
-    assert client.put("/api/config", json=cfg_payload, headers=headers_docente).status_code == 403
-    assert client.post("/api/bancas/I2DEV-A_Grupo05/reabrir", headers=headers_docente).status_code == 403
+    headers_pendente = {"Authorization": "Bearer tok-pendente"}
+    assert client.put("/api/config", json=cfg_payload, headers=headers_pendente).status_code == 403
+    assert client.put(
+        "/api/bancas/GRUPO_INEXISTENTE/avaliacao",
+        json=eval_payload,
+        headers=headers_pendente,
+    ).status_code == 403
+
+    # 3. Convidado pré-autorizado (Joao - joaopaulooliveiira@hotmail.com): bloqueado como Titular (403), liberado para avaliar (passa da auth e cai no 404 do grupo)
+    monkeypatch.setattr(
+        fb_svc.httpx,
+        "Client",
+        lambda timeout=10.0: FakeClient([{"email": "joaopaulooliveiira@hotmail.com", "emailVerified": False}]),
+    )
+    headers_joao = {"Authorization": "Bearer tok-joao"}
+    assert client.put("/api/config", json=cfg_payload, headers=headers_joao).status_code == 403
+    assert client.post("/api/bancas/I2DEV-A_Grupo05/reabrir", headers=headers_joao).status_code == 403
     assert client.post(
         "/api/bancas/I2DEV-A_Grupo05/adiamento-data-futura",
         json={"ativo": True, "motivo": "Teste"},
-        headers=headers_docente,
+        headers=headers_joao,
     ).status_code == 403
-    assert client.post("/api/firebase/sync-all", headers=headers_docente).status_code == 403
-
-    r_eval_doc = client.put(
+    assert client.post("/api/firebase/sync-all", headers=headers_joao).status_code == 403
+    assert client.put(
         "/api/bancas/GRUPO_INEXISTENTE/avaliacao",
-        json={
-            "avaliador": "Prof. Edivan",
-            "rubricas": [],
-            "integrantes_notas": [],
-            "parecer_tecnico": "",
-            "sincronizar_firebase": False,
-        },
-        headers=headers_docente,
-    )
-    assert r_eval_doc.status_code == 404
+        json=eval_payload,
+        headers=headers_joao,
+    ).status_code == 404
 
-    # Professor Titular oficial (william.komel@docente.senai.br): autorizado para ações exclusivas
+    # 4. Edivan revogado explicitamente no Firestore -> passa a receber 403 mesmo em /avaliacao
     monkeypatch.setattr(
         fb_svc.httpx,
         "Client",
-        lambda timeout=10.0: FakeClient([{"email": "William.Komel@docente.senai.br", "emailVerified": True}]),
+        lambda timeout=10.0: FakeClient(
+            [{"email": "edivan.andrade2025@gmail.com", "emailVerified": True}],
+            firestore_docs={"edivan.andrade2025@gmail.com": "revogado"},
+        ),
+    )
+    assert client.put(
+        "/api/bancas/GRUPO_INEXISTENTE/avaliacao",
+        json=eval_payload,
+        headers={"Authorization": "Bearer tok-edivan"},
+    ).status_code == 403
+
+    # 5. Qualquer e-mail (@docente.senai.br ou @gmail.com) com status 'autorizado' no Firestore -> liberado como Convidado
+    monkeypatch.setattr(
+        fb_svc.httpx,
+        "Client",
+        lambda timeout=10.0: FakeClient(
+            [{"email": "convidado@docente.senai.br", "emailVerified": True}],
+            firestore_docs={"convidado@docente.senai.br": "autorizado"},
+        ),
+    )
+    headers_convidado = {"Authorization": "Bearer tok-convidado"}
+    assert client.put("/api/config", json=cfg_payload, headers=headers_convidado).status_code == 403
+    assert client.put(
+        "/api/bancas/GRUPO_INEXISTENTE/avaliacao",
+        json=eval_payload,
+        headers=headers_convidado,
+    ).status_code == 404
+
+    # 6. Titular williamdevide@gmail.com não verificado é bloqueado; verificado possui poder total
+    monkeypatch.setattr(
+        fb_svc.httpx,
+        "Client",
+        lambda timeout=10.0: FakeClient([{"email": "WilliamDevide@gmail.com", "emailVerified": False}]),
+    )
+    try:
+        fb_svc.validar_permissao_docente_backend("Bearer tok-titular-unverified", exigir_titular=True)
+        raise AssertionError("Titular sem emailVerified deveria falhar com 403.")
+    except HTTPException as exc:
+        assert exc.status_code == 403
+
+    monkeypatch.setattr(
+        fb_svc.httpx,
+        "Client",
+        lambda timeout=10.0: FakeClient([{"email": "WilliamDevide@gmail.com", "emailVerified": True}]),
     )
     tok_t, user_t = fb_svc.validar_permissao_docente_backend("Bearer tok-titular", exigir_titular=True)
     assert tok_t == "tok-titular"
