@@ -284,3 +284,120 @@ def test_auditoria_profunda_v2():
             assert not any("Formatação ABNT" in item for item in g.get("itens_insuficientes_grupo", []))
 
 
+def test_upload_gerenciamento_arquivos_e_reabertura_banca():
+    import shutil
+    from backend.app.config_manager import ler_avaliacoes_salvas, salvar_avaliacoes_salvas
+    from backend.app.tcc_auditor import resolver_ou_criar_pasta_grupo
+
+    gid = "I2DEV-A_Grupo01"  # Grupo do cronograma sem entrega na pasta
+    salvas_orig = ler_avaliacoes_salvas()
+    registro_orig = dict(salvas_orig[gid]) if gid in salvas_orig else None
+
+    pasta_criada = None
+    try:
+        # 1. Listagem inicial vazia
+        r_ini = client.get(f"/api/bancas/{gid}/arquivos")
+        assert r_ini.status_code == 200
+        d_ini = r_ini.json()
+        assert d_ini["total_arquivos"] == 0
+        assert d_ini["entregue_na_pasta"] is False
+
+        # 2. Rejeitar extensão proibida e path traversal
+        r_ext = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[("arquivos", ("malware.exe", b"MZ", "application/octet-stream"))],
+        )
+        assert r_ext.status_code == 400
+
+        r_trav_up = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[("arquivos", ("../evil.txt", b"x", "text/plain"))],
+        )
+        assert r_trav_up.status_code == 400
+
+        r_trav = client.delete(f"/api/bancas/{gid}/arquivos/..%2Flinks.txt")
+        assert r_trav.status_code in (400, 404, 405)
+
+        # 3. Enviar dois arquivos válidos (.txt e .sql)
+        r_up = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[
+                ("arquivos", ("links.txt", b"GitHub: https://github.com/org/repo\n", "text/plain")),
+                (
+                    "arquivos",
+                    ("CTDS-2026-02-BD-Teste.sql", b"CREATE TABLE usuarios (id INT PRIMARY KEY);", "text/plain"),
+                ),
+            ],
+        )
+        assert r_up.status_code == 200
+        d_up = r_up.json()
+        assert d_up["ok"] is True
+        assert sorted(d_up["enviados"]) == ["CTDS-2026-02-BD-Teste.sql", "links.txt"]
+        assert d_up["banca"]["entregue_na_pasta"] is True
+        assert d_up["banca"]["status_avaliacao"] == "entregue_nao_auditado"
+
+        pasta_criada, _, _ = resolver_ou_criar_pasta_grupo(gid, criar_se_ausente=False)
+        assert pasta_criada is not None and pasta_criada.exists()
+
+        # 4. Substituir arquivo existente pelo mesmo nome e validar download
+        r_sub = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[("arquivos", ("links.txt", b"Deploy: https://teste.example.com\n", "text/plain"))],
+        )
+        assert r_sub.status_code == 200
+        assert "links.txt" in r_sub.json()["substituidos"]
+
+        r_dl = client.get(f"/api/bancas/{gid}/arquivos/links.txt")
+        assert r_dl.status_code == 200
+        assert b"https://teste.example.com" in r_dl.content
+
+        # 5. Simular banca concluída -> bloqueia upload e exclusão (409), libera download (200) e permite reabertura
+        salvas_tmp = ler_avaliacoes_salvas()
+        salvas_tmp[gid]["banca_realizada"] = True
+        salvas_tmp[gid]["status_avaliacao"] = "avaliado_banca"
+        salvar_avaliacoes_salvas(salvas_tmp)
+
+        r_blk_up = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[("arquivos", ("links.txt", b"bloqueado", "text/plain"))],
+        )
+        assert r_blk_up.status_code == 409
+
+        r_blk_del = client.delete(f"/api/bancas/{gid}/arquivos/links.txt")
+        assert r_blk_del.status_code == 409
+
+        r_dl_concluida = client.get(f"/api/bancas/{gid}/arquivos/links.txt")
+        assert r_dl_concluida.status_code == 200
+
+        # 6. Reabrir banca (voltar para entregue) -> desbloqueia exclusão e upload
+        r_reabrir = client.post(f"/api/bancas/{gid}/reabrir")
+        assert r_reabrir.status_code == 200
+        assert r_reabrir.json()["banca"]["banca_realizada"] is False
+        assert r_reabrir.json()["banca"]["status_avaliacao"] == "auditado_ia"
+
+        # 7. Excluir arquivo individual
+        r_del_one = client.delete(f"/api/bancas/{gid}/arquivos/links.txt")
+        assert r_del_one.status_code == 200
+        assert r_del_one.json()["pasta_vazia"] is False
+        assert len(r_del_one.json()["arquivos"]) == 1
+
+        # 8. Excluir todos os arquivos -> remove pasta vazia e retorna para pendente_entrega
+        r_del_all = client.delete(f"/api/bancas/{gid}/arquivos")
+        assert r_del_all.status_code == 200
+        d_all = r_del_all.json()
+        assert d_all["removidos_qtd"] == 1
+        assert d_all["banca"]["entregue_na_pasta"] is False
+        assert d_all["banca"]["status_avaliacao"] == "pendente_entrega"
+        assert not pasta_criada.exists()
+    finally:
+        if pasta_criada and pasta_criada.exists():
+            shutil.rmtree(pasta_criada, ignore_errors=True)
+        salvas_rest = ler_avaliacoes_salvas()
+        if registro_orig is not None:
+            salvas_rest[gid] = registro_orig
+        else:
+            salvas_rest.pop(gid, None)
+        salvar_avaliacoes_salvas(salvas_rest)
+
+
+

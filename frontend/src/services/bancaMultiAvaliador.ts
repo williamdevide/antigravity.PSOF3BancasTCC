@@ -751,3 +751,45 @@ export async function atualizarPendenciasBanca(
     return { ok: false, mensagem: formatarErroFirestore(err, 'atualizar pendências da banca') };
   }
 }
+
+/**
+ * Reabre uma banca já concluída para o estado entregue ('aguardando_inicio') no Firestore,
+ * PRESERVANDO o histórico das avaliações individuais dos professores em psof3_avaliacoes_professores,
+ * liberando a gestão (upload/exclusão) dos arquivos de entrega e nova auditoria técnica.
+ */
+export async function reabrirBancaParaEntregue(
+  grupo: AvaliacaoGrupo,
+  professor: User,
+): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    const agora = new Date().toISOString();
+    const nomeProf =
+      professor.displayName || professor.email?.split('@')[0] || 'Docente';
+    const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupo.id);
+
+    await setDoc(
+      docSessaoRef,
+      {
+        grupo_id: grupo.id,
+        turma: grupo.turma,
+        projeto: grupo.projeto,
+        status: 'aguardando_inicio',
+        encerrado_em: null,
+        reaberto_por: nomeProf,
+        reaberto_em: agora,
+        atualizado_em: agora,
+      },
+      { merge: true },
+    );
+
+    return {
+      ok: true,
+      mensagem: `Banca de ${grupo.projeto} reaberta para 'Entregue' com histórico docente preservado.`,
+    };
+  } catch (err: unknown) {
+    return {
+      ok: false,
+      mensagem: formatarErroFirestore(err, 'reabrir banca para estado entregue'),
+    };
+  }
+}

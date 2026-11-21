@@ -204,7 +204,18 @@ def recalcular_totais_avaliacao(avaliacao: AvaliacaoGrupoModel) -> AvaliacaoGrup
     return avaliacao
 
 
-def _mapear_pastas_turma(pasta_tcc: Path) -> dict[str, Path]:
+def _pasta_possui_arquivos_reais(pasta: Path) -> bool:
+    """Verifica se a pasta possui pelo menos 1 arquivo real visível (ignorando ocultos e Thumbs.db)."""
+    try:
+        return any(
+            f.is_file() and not f.name.startswith(".") and f.name.lower() != "thumbs.db"
+            for f in pasta.iterdir()
+        )
+    except OSError:
+        return False
+
+
+def _mapear_pastas_turma(pasta_tcc: Path, ignorar_vazias: bool = True) -> dict[str, Path]:
     """
     Percorre ./tcc/I2DEV-A e ./tcc/I2DEV-B e associa cada subpasta de grupo
     ao ID do cronograma oficial (ex.: 'I2DEV-B_Grupo08'), ou cria entradas dinâmicas
@@ -217,6 +228,8 @@ def _mapear_pastas_turma(pasta_tcc: Path) -> dict[str, Path]:
             continue
         for sub in sorted(dir_turma.iterdir()):
             if not sub.is_dir():
+                continue
+            if ignorar_vazias and not _pasta_possui_arquivos_reais(sub):
                 continue
             m = re.search(r"grupo\s*0*(\d+)", sub.name, flags=re.IGNORECASE)
             if m:
@@ -231,6 +244,87 @@ def _mapear_pastas_turma(pasta_tcc: Path) -> dict[str, Path]:
                         encontrados[item["id"]] = sub
                         break
     return encontrados
+
+
+def obter_meta_e_ordem_grupo(grupo_id: str) -> tuple[dict[str, Any], int] | None:
+    """Retorna os metadados do cronograma e o número de ordem de apresentação na turma."""
+    cont_ordem: dict[str, int] = {"I2DEV-A": 0, "I2DEV-B": 0}
+    for meta in CRONOGRAMA_OFICIAL_BANCAS:
+        turma = meta["turma"]
+        cont_ordem[turma] = cont_ordem.get(turma, 0) + 1
+        if meta["id"] == grupo_id:
+            return meta, cont_ordem[turma]
+    return None
+
+
+def _sanitizar_nome_pasta(texto: str) -> str:
+    """Remove caracteres proibidos para nomes de pasta em Windows/Linux mantendo acentos e leitura."""
+    limpo = re.sub(r'[\\/:*?"<>|]+', "-", texto or "").strip()
+    limpo = re.sub(r"\s+", " ", limpo)
+    return limpo
+
+
+def resolver_ou_criar_pasta_grupo(
+    grupo_id: str,
+    criar_se_ausente: bool = False,
+) -> tuple[Path | None, dict[str, Any] | None, int]:
+    """Localiza a pasta de entrega do grupo em ./tcc/{turma}/ ou cria no padrão oficial quando solicitado."""
+    info = obter_meta_e_ordem_grupo(grupo_id)
+    if not info:
+        return None, None, 0
+    meta, ordem = info
+
+    cfg = ler_env()
+    pasta_tcc = resolver_pasta_tcc(cfg.pasta_tcc)
+    pastas_map = _mapear_pastas_turma(pasta_tcc, ignorar_vazias=False)
+    pasta = pastas_map.get(grupo_id)
+
+    if pasta is None and criar_se_ausente:
+        turma_dir = pasta_tcc / meta["turma"]
+        turma_dir.mkdir(parents=True, exist_ok=True)
+        proj_pasta = _sanitizar_nome_pasta(meta["projeto"].split("/")[0].strip())
+        integrantes_str = ", ".join(
+            _sanitizar_nome_pasta(nome.strip()) for nome in meta["integrantes"] if nome.strip()
+        )
+        nome_pasta = f"Banca{ordem:02d}-Grupo{int(meta['grupo_num']):02d}-{proj_pasta}-({integrantes_str})"
+        pasta = turma_dir / nome_pasta
+        pasta.mkdir(parents=True, exist_ok=True)
+
+    return pasta, meta, ordem
+
+
+def classificar_tipo_arquivo_entrega(nome_arquivo: str) -> str:
+    """Identifica o papel do arquivo dentro do pacote oficial CTDS-2026-02."""
+    nl = _remover_acentos(nome_arquivo.lower())
+    if nl == "links.txt":
+        return "Links (links.txt)"
+    if nl.endswith(".sql"):
+        return "Script BD (.sql)"
+    if nl.endswith(".zip"):
+        return "Sistema / Código (.zip)"
+    if nl.endswith(".pptx"):
+        return "Apresentação (.pptx)"
+    if ("apresentacao" in nl or "slide" in nl) and nl.endswith(".pdf"):
+        return "Apresentação (.pdf)"
+    if nl.endswith(".docx"):
+        return "Monografia (.docx)"
+    if nl.endswith(".pdf"):
+        return "Monografia / Doc (.pdf)"
+    if nl.endswith((".png", ".jpg", ".jpeg")):
+        return "Imagem / Diagrama"
+    return "Anexo da Entrega"
+
+
+def banca_esta_concluida_no_backend(grupo_id: str) -> bool:
+    """Retorna True se o grupo estiver marcado como banca já realizada/concluída em avaliacoes.json."""
+    salvas = ler_avaliacoes_salvas()
+    registro = salvas.get(grupo_id)
+    if not registro:
+        return False
+    return bool(
+        registro.get("banca_realizada") is True
+        or registro.get("status_avaliacao") in ("avaliado_banca", "concluida")
+    )
 
 
 def _extrair_texto_docx(caminho: Path) -> str:
@@ -2762,3 +2856,98 @@ def sincronizar_e_obter_todas_bancas(
         salvar_avaliacoes_salvas(salvas)
 
     return resultados
+
+
+def sincronizar_status_entrega_grupo(grupo_id: str) -> AvaliacaoGrupoModel:
+    """
+    Sincroniza avaliacoes.json após upload ou exclusão de arquivos da pasta do grupo.
+    Se não houver mais arquivos reais na pasta, remove o diretório vazio e restaura
+    o grupo para 'pendente_entrega' mantendo as notas do Pilar 4 oficial.
+    """
+    pasta, meta, ordem = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=False)
+    if not meta:
+        raise ValueError(f"Grupo '{grupo_id}' não encontrado no cronograma oficial.")
+
+    salvas = ler_avaliacoes_salvas()
+    tem_arquivos = bool(pasta and pasta.exists() and _pasta_possui_arquivos_reais(pasta))
+
+    if not tem_arquivos:
+        # Remove pasta vazia caso todos os entregáveis tenham sido excluídos
+        if pasta and pasta.exists():
+            try:
+                for arq_oculto in pasta.iterdir():
+                    if arq_oculto.is_file() and (
+                        arq_oculto.name.startswith(".") or arq_oculto.name.lower() == "thumbs.db"
+                    ):
+                        arq_oculto.unlink(missing_ok=True)
+                if not any(pasta.iterdir()):
+                    pasta.rmdir()
+            except OSError:
+                pass
+        av = auditar_grupo_individual(meta, None, ordem_apresentacao=ordem)
+        salvas[grupo_id] = av.model_dump()
+        salvar_avaliacoes_salvas(salvas)
+        return av
+
+    assert pasta is not None
+    ja_salva = salvas.get(grupo_id)
+    av: AvaliacaoGrupoModel | None = None
+    if ja_salva:
+        try:
+            av = AvaliacaoGrupoModel(**ja_salva)
+        except Exception:
+            av = None
+
+    if av is None:
+        av = auditar_grupo_individual(meta, None, ordem_apresentacao=ordem)
+
+    itens_arq, pct_nom, _ = _analisar_nomenclatura_arquivos(pasta, av.projeto, av.integrantes)
+    av.ordem_apresentacao = ordem
+    av.data_banca = meta["data"]
+    av.data_banca_iso = _data_br_para_iso(meta["data"])
+    av.entregue_na_pasta = True
+    av.nome_pasta_entregue = pasta.name
+    av.caminho_pasta = str(pasta)
+    av.arquivos_entregues = itens_arq
+    av.conformidade_nomenclatura_pct = pct_nom
+    av.atualizado_em = datetime.now().isoformat(timespec="seconds")
+    if av.status_avaliacao == "pendente_entrega":
+        av.status_avaliacao = "entregue_nao_auditado"
+
+    av = recalcular_totais_avaliacao(av)
+    salvas[grupo_id] = av.model_dump()
+    salvar_avaliacoes_salvas(salvas)
+    return av
+
+
+def reabrir_banca_para_entregue_backend(grupo_id: str) -> AvaliacaoGrupoModel:
+    """
+    Reabre uma banca já concluída para o estado 'entregue' no backend, permitindo
+    excluir/reenviar arquivos e disparar nova auditoria sem apagar o histórico docente.
+    """
+    info = obter_meta_e_ordem_grupo(grupo_id)
+    if not info:
+        raise ValueError(f"Grupo '{grupo_id}' não encontrado no cronograma oficial.")
+    meta, ordem = info
+
+    salvas = ler_avaliacoes_salvas()
+    registro = salvas.get(grupo_id)
+    av: AvaliacaoGrupoModel | None = None
+    if registro:
+        try:
+            av = AvaliacaoGrupoModel(**registro)
+        except Exception:
+            av = None
+
+    if av is None:
+        pasta, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=False)
+        av = auditar_grupo_individual(meta, pasta if pasta and _pasta_possui_arquivos_reais(pasta) else None, ordem_apresentacao=ordem)
+
+    av.banca_realizada = False
+    av.status_avaliacao = "auditado_ia" if av.entregue_na_pasta else "pendente_entrega"
+    av.atualizado_em = datetime.now().isoformat(timespec="seconds")
+    av = recalcular_totais_avaliacao(av)
+
+    salvas[grupo_id] = av.model_dump()
+    salvar_avaliacoes_salvas(salvas)
+    return av

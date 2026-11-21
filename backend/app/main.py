@@ -5,6 +5,7 @@ Agente Avaliador de Bancas TCC (PSOF3 — Rubricas MSEP).
 from __future__ import annotations
 
 from datetime import datetime
+import mimetypes
 import os
 from pathlib import Path
 import subprocess
@@ -12,7 +13,7 @@ import threading
 import uuid
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -49,9 +50,73 @@ from .report_generator import (
     exportar_planilha_consolidada_xlsx,
 )
 from .tcc_auditor import (
+    _pasta_possui_arquivos_reais,
+    banca_esta_concluida_no_backend,
+    classificar_tipo_arquivo_entrega,
+    obter_meta_e_ordem_grupo,
+    reabrir_banca_para_entregue_backend,
     recalcular_totais_avaliacao,
+    resolver_ou_criar_pasta_grupo,
     sincronizar_e_obter_todas_bancas,
+    sincronizar_status_entrega_grupo,
 )
+
+
+EXTENSOES_UPLOAD_PERMITIDAS = {
+    ".docx",
+    ".pdf",
+    ".pptx",
+    ".sql",
+    ".zip",
+    ".txt",
+    ".md",
+    ".csv",
+    ".png",
+    ".jpg",
+    ".jpeg",
+}
+MAX_UPLOAD_BYTES = 200 * 1024 * 1024  # 200 MB por arquivo
+
+
+def _sanitizar_nome_arquivo_upload(nome: str, validar_extensao: bool = True) -> str:
+    """Valida nome de arquivo contra path traversal e extensões não permitidas."""
+    if not nome or "\x00" in nome:
+        raise HTTPException(status_code=400, detail="Nome de arquivo inválido.")
+    if "/" in nome or "\\" in nome or ".." in nome:
+        raise HTTPException(status_code=400, detail="Caminho de arquivo inválido.")
+    nome_base = Path(nome).name.strip()
+    if not nome_base or nome_base in (".", ".."):
+        raise HTTPException(status_code=400, detail="Nome de arquivo vazio.")
+    if validar_extensao:
+        ext = Path(nome_base).suffix.lower()
+        if ext not in EXTENSOES_UPLOAD_PERMITIDAS:
+            permitidas = ", ".join(sorted(EXTENSOES_UPLOAD_PERMITIDAS))
+            raise HTTPException(
+                status_code=400,
+                detail=f"Extensão '{ext or '(sem extensão)'}' não permitida para '{nome_base}'. Aceitas: {permitidas}",
+            )
+    return nome_base
+
+
+def _serializar_arquivos_pasta(pasta: Path | None) -> list[dict[str, Any]]:
+    """Lista os arquivos reais da pasta de entrega com tamanho, data e classificação."""
+    if not pasta or not pasta.exists():
+        return []
+    itens: list[dict[str, Any]] = []
+    for arq in sorted(pasta.iterdir(), key=lambda p: p.name.lower()):
+        if not arq.is_file() or arq.name.startswith(".") or arq.name.lower() == "thumbs.db":
+            continue
+        st = arq.stat()
+        itens.append(
+            {
+                "nome": arq.name,
+                "tamanho_bytes": st.st_size,
+                "modificado_em": datetime.fromtimestamp(st.st_mtime).isoformat(timespec="seconds"),
+                "tipo_detectado": classificar_tipo_arquivo_entrega(arq.name),
+                "extensao": arq.suffix.lower(),
+            }
+        )
+    return itens
 
 
 app = FastAPI(
@@ -381,6 +446,185 @@ def sincronizar_grupo_firebase_endpoint(grupo_id: str) -> dict[str, Any]:
             salvar_avaliacoes_salvas(salvas)
             return {"ok": True, "mensagem": msg, "firebase_sync_em": b.firebase_sync_em}
     raise HTTPException(status_code=404, detail="Grupo não encontrado.")
+
+
+@app.get("/api/bancas/{grupo_id}/arquivos")
+def listar_arquivos_entrega_grupo(grupo_id: str) -> dict[str, Any]:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    pasta, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=False)
+    arquivos = _serializar_arquivos_pasta(pasta)
+    return {
+        "grupo_id": grupo_id,
+        "pasta_nome": pasta.name if pasta else "",
+        "pasta_caminho": str(pasta) if pasta else "",
+        "entregue_na_pasta": len(arquivos) > 0,
+        "banca_realizada": banca_esta_concluida_no_backend(grupo_id),
+        "total_arquivos": len(arquivos),
+        "tamanho_total_bytes": sum(a["tamanho_bytes"] for a in arquivos),
+        "arquivos": arquivos,
+    }
+
+
+@app.post("/api/bancas/{grupo_id}/arquivos")
+async def upload_arquivos_entrega_grupo(
+    grupo_id: str,
+    arquivos: list[UploadFile] = File(...),
+) -> dict[str, Any]:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    if banca_esta_concluida_no_backend(grupo_id):
+        raise HTTPException(
+            status_code=409,
+            detail="Banca já concluída. Use 'Reabrir Banca (Voltar para Entregue)' antes de enviar ou excluir arquivos.",
+        )
+    if not arquivos:
+        raise HTTPException(status_code=400, detail="Nenhum arquivo selecionado para envio.")
+
+    pasta, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=True)
+    assert pasta is not None
+    pasta_res = pasta.resolve()
+
+    enviados: list[str] = []
+    substituidos: list[str] = []
+
+    for arq in arquivos:
+        nome_limpo = _sanitizar_nome_arquivo_upload(arq.filename or "", validar_extensao=True)
+        destino = (pasta_res / nome_limpo).resolve()
+        if destino.parent != pasta_res:
+            raise HTTPException(status_code=400, detail="Destino de arquivo inválido.")
+
+        ja_existia = destino.exists()
+        total_lido = 0
+        try:
+            with destino.open("wb") as out:
+                while True:
+                    chunk = await arq.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    total_lido += len(chunk)
+                    if total_lido > MAX_UPLOAD_BYTES:
+                        raise HTTPException(
+                            status_code=413,
+                            detail=f"Arquivo '{nome_limpo}' excede o limite de 200 MB por arquivo.",
+                        )
+                    out.write(chunk)
+        except HTTPException:
+            destino.unlink(missing_ok=True)
+            raise
+        except Exception as exc:
+            destino.unlink(missing_ok=True)
+            raise HTTPException(status_code=500, detail=f"Falha ao salvar '{nome_limpo}': {exc}") from exc
+        finally:
+            await arq.close()
+
+        enviados.append(nome_limpo)
+        if ja_existia:
+            substituidos.append(nome_limpo)
+
+    banca_atualizada = sincronizar_status_entrega_grupo(grupo_id)
+    lista_final = _serializar_arquivos_pasta(pasta)
+    return {
+        "ok": True,
+        "mensagem": f"{len(enviados)} arquivo(s) salvo(s) na pasta '{pasta.name}'.",
+        "pasta_nome": pasta.name,
+        "enviados": enviados,
+        "substituidos": substituidos,
+        "arquivos": lista_final,
+        "banca": banca_atualizada.model_dump(),
+    }
+
+
+@app.get("/api/bancas/{grupo_id}/arquivos/{nome_arquivo}")
+def baixar_arquivo_entrega_grupo(grupo_id: str, nome_arquivo: str) -> FileResponse:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    nome_limpo = _sanitizar_nome_arquivo_upload(nome_arquivo, validar_extensao=False)
+    pasta, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=False)
+    if not pasta or not pasta.exists():
+        raise HTTPException(status_code=404, detail="Pasta de entrega do grupo não encontrada.")
+
+    pasta_res = pasta.resolve()
+    alvo = (pasta_res / nome_limpo).resolve()
+    if alvo.parent != pasta_res or not alvo.is_file():
+        raise HTTPException(status_code=404, detail=f"Arquivo '{nome_limpo}' não encontrado.")
+
+    media, _ = mimetypes.guess_type(str(alvo))
+    return FileResponse(path=alvo, filename=alvo.name, media_type=media or "application/octet-stream")
+
+
+@app.delete("/api/bancas/{grupo_id}/arquivos/{nome_arquivo}")
+def excluir_arquivo_entrega_grupo(grupo_id: str, nome_arquivo: str) -> dict[str, Any]:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    if banca_esta_concluida_no_backend(grupo_id):
+        raise HTTPException(
+            status_code=409,
+            detail="Banca já concluída. Use 'Reabrir Banca (Voltar para Entregue)' antes de excluir arquivos.",
+        )
+
+    nome_limpo = _sanitizar_nome_arquivo_upload(nome_arquivo, validar_extensao=False)
+    pasta, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=False)
+    if not pasta or not pasta.exists():
+        raise HTTPException(status_code=404, detail="Pasta de entrega não encontrada.")
+
+    pasta_res = pasta.resolve()
+    alvo = (pasta_res / nome_limpo).resolve()
+    if alvo.parent != pasta_res or not alvo.is_file():
+        raise HTTPException(status_code=404, detail=f"Arquivo '{nome_limpo}' não encontrado.")
+
+    alvo.unlink()
+    banca_atualizada = sincronizar_status_entrega_grupo(grupo_id)
+    pasta_vazia = not _pasta_possui_arquivos_reais(pasta) if pasta.exists() else True
+    lista_final = _serializar_arquivos_pasta(pasta if pasta.exists() else None)
+    return {
+        "ok": True,
+        "mensagem": f"Arquivo '{nome_limpo}' excluído da entrega.",
+        "pasta_vazia": pasta_vazia,
+        "arquivos": lista_final,
+        "banca": banca_atualizada.model_dump(),
+    }
+
+
+@app.delete("/api/bancas/{grupo_id}/arquivos")
+def limpar_arquivos_entrega_grupo(grupo_id: str) -> dict[str, Any]:
+    if not obter_meta_e_ordem_grupo(grupo_id):
+        raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
+    if banca_esta_concluida_no_backend(grupo_id):
+        raise HTTPException(
+            status_code=409,
+            detail="Banca já concluída. Use 'Reabrir Banca (Voltar para Entregue)' antes de excluir os arquivos.",
+        )
+
+    pasta, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=False)
+    removidos_qtd = 0
+    if pasta and pasta.exists():
+        for arq in list(pasta.iterdir()):
+            if arq.is_file() and not arq.name.startswith(".") and arq.name.lower() != "thumbs.db":
+                arq.unlink()
+                removidos_qtd += 1
+
+    banca_atualizada = sincronizar_status_entrega_grupo(grupo_id)
+    return {
+        "ok": True,
+        "mensagem": f"{removidos_qtd} arquivo(s) removido(s) da entrega.",
+        "removidos_qtd": removidos_qtd,
+        "arquivos": [],
+        "banca": banca_atualizada.model_dump(),
+    }
+
+
+@app.post("/api/bancas/{grupo_id}/reabrir")
+def reabrir_banca_para_entregue_endpoint(grupo_id: str) -> dict[str, Any]:
+    try:
+        banca_atualizada = reabrir_banca_para_entregue_backend(grupo_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return {
+        "ok": True,
+        "mensagem": f"Banca de {banca_atualizada.projeto} reaberta para o estado 'Entregue'. Agora é possível gerenciar arquivos e reauditar.",
+        "banca": banca_atualizada.model_dump(),
+    }
 
 
 @app.post("/api/firebase/sync-all")

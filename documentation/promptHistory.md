@@ -663,9 +663,22 @@ depois, quero uma landingpage em que os alunos vejam cada apresentação (ordena
 6. **Visibilidade de Notas quando Retida:**
    - Exibir sempre as notas numéricas (parciais P1–P4, média do grupo e individuais) assim que a banca for concluída, destacando o selo oficial (`Nota Liberada`, `Nota Retida`, `Nova Apresentação`), o texto das pendências e se já foram cumpridas.
 
+---
 
+## Sessão 26 — 21/11/2026 (10:03)
 
+### Prompt 26 (21/11/2026 - 10:03)
+```text
+/agente-orquestrador /grill-me /goal agora quero em Auditoria & Bancas, que quando eu clicar no card do grupo e do lado direito abrir as informações do projeto tenha um botão que abra um modal para eu arrastar os arquivos da entrega do grupo e auditar eles. os arquivos ficarão salvos da mesma forma que os outros já vinham sendo salvos. após enviar uma primeira vez, aparece uma lista dos arquivos enviados (inclusive com a opção de excluir após a analise e enviar novos)
+```
 
-
-
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 26
+1. **Fluxo de Upload & Auditoria no Modal:**
+   - Dois botões claros ao arrastar/selecionar arquivos: **"Enviar e Auditar Agora"** (ação principal) e **"Apenas Salvar Arquivos"** (para enviar em partes antes de auditar), além de um botão **"Auditar / Reauditar Grupo"** na lista de arquivos já enviados.
+2. **Proteção de Bancas Concluídas (`Reabrir Banca`):**
+   - Somente quando a banca **NÃO estiver concluída** (pendente de entrega ou entregue/aguardando banca) é permitido enviar/substituir e excluir arquivos.
+   - Se a banca **estiver concluída**, upload e exclusão ficam bloqueados no modal (mantendo apenas download) e aparece o botão **"Reabrir Banca (Voltar para Entregue)"**.
+   - Ao confirmar **"Reabrir Banca (Voltar para Entregue)"**, a banca volta para estado entregue (`aguardando_inicio` no Firestore e `banca_realizada = False` no backend), **mantendo o histórico das notas e rascunhos dos professores** no Firestore (`psof3_avaliacoes_professores`), liberando exclusão, reenvio e nova auditoria.
+3. **Lista de Arquivos & Segurança:**
+   - Aceitar todos os entregáveis oficiais (`.docx`, `.pdf`, `.pptx`, `.sql`, `.zip`, `.txt`, `.md`, `.csv`, `.png`, `.jpg`, `.jpeg`, até 200 MB por arquivo), com substituição por nome igual, download individual, exclusão individual e limpeza total (revertendo o grupo para pendente se a pasta ficar vazia).
 

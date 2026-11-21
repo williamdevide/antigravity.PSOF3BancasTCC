@@ -4,6 +4,7 @@ import type {
   AvaliacaoGrupo,
   ConfigEnv,
   ExecucaoHistorico,
+  ListaArquivosEntregaResponse,
   NotaIndividualIntegrante,
   RegrasOficiaisResponse,
   ResultadoFinalTipo,
@@ -132,4 +133,68 @@ export const api = {
 
   getDownloadUrl: (filename: string) =>
     `${API_BASE}/api/reports/download/${encodeURIComponent(filename)}`,
+
+  listarArquivosGrupo: (grupoId: string) =>
+    request<ListaArquivosEntregaResponse>(
+      `/api/bancas/${encodeURIComponent(grupoId)}/arquivos`,
+    ),
+
+  uploadArquivosGrupo: async (grupoId: string, arquivos: File[]) => {
+    const formData = new FormData();
+    arquivos.forEach((arq) => {
+      formData.append('arquivos', arq);
+    });
+    const resp = await fetch(
+      `${API_BASE}/api/bancas/${encodeURIComponent(grupoId)}/arquivos`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+    );
+    if (!resp.ok) {
+      const erro = await resp.json().catch(() => ({ detail: resp.statusText }));
+      throw new Error(erro.detail || 'Erro ao enviar arquivos da entrega');
+    }
+    return resp.json() as Promise<{
+      ok: boolean;
+      mensagem: string;
+      pasta_nome: string;
+      enviados: string[];
+      substituidos: string[];
+      arquivos: ListaArquivosEntregaResponse['arquivos'];
+      banca: AvaliacaoGrupo;
+    }>;
+  },
+
+  excluirArquivoGrupo: (grupoId: string, nomeArquivo: string) =>
+    request<{
+      ok: boolean;
+      mensagem: string;
+      pasta_vazia: boolean;
+      arquivos: ListaArquivosEntregaResponse['arquivos'];
+      banca: AvaliacaoGrupo;
+    }>(
+      `/api/bancas/${encodeURIComponent(grupoId)}/arquivos/${encodeURIComponent(nomeArquivo)}`,
+      { method: 'DELETE' },
+    ),
+
+  excluirTodosArquivosGrupo: (grupoId: string) =>
+    request<{
+      ok: boolean;
+      mensagem: string;
+      removidos_qtd: number;
+      arquivos: ListaArquivosEntregaResponse['arquivos'];
+      banca: AvaliacaoGrupo;
+    }>(`/api/bancas/${encodeURIComponent(grupoId)}/arquivos`, {
+      method: 'DELETE',
+    }),
+
+  getDownloadArquivoGrupoUrl: (grupoId: string, nomeArquivo: string) =>
+    `${API_BASE}/api/bancas/${encodeURIComponent(grupoId)}/arquivos/${encodeURIComponent(nomeArquivo)}`,
+
+  reabrirBancaBackend: (grupoId: string) =>
+    request<{ ok: boolean; mensagem: string; banca: AvaliacaoGrupo }>(
+      `/api/bancas/${encodeURIComponent(grupoId)}/reabrir`,
+      { method: 'POST' },
+    ),
 };

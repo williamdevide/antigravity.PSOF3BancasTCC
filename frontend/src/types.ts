@@ -443,3 +443,23 @@ export interface BancaConsolidada {
   status_liberacao_final: ResultadoFinalTipo;
   status_liberacao_manual?: ResultadoFinalTipo | null;
 }
+
+export interface ArquivoEntregaSalvo {
+  nome: string;
+  tamanho_bytes: number;
+  modificado_em: string;
+  tipo_detectado: string;
+  extensao: string;
+}
+
+export interface ListaArquivosEntregaResponse {
+  grupo_id: string;
+  pasta_nome: string;
+  pasta_caminho: string;
+  entregue_na_pasta: boolean;
+  banca_realizada: boolean;
+  total_arquivos: number;
+  tamanho_total_bytes: number;
+  arquivos: ArquivoEntregaSalvo[];
+}
+

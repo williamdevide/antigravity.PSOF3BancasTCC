@@ -46,6 +46,7 @@ import { AboutView } from './components/AboutView';
 import { AgentHub, type AbaAgente } from './components/AgentHub';
 import { AuthModal } from './components/AuthModal';
 import { BannerBancaAoVivo } from './components/BannerBancaAoVivo';
+import { ModalEntregaArquivos } from './components/ModalEntregaArquivos';
 import { ModalReauditoria } from './components/ModalReauditoria';
 import { PainelBancaConsolidada } from './components/PainelBancaConsolidada';
 import { StudentLandingPage } from './components/StudentLandingPage';
@@ -63,6 +64,7 @@ import {
   encerrarMinhaAvaliacao,
   encerrarEConsolidarBanca,
   atualizarPendenciasBanca,
+  reabrirBancaParaEntregue,
   resetarBancaGrupo,
   recalcularEConsolidarBancaAposEdicao,
   salvarAnaliseAutomaticaFirestore,
@@ -174,6 +176,7 @@ export function App() {
   const [usuarioAuth, setUsuarioAuth] = useState<User | null>(null);
   const [authModalAberto, setAuthModalAberto] = useState<boolean>(false);
   const [modalReauditoriaAberto, setModalReauditoriaAberto] = useState<boolean>(false);
+  const [modalArquivosAberto, setModalArquivosAberto] = useState<boolean>(false);
   const [authPronto, setAuthPronto] = useState<boolean>(false);
   const [bancaConsolidada, setBancaConsolidada] = useState<BancaConsolidada | null>(null);
   const [sessaoAoVivo, setSessaoAoVivo] = useState<SessaoBancaAoVivo | null>(null);
@@ -598,6 +601,36 @@ export function App() {
         tipo: 'erro',
         texto: err instanceof Error ? err.message : 'Erro ao disparar auditoria.',
       });
+    }
+  };
+
+  const handleReabrirBancaParaEntregue = async (): Promise<boolean> => {
+    if (!grupoAtual) return false;
+    if (!usuarioAuth) {
+      setAuthModalAberto(true);
+      return false;
+    }
+    setSalvandoFicha(true);
+    setAviso(null);
+    try {
+      const resFb = await reabrirBancaParaEntregue(grupoAtual, usuarioAuth);
+      if (!resFb.ok) {
+        setAviso({ tipo: 'erro', texto: resFb.mensagem });
+        return false;
+      }
+      const resBk = await api.reabrirBancaBackend(grupoAtual.id);
+      setBancas((prev) => prev.map((b) => (b.id === resBk.banca.id ? resBk.banca : b)));
+      await carregarTudo();
+      setAviso({ tipo: 'ok', texto: resBk.mensagem });
+      return true;
+    } catch (err) {
+      setAviso({
+        tipo: 'erro',
+        texto: err instanceof Error ? err.message : 'Falha ao reabrir a banca para estado entregue.',
+      });
+      return false;
+    } finally {
+      setSalvandoFicha(false);
     }
   };
 
@@ -1876,6 +1909,19 @@ export function App() {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setModalArquivosAberto(true)}
+                              className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-800 transition hover:bg-red-100 cursor-pointer"
+                              title="Arrastar arquivos da entrega do grupo, visualizar salvos, excluir ou auditar"
+                            >
+                              <CloudUpload className="h-4 w-4 text-red-600" />
+                              <span>
+                                {grupoAtual.entregue_na_pasta
+                                  ? 'Gerenciar Entrega / Arquivos'
+                                  : 'Enviar Entrega (Arquivos)'}
+                              </span>
+                            </button>
                             {grupoAtual.entregue_na_pasta && (
                               <>
                                 <button
@@ -1920,10 +1966,20 @@ export function App() {
                               <p className="mx-auto mt-1 max-w-xl text-xs leading-relaxed text-slate-600">
                                 As notas individuais do{' '}
                                 <strong>Pilar 4 (Sprints 4.1 + Participação 4.2)</strong> extraídas
-                                dos PDFs oficiais da turma já estão carregadas abaixo. Assim que a
-                                pasta do grupo for entregue, clique em{' '}
-                                <strong>Reauditar ./tcc</strong>.
+                                dos PDFs oficiais da turma já estão carregadas abaixo. Você pode
+                                arrastar os arquivos diretamente aqui ou colocar na pasta oficial e
+                                clicar em <strong>Reauditar ./tcc</strong>.
                               </p>
+                              <div className="mt-4 flex justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => setModalArquivosAberto(true)}
+                                  className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-red-700 cursor-pointer"
+                                >
+                                  <CloudUpload className="h-4 w-4" />
+                                  Arrastar e Enviar Arquivos da Entrega
+                                </button>
+                              </div>
                             </div>
 
                             {/* Tabela do Pilar 4 Oficial mesmo para grupos que ainda não entregaram a pasta */}
@@ -5192,6 +5248,22 @@ export function App() {
           void handleAuditarAgora(grupoIds, turma);
         }}
       />
+
+      {/* Modal de Upload / Gerenciamento de Arquivos da Entrega por Grupo */}
+      {grupoAtual && (
+        <ModalEntregaArquivos
+          aberto={modalArquivosAberto}
+          onClose={() => setModalArquivosAberto(false)}
+          grupo={grupoAtual}
+          bancaConcluida={bancaJaRealizadaAtual}
+          auditoriaEmAndamento={status.estado === 'running'}
+          onAtualizarBancas={carregarTudo}
+          onDispararAuditoriaGrupo={async (gid) => {
+            await handleAuditarAgora([gid], null);
+          }}
+          onReabrirBanca={handleReabrirBancaParaEntregue}
+        />
+      )}
     </div>
   );
 }

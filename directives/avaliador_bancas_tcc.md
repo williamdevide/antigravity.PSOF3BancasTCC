@@ -132,3 +132,7 @@ Automatizar a auditoria técnica, documental e estrutural dos Trabalhos de Concl
    - O professor clica em *"Encerrar Minha Avaliação"* para persistir no Firestore e marcar `concluido: true`.
 5. **Trava de Consolidação:**
    - O Professor Titular só é liberado para consolidar a média final e fechar a ata após o segundo professor ter concluído suas notas (com contingência justificada caso o 2º avaliador esteja ausente).
+6. **Upload Direto de Entregáveis & Reabertura Controlada:**
+   - Na aba *Auditoria & Bancas*, qualquer grupo pode receber arquivos via drag-and-drop no modal **"Enviar / Gerenciar Arquivos"**, salvos na pasta oficial `./tcc/{turma}/BancaXX-GrupoYY-Projeto-(Integrantes)/` (mesmo padrão das entregas manuais), com opção de **Enviar e Auditar Agora**, **Apenas Salvar Arquivos**, baixar, substituir e excluir arquivos após a análise (voltando para `pendente_entrega` se a pasta ficar vazia).
+   - Se a banca já estiver **concluída**, exclusão e upload ficam bloqueados até o docente clicar em **"Reabrir Banca (Voltar para Entregue)"**, o que desmarca a conclusão mantendo o histórico de notas/rascunhos individuais em `psof3_avaliacoes_professores`.
+
