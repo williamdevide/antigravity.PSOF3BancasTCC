@@ -299,6 +299,16 @@ class RevisaoPosBancaModel(BaseModel):
     atualizado_em: str | None = None
 
 
+class RegistroHistoricoPendenciaModel(BaseModel):
+    id: str
+    data_hora: str
+    autor: str = "Docente"
+    origem: Literal["banca", "revisados"] = "banca"
+    mensagem: str
+    status_aplicado: ResultadoFinalTipo | None = None
+    pendencias_cumpridas: bool = False
+
+
 class AvaliacaoGrupoModel(BaseModel):
     id: str  # Ex: "I2DEV-B_Grupo08"
     ordem_apresentacao: int = 1
@@ -342,6 +352,7 @@ class AvaliacaoGrupoModel(BaseModel):
     status_liberacao_manual: str | None = None
 
     revisao_pos_banca: RevisaoPosBancaModel = Field(default_factory=RevisaoPosBancaModel)
+    historico_pendencias: list[RegistroHistoricoPendenciaModel] = Field(default_factory=list)
 
     parecer_tecnico: str = ""
     parecer_estruturado: list[BlocoParecerTecnico] = Field(default_factory=list)
@@ -413,5 +424,15 @@ class AvaliarRevisaoPosBancaRequest(BaseModel):
     aceito: bool
     observacao_professor: str = ""
     avaliador: str = "Prof. Titular"
+    novo_status_liberacao: ResultadoFinalTipo | None = None
+    pendencias_cumpridas: bool | None = None
+
+
+class SalvarPendenciasGrupoRequest(BaseModel):
+    mensagem: str = ""
+    origem: Literal["banca", "revisados"] = "banca"
+    autor: str = "Docente"
+    possui_pendencias: bool = True
+    pendencias_cumpridas: bool = False
     novo_status_liberacao: ResultadoFinalTipo | None = None
 

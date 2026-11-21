@@ -729,6 +729,29 @@ melhore a visualização no pilar 2
 3. **Visibilidade na Landing Page Pública (`/`):**
    - Exibe no card da banca realizada um aviso claro com a contagem de arquivos revisados recebidos, status da validação pelo professor e observação docente (sem links públicos de download e preservando as notas originais).
 
+---
+
+## Sessão 30 — 21/11/2026 (12:12)
+
+### Prompt 30 (21/11/2026 - 12:12)
+```text
+/agente-orquestrador /grill-me /goal na tela em que adiciono os arquivos revisados quero já poder alterar o status da banca (Nota retida / Nova apresentação / Nota Liberada) (coloque igual ao bloco Controle de Pendências & Cumprimento (Portal dos Alunos) que esta na tela da Ficha MSEP & Arguição
+na tela Ficha MSEP & Arguição se eu colocar uma Descrição das Pendências da Banca durante a banca e depois na recepção dos arquivos revisados, essas mensagens aparecem com a informação da data em que ocorreram.
+em auditoria & bancas faça os cards terem as mesmas cores que na tela do aluno
+na barra de navegação ao lado do botão configurações crie um botão para o gestão de arquivos, ele abre uma tela no formato de arvore de diretorios e arquivos do lado esquerdo e com visualização de conteudo do lado direito, que mostra a pasta com envio dos arquivos dos alunos
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 30
+1. **Gestão de Arquivos (`./tcc`):**
+   - Aba dedicada **Gestão de Arquivos** na barra de navegação ao lado de *Configurações* com árvore expansível à esquerda e visualizador rico à direita (texto/código, PDF inline em `<iframe>`, imagens nativas, texto extraído de `.docx`/`.pptx`, lista navegável com preview de arquivos internos em `.zip`, download e exclusão com proteção para `regras/` e PDFs oficiais).
+2. **Histórico Datado de Pendências & Revisões (`historico_pendencias`):**
+   - Armazenamento em linha do tempo cronológica contendo data/hora, autor, origem (`Durante a Banca` vs `Arquivos Revisados`), texto da mensagem e status aplicado, exibido integralmente na Ficha MSEP (habilitada inclusive durante a banca ao vivo), na aba Revisados e nos cards da Landing Page pública (`/`).
+3. **Controle de Pendências & Status na Tela de Arquivos Revisados:**
+   - Bloco completo **Controle de Pendências & Cumprimento (Portal dos Alunos)** sempre visível na aba *Arquivos Revisados* (com alternador `Pendências em Aberto` / `Cumpridas`, seletor dos 3 status possíveis, linha do tempo datada e campo de nova mensagem), integrado com o aceite dos arquivos revisados quando presentes.
+4. **Paridade Visual dos Cards em *Auditoria & Bancas*:**
+   - Mesmas bordas coloridas da Landing Page dos alunos (amarelo = aguardando, verde = nota liberada, laranja = nota retida, vermelho = nova apresentação ou ao vivo).
+
+
 
 
 

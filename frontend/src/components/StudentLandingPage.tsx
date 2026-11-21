@@ -24,6 +24,7 @@ import { APP_VERSION } from '../config/version';
 import type {
   AvaliacaoGrupo,
   NotaIndividualIntegrante,
+  RegistroHistoricoPendencia,
   ResultadoFinalTipo,
   SessaoBancaAoVivo,
 } from '../types';
@@ -128,6 +129,10 @@ function resolverDadosBancaRealizada(
   );
 
   const revisaoPosBanca = sessao?.revisao_pos_banca || banca.revisao_pos_banca || null;
+  const historicoPendencias: RegistroHistoricoPendencia[] =
+    sessao?.historico_pendencias && sessao.historico_pendencias.length > 0
+      ? sessao.historico_pendencias
+      : banca.historico_pendencias || [];
 
   return {
     realizada,
@@ -145,6 +150,7 @@ function resolverDadosBancaRealizada(
     possuiPendencias,
     consideracoesProfessores,
     revisaoPosBanca,
+    historicoPendencias,
   };
 }
 
@@ -880,10 +886,61 @@ export function StudentLandingPage({
                                 </span>
                               </div>
 
-                              {info.pendenciasTexto && (
-                                <p className="mt-2 whitespace-pre-line rounded-lg border border-black/5 bg-white/80 p-2.5 text-xs leading-relaxed text-slate-800">
-                                  {info.pendenciasTexto}
-                                </p>
+                              {info.historicoPendencias.length > 0 ? (
+                                <div className="mt-2.5 space-y-1.5">
+                                  <p className="text-[10px] font-extrabold uppercase tracking-wider opacity-75">
+                                    Histórico de Registros &amp; Pendências:
+                                  </p>
+                                  {info.historicoPendencias.map((reg) => {
+                                    const dataFmt = reg.data_hora
+                                      ? new Date(reg.data_hora).toLocaleString('pt-BR', {
+                                          day: '2-digit',
+                                          month: '2-digit',
+                                          year: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })
+                                      : '';
+                                    const isRev = reg.origem === 'revisados';
+                                    return (
+                                      <div
+                                        key={reg.id || `${reg.data_hora}-${reg.mensagem.slice(0, 12)}`}
+                                        className="rounded-lg border border-black/10 bg-white/85 px-3 py-2 text-xs text-slate-800"
+                                      >
+                                        <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px]">
+                                          <div className="flex flex-wrap items-center gap-1.5">
+                                            <span
+                                              className={`rounded px-1.5 py-0.5 font-extrabold uppercase ${
+                                                isRev
+                                                  ? 'bg-emerald-100 text-emerald-800'
+                                                  : 'bg-indigo-100 text-indigo-800'
+                                              }`}
+                                            >
+                                              {isRev ? 'Arquivos Revisados' : 'Durante a Banca'}
+                                            </span>
+                                            <span className="font-bold text-slate-700">
+                                              {reg.autor}
+                                            </span>
+                                          </div>
+                                          {dataFmt && (
+                                            <span className="font-mono font-semibold text-slate-500">
+                                              {dataFmt}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="mt-1 whitespace-pre-line leading-relaxed text-slate-800">
+                                          {reg.mensagem}
+                                        </p>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                info.pendenciasTexto && (
+                                  <p className="mt-2 whitespace-pre-line rounded-lg border border-black/5 bg-white/80 p-2.5 text-xs leading-relaxed text-slate-800">
+                                    {info.pendenciasTexto}
+                                  </p>
+                                )
                               )}
 
                               {info.pendenciasCumpridas && info.pendenciasCumpridasEm && (

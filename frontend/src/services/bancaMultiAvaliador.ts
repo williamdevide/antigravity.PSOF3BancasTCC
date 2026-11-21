@@ -15,6 +15,7 @@ import type {
   BancaConsolidada,
   DraftAvaliacaoLocal,
   NivelMSEP,
+  RegistroHistoricoPendencia,
   ResultadoFinalTipo,
   RevisaoPosBanca,
   RubricaItemAvaliacao,
@@ -682,8 +683,8 @@ export async function recalcularEConsolidarBancaAposEdicao(
 }
 
 /**
- * Atualiza a descrição e o cumprimento das pendências de uma banca já concluída,
- * sincronizando o status de liberação da nota para exibição no Portal dos Alunos.
+ * Atualiza o registro datado de pendências/mensagens (origem 'banca' ou 'revisados')
+ * e o cumprimento/status final da nota no Firestore para o Portal dos Alunos.
  */
 export async function atualizarPendenciasBanca(
   grupoId: string,
@@ -695,44 +696,64 @@ export async function atualizarPendenciasBanca(
     pendencias_descricao: string;
     pendencias_cumpridas: boolean;
     novo_status_liberacao: ResultadoFinalTipo;
+    origem?: 'banca' | 'revisados';
   },
-): Promise<{ ok: boolean; mensagem: string }> {
+): Promise<{ ok: boolean; mensagem: string; historico?: RegistroHistoricoPendencia[] }> {
   try {
     const agora = new Date().toISOString();
+    const autorNome = professor.displayName || professor.email || 'Docente';
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
 
-    const bancaAtualizada: BancaConsolidada | undefined = consolidadaAtual
+    const bancaOrigem = consolidadaAtual || sessaoAtual?.banca_consolidada || null;
+    const bancaAtualizada: BancaConsolidada | undefined = bancaOrigem
       ? {
-          ...consolidadaAtual,
+          ...bancaOrigem,
           status_liberacao_final: dados.novo_status_liberacao,
           status_liberacao_manual: dados.novo_status_liberacao,
-          integrantes_medias: consolidadaAtual.integrantes_medias.map((ind) => ({
-            ...ind,
-            resultado: dados.novo_status_liberacao,
-          })),
-        }
-      : sessaoAtual?.banca_consolidada
-      ? {
-          ...sessaoAtual.banca_consolidada,
-          status_liberacao_final: dados.novo_status_liberacao,
-          status_liberacao_manual: dados.novo_status_liberacao,
-          integrantes_medias: sessaoAtual.banca_consolidada.integrantes_medias.map((ind) => ({
+          integrantes_medias: bancaOrigem.integrantes_medias.map((ind) => ({
             ...ind,
             resultado: dados.novo_status_liberacao,
           })),
         }
       : undefined;
 
+    const histExistente: RegistroHistoricoPendencia[] = [
+      ...(sessaoAtual?.historico_pendencias || []),
+    ];
+    const msgNova = dados.pendencias_descricao.trim();
+    const origemAtual = dados.origem || 'banca';
+    if (msgNova) {
+      const ultimo = histExistente[histExistente.length - 1];
+      const mesmaEntrada =
+        ultimo &&
+        ultimo.origem === origemAtual &&
+        ultimo.mensagem.trim() === msgNova &&
+        ultimo.status_aplicado === dados.novo_status_liberacao &&
+        ultimo.pendencias_cumpridas === dados.pendencias_cumpridas;
+      if (!mesmaEntrada) {
+        histExistente.push({
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          data_hora: agora,
+          autor: autorNome,
+          origem: origemAtual,
+          mensagem: msgNova,
+          status_aplicado: dados.novo_status_liberacao,
+          pendencias_cumpridas: dados.pendencias_cumpridas,
+        });
+      }
+    }
+
     const payload: Record<string, unknown> = {
       status: sessaoAtual?.status || 'concluida',
       possui_pendencias: dados.possui_pendencias,
-      pendencias_descricao: dados.pendencias_descricao.trim(),
+      pendencias_descricao: msgNova || sessaoAtual?.pendencias_descricao || '',
       pendencias_cumpridas: dados.pendencias_cumpridas,
       pendencias_cumpridas_em: dados.pendencias_cumpridas
         ? sessaoAtual?.pendencias_cumpridas_em || agora
         : null,
-      pendencias_atualizado_por: professor.displayName || professor.email || 'Docente',
+      pendencias_atualizado_por: autorNome,
       status_liberacao_final: dados.novo_status_liberacao,
+      historico_pendencias: histExistente,
       atualizado_em: agora,
     };
 
@@ -745,8 +766,9 @@ export async function atualizarPendenciasBanca(
     return {
       ok: true,
       mensagem: dados.pendencias_cumpridas
-        ? 'Pendências marcadas como cumpridas e status atualizado no Portal dos Alunos!'
-        : 'Registro de pendências e status da nota salvos no Firebase!',
+        ? 'Pendências marcadas como cumpridas e registro datado atualizado no Portal dos Alunos!'
+        : 'Registro datado de pendências e status da nota salvos no Firebase!',
+      historico: histExistente,
     };
   } catch (err: unknown) {
     return { ok: false, mensagem: formatarErroFirestore(err, 'atualizar pendências da banca') };
@@ -810,8 +832,33 @@ export async function sincronizarRevisaoPosBancaFirestore(
 ): Promise<{ ok: boolean; mensagem: string }> {
   try {
     const agora = new Date().toISOString();
+    const autorNome = professor.displayName || professor.email || 'Prof. Titular';
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupo.id);
     const bancaOrigem = consolidadaAtual || sessaoAtual?.banca_consolidada || null;
+
+    const histExistente: RegistroHistoricoPendencia[] = [
+      ...(sessaoAtual?.historico_pendencias || []),
+    ];
+    const msgRev = (revisao.observacao_professor || '').trim();
+    if (msgRev) {
+      const ultimo = histExistente[histExistente.length - 1];
+      const jaRegistrada =
+        ultimo &&
+        ultimo.origem === 'revisados' &&
+        ultimo.mensagem.trim() === msgRev &&
+        ultimo.status_aplicado === (novoStatusLiberacao || null);
+      if (!jaRegistrada) {
+        histExistente.push({
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          data_hora: agora,
+          autor: autorNome,
+          origem: 'revisados',
+          mensagem: msgRev,
+          status_aplicado: novoStatusLiberacao || null,
+          pendencias_cumpridas: Boolean(revisao.aceito && novoStatusLiberacao === 'Aprovado'),
+        });
+      }
+    }
 
     const payload: Record<string, unknown> = {
       grupo_id: grupo.id,
@@ -819,6 +866,7 @@ export async function sincronizarRevisaoPosBancaFirestore(
       projeto: grupo.projeto,
       status: sessaoAtual?.status || 'concluida',
       revisao_pos_banca: revisao,
+      historico_pendencias: histExistente,
       atualizado_em: agora,
     };
 
@@ -827,7 +875,7 @@ export async function sincronizarRevisaoPosBancaFirestore(
       if (novoStatusLiberacao === 'Aprovado') {
         payload.pendencias_cumpridas = true;
         payload.pendencias_cumpridas_em = sessaoAtual?.pendencias_cumpridas_em || agora;
-        payload.pendencias_atualizado_por = professor.displayName || professor.email || 'Prof. Titular';
+        payload.pendencias_atualizado_por = autorNome;
       } else {
         payload.pendencias_cumpridas = false;
         payload.pendencias_cumpridas_em = null;

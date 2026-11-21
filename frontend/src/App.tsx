@@ -20,6 +20,7 @@ import {
   FileSpreadsheet,
   FileText,
   FolderOpen,
+  FolderTree,
   GitBranch,
   Globe,
   GraduationCap,
@@ -47,6 +48,7 @@ import { AboutView } from './components/AboutView';
 import { AgentHub, type AbaAgente } from './components/AgentHub';
 import { AuthModal } from './components/AuthModal';
 import { BannerBancaAoVivo } from './components/BannerBancaAoVivo';
+import { FileExplorerView } from './components/FileExplorerView';
 import { ModalEntregaArquivos } from './components/ModalEntregaArquivos';
 import { ModalReauditoria } from './components/ModalReauditoria';
 import { PainelBancaConsolidada } from './components/PainelBancaConsolidada';
@@ -865,6 +867,7 @@ export function App() {
     pendencias_descricao: string;
     pendencias_cumpridas: boolean;
     novo_status_liberacao: ResultadoFinalTipo;
+    origem?: 'banca' | 'revisados';
   }) => {
     if (!grupoAtual) return;
     if (!usuarioAuth) {
@@ -874,13 +877,36 @@ export function App() {
     setSalvandoFicha(true);
     setAviso(null);
     try {
+      const origemRegistro = dados.origem || 'banca';
       const res = await atualizarPendenciasBanca(
         grupoAtual.id,
         sessaoAtual || null,
         consolidadaAtual || null,
         usuarioAuth,
-        dados,
+        {
+          ...dados,
+          origem: origemRegistro,
+        },
       );
+      try {
+        const resBk = await api.salvarPendenciasBackend(grupoAtual.id, {
+          mensagem: dados.pendencias_descricao,
+          origem: origemRegistro,
+          autor:
+            usuarioAuth.displayName ||
+            avaliadorEdit ||
+            usuarioAuth.email?.split('@')[0] ||
+            'Professor',
+          possui_pendencias: dados.possui_pendencias,
+          pendencias_cumpridas: dados.pendencias_cumpridas,
+          novo_status_liberacao: dados.novo_status_liberacao,
+        });
+        if (resBk?.banca) {
+          setBancas((prev) => prev.map((b) => (b.id === grupoAtual.id ? resBk.banca : b)));
+        }
+      } catch {
+        // Mantém sincronização ao vivo no Firestore caso o backend local esteja reiniciando
+      }
       setAviso({ tipo: res.ok ? 'ok' : 'erro', texto: res.mensagem });
     } catch (err) {
       setAviso({
@@ -1325,6 +1351,17 @@ export function App() {
                   <Settings className="h-4 w-4" />
                   Configurações
                 </button>
+                <button
+                  onClick={() => setAbaAtiva('arquivos')}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                    abaAtiva === 'arquivos'
+                      ? 'bg-red-600 text-white'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <FolderTree className="h-4 w-4" />
+                  Gestão de Arquivos
+                </button>
               </nav>
             ) : (
               <button
@@ -1718,19 +1755,28 @@ export function App() {
                               sessaoB?.status_liberacao_final ??
                               sessaoB?.banca_consolidada?.status_liberacao_final ??
                               b.status_liberacao_nota;
+                            const emAndamentoCard = sessaoB?.status === 'em_andamento';
+                            const cardBordaCor = emAndamentoCard
+                              ? 'border-2 border-red-600 bg-red-50/25'
+                              : !bancaJaRealizada
+                              ? 'border-2 border-yellow-400 bg-white'
+                              : statusFinalApresentado === 'Aprovado'
+                              ? 'border-2 border-emerald-500 bg-emerald-50/20'
+                              : statusFinalApresentado === 'Nota Retida (Pendências)' ||
+                                statusFinalApresentado === 'Nota Retida'
+                              ? 'border-2 border-orange-500 bg-orange-50/20'
+                              : 'border-2 border-red-600 bg-red-50/20';
 
                             return (
                               <div
                                 key={b.id}
                                 onClick={() => setGrupoSelecionadoId(b.id)}
-                                className={`cursor-pointer rounded-xl border p-3.5 transition ${
+                                className={`cursor-pointer rounded-xl p-3.5 transition ${cardBordaCor} ${
                                   selecionado
-                                    ? 'border-red-600 bg-red-50/30 ring-2 ring-red-500/20 shadow-sm'
-                                    : bancaJaRealizada
-                                    ? 'border-purple-300 bg-purple-50/30 hover:border-purple-400 shadow-2xs'
-                                    : b.entregue_na_pasta
-                                    ? 'border-emerald-200 bg-white hover:border-emerald-400'
-                                    : 'border-slate-200 bg-white/80 opacity-85 hover:opacity-100'
+                                    ? 'ring-2 ring-slate-900/40 shadow-md'
+                                    : !bancaJaRealizada && !b.entregue_na_pasta
+                                    ? 'opacity-90 hover:opacity-100 hover:shadow-sm'
+                                    : 'hover:shadow-sm'
                                 }`}
                               >
                                 <div className="flex items-start justify-between gap-2">
@@ -1785,7 +1831,7 @@ export function App() {
                                               : statusFinalApresentado ===
                                                   'Nota Retida (Pendências)' ||
                                                 statusFinalApresentado === 'Nota Retida'
-                                              ? 'bg-amber-100 text-amber-900'
+                                              ? 'bg-orange-100 text-orange-800'
                                               : 'bg-red-100 text-red-800'
                                           }`}
                                         >
@@ -5242,6 +5288,13 @@ export function App() {
                 </div>
               </form>
             )}
+
+            {/* =================================================================== */}
+            {/* ABA 6: GESTÃO DE ARQUIVOS (ÁRVORE ./tcc + VISUALIZADOR DE CONTEÚDO) */}
+            {/* =================================================================== */}
+            {abaAtiva === 'arquivos' && (
+              <FileExplorerView onArquivoExcluido={carregarTudo} />
+            )}
           </>
         )}
       </main>
@@ -5300,6 +5353,17 @@ export function App() {
             sessaoAtual?.revisao_pos_banca || grupoAtual.revisao_pos_banca || null
           }
           statusTrabalhoAtual={statusFinalGrupoAtual as ResultadoFinalTipo}
+          historicoPendencias={
+            (sessaoAtual?.historico_pendencias && sessaoAtual.historico_pendencias.length > 0
+              ? sessaoAtual.historico_pendencias
+              : grupoAtual.historico_pendencias) || []
+          }
+          pendenciasCumpridasAtual={Boolean(sessaoAtual?.pendencias_cumpridas)}
+          pendenciasDescricaoAtual={
+            sessaoAtual?.pendencias_descricao !== undefined
+              ? sessaoAtual.pendencias_descricao
+              : (grupoAtual.itens_insuficientes_grupo || []).join('\n')
+          }
           onAtualizarBancas={carregarTudo}
           onDispararAuditoriaGrupo={async (gid) => {
             await handleAuditarAgora([gid], null);
@@ -5319,6 +5383,7 @@ export function App() {
               setAviso({ tipo: 'erro', texto: resSync.mensagem });
             }
           }}
+          onAtualizarPendencias={handleAtualizarPendencias}
         />
       )}
     </div>

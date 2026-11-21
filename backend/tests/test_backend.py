@@ -521,5 +521,141 @@ def test_arquivos_revisados_pos_banca_e_aceite_status():
         salvar_avaliacoes_salvas(salvas_rest)
 
 
+def test_explorador_arquivos_tcc_e_historico_pendencias():
+    """Valida endpoints do explorador de arquivos ./tcc e histórico datado de pendências."""
+    import io
+    import shutil
+    import zipfile
+    from backend.app.config_manager import ler_avaliacoes_salvas, salvar_avaliacoes_salvas
+    from backend.app.tcc_auditor import resolver_ou_criar_pasta_grupo
+
+    bancas = client.get("/api/bancas").json()["bancas"]
+    grupo = next(b for b in bancas if not b.get("entregue_na_pasta") and not b.get("banca_realizada"))
+    gid = grupo["id"]
+    salvas_orig = ler_avaliacoes_salvas()
+    registro_orig = salvas_orig.get(gid)
+    pasta_criada = None
+
+    try:
+        # Prepara arquivos de teste (txt e zip) na pasta do grupo
+        buf_zip = io.BytesIO()
+        with zipfile.ZipFile(buf_zip, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("src/app.ts", "export const ok = true;\n")
+        buf_zip.seek(0)
+
+        r_up = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[
+                ("arquivos", ("notas_teste.txt", b"Linha 1\nLinha 2\n", "text/plain")),
+                ("arquivos", ("projeto.zip", buf_zip.read(), "application/zip")),
+            ],
+        )
+        assert r_up.status_code == 200
+        pasta_nome = r_up.json()["pasta_nome"]
+        pasta_criada, _, _ = resolver_ou_criar_pasta_grupo(gid, criar_se_ausente=False)
+        assert pasta_criada is not None
+        caminho_txt_rel = f"{grupo['turma']}/{pasta_nome}/notas_teste.txt"
+        caminho_zip_rel = f"{grupo['turma']}/{pasta_nome}/projeto.zip"
+
+        # 1. Árvore de diretórios inclui pasta da turma, grupo e arquivos enviados
+        r_tree = client.get("/api/arquivos/arvore")
+        assert r_tree.status_code == 200
+        tree = r_tree.json()
+        assert tree["raiz_nome"]
+        assert tree["total_arquivos"] >= 2
+
+        # 2. Visualizar arquivo texto
+        r_prev_txt = client.get("/api/arquivos/visualizar", params={"caminho": caminho_txt_rel})
+        assert r_prev_txt.status_code == 200
+        d_txt = r_prev_txt.json()
+        assert d_txt["modo"] == "texto"
+        assert "Linha 1" in d_txt["conteudo_texto"]
+
+        # 3. Visualizar listagem ZIP e depois arquivo interno do ZIP
+        r_prev_zip = client.get("/api/arquivos/visualizar", params={"caminho": caminho_zip_rel})
+        assert r_prev_zip.status_code == 200
+        d_zip = r_prev_zip.json()
+        assert d_zip["modo"] == "zip"
+        assert any(e["caminho"] == "src/app.ts" for e in d_zip["entradas_zip"])
+
+        r_prev_zip_in = client.get(
+            "/api/arquivos/visualizar",
+            params={"caminho": caminho_zip_rel, "entrada_zip": "src/app.ts"},
+        )
+        assert r_prev_zip_in.status_code == 200
+        d_zip_in = r_prev_zip_in.json()
+        assert d_zip_in["modo"] == "texto"
+        assert d_zip_in["subtipo"] == "ZIP :: src/app.ts"
+        assert "export const ok = true" in d_zip_in["conteudo_texto"]
+
+        # 4. Raw inline streaming, download attachment e bloqueio de path traversal (400)
+        r_raw = client.get("/api/arquivos/raw", params={"caminho": caminho_txt_rel})
+        assert r_raw.status_code == 200
+        assert "inline" in r_raw.headers.get("content-disposition", "")
+
+        r_raw_dl = client.get(
+            "/api/arquivos/raw",
+            params={"caminho": caminho_txt_rel, "download": "true"},
+        )
+        assert r_raw_dl.status_code == 200
+        assert "attachment" in r_raw_dl.headers.get("content-disposition", "")
+
+        r_trav = client.get("/api/arquivos/visualizar", params={"caminho": "../../.env"})
+        assert r_trav.status_code == 400
+
+        # 5. Bloqueio de exclusão em arquivos protegidos de regras (403)
+        r_regras_tree = [n for n in tree["filhos"] if n["nome"] == "regras"]
+        if r_regras_tree and r_regras_tree[0]["filhos"]:
+            regra_arq = r_regras_tree[0]["filhos"][0]["caminho_relativo"]
+            r_del_prot = client.delete("/api/arquivos", params={"caminho": regra_arq})
+            assert r_del_prot.status_code == 403
+
+        # 6. Histórico cronológico datado em /pendencias (banca + revisados)
+        r_p1 = client.post(
+            f"/api/bancas/{gid}/pendencias",
+            json={
+                "mensagem": "Remover uso de localStorage nos agendamentos.",
+                "origem": "banca",
+                "autor": "Prof. William",
+                "possui_pendencias": True,
+                "pendencias_cumpridas": False,
+                "novo_status_liberacao": "Nota Retida (Pendências)",
+            },
+        )
+        assert r_p1.status_code == 200
+        r_p2 = client.post(
+            f"/api/bancas/{gid}/pendencias",
+            json={
+                "mensagem": "Arquivos revisados aceitos e banco online validado.",
+                "origem": "revisados",
+                "autor": "Prof. William",
+                "possui_pendencias": False,
+                "pendencias_cumpridas": True,
+                "novo_status_liberacao": "Aprovado",
+            },
+        )
+        assert r_p2.status_code == 200
+        hist = r_p2.json()["banca"]["historico_pendencias"]
+        assert len(hist) >= 2
+        assert hist[-2]["origem"] == "banca"
+        assert hist[-1]["origem"] == "revisados"
+        assert hist[-1]["data_hora"]
+        assert r_p2.json()["banca"]["status_liberacao_nota"] == "Aprovado"
+
+        # 7. Exclusão segura via DELETE /api/arquivos
+        r_del_txt = client.delete("/api/arquivos", params={"caminho": caminho_txt_rel})
+        assert r_del_txt.status_code == 200
+    finally:
+        if pasta_criada and pasta_criada.exists():
+            shutil.rmtree(pasta_criada, ignore_errors=True)
+        salvas_rest = ler_avaliacoes_salvas()
+        if registro_orig is not None:
+            salvas_rest[gid] = registro_orig
+        else:
+            salvas_rest.pop(gid, None)
+        salvar_avaliacoes_salvas(salvas_rest)
+
+
+
 
 

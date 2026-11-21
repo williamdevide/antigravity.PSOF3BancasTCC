@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type {
   BancaConsolidada,
   AvaliacaoGrupo,
+  RegistroHistoricoPendencia,
   ResultadoFinalTipo,
   SessaoBancaAoVivo,
 } from '../types';
@@ -38,6 +39,7 @@ interface PainelBancaConsolidadaProps {
     pendencias_descricao: string;
     pendencias_cumpridas: boolean;
     novo_status_liberacao: ResultadoFinalTipo;
+    origem?: 'banca' | 'revisados';
   }) => Promise<void>;
   modoEdicaoReaberto?: boolean;
   salvando: boolean;
@@ -585,113 +587,178 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
       {/* ========================================================================= */}
       {/* GESTÃO SIMPLIFICADA DE PENDÊNCIAS & CUMPRIMENTO (PORTAL DOS ALUNOS)       */}
       {/* ========================================================================= */}
-      {statusSessao === 'concluida' && onAtualizarPendencias && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 shadow-2xs space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/70 pb-2.5">
-            <div className="flex items-center gap-2">
-              <ClipboardCheck className="h-4 w-4 text-amber-700" />
-              <div>
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
-                  Controle de Pendências &amp; Cumprimento (Portal dos Alunos)
-                </h4>
-                <p className="text-[11px] text-slate-600">
-                  Registre as pendências apontadas na banca e sinalize quando forem cumpridas para atualizar o portal público.
-                </p>
+      {(statusSessao === 'em_andamento' || statusSessao === 'concluida') &&
+        onAtualizarPendencias && (() => {
+          const historicoLista: RegistroHistoricoPendencia[] =
+            (sessaoAoVivo?.historico_pendencias && sessaoAoVivo.historico_pendencias.length > 0
+              ? sessaoAoVivo.historico_pendencias
+              : grupoAtual.historico_pendencias) || [];
+          return (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 shadow-2xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/70 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck className="h-4 w-4 text-amber-700" />
+                  <div>
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                      Controle de Pendências &amp; Cumprimento (Portal dos Alunos)
+                    </h4>
+                    <p className="text-[11px] text-slate-600">
+                      Registre mensagens e pendências com data/hora durante a banca ou pós-banca para atualizar o portal público.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const proximo = !pendenciasCumpridasEdit;
+                    setPendenciasCumpridasEdit(proximo);
+                    if (proximo) {
+                      setStatusFinalPendEdit('Aprovado');
+                    }
+                  }}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-extrabold transition shadow-xs cursor-pointer ${
+                    pendenciasCumpridasEdit
+                      ? 'border border-emerald-500 bg-emerald-600 text-white hover:bg-emerald-700'
+                      : 'border border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200'
+                  }`}
+                >
+                  {pendenciasCumpridasEdit ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Pendências Cumpridas
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-4 w-4 text-amber-700" />
+                      Pendências em Aberto
+                    </>
+                  )}
+                </button>
               </div>
-            </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                const proximo = !pendenciasCumpridasEdit;
-                setPendenciasCumpridasEdit(proximo);
-                if (proximo) {
-                  setStatusFinalPendEdit('Aprovado');
-                }
-              }}
-              className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-extrabold transition shadow-xs cursor-pointer ${
-                pendenciasCumpridasEdit
-                  ? 'border border-emerald-500 bg-emerald-600 text-white hover:bg-emerald-700'
-                  : 'border border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200'
-              }`}
-            >
-              {pendenciasCumpridasEdit ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  Pendências Cumpridas
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-4 w-4 text-amber-700" />
-                  Pendências em Aberto
-                </>
+              {historicoLista.length > 0 && (
+                <div className="rounded-lg border border-amber-200/80 bg-white/90 p-3 space-y-2">
+                  <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-600">
+                    <Clock className="h-3.5 w-3.5 text-amber-700" />
+                    Histórico Cronológico de Mensagens &amp; Pendências ({historicoLista.length})
+                  </p>
+                  <div className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
+                    {historicoLista.map((reg) => {
+                      const dataFmt = reg.data_hora
+                        ? new Date(reg.data_hora).toLocaleString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '';
+                      const isRevisados = reg.origem === 'revisados';
+                      return (
+                        <div
+                          key={reg.id || `${reg.data_hora}-${reg.mensagem.slice(0, 12)}`}
+                          className="rounded-lg border border-slate-200 bg-slate-50/70 px-2.5 py-2 text-[11px]"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-1.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`rounded px-1.5 py-0.5 text-[9px] font-extrabold uppercase ${
+                                  isRevisados
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-indigo-100 text-indigo-800'
+                                }`}
+                              >
+                                {isRevisados ? 'Arquivos Revisados' : 'Durante a Banca'}
+                              </span>
+                              <span className="font-bold text-slate-800">{reg.autor}</span>
+                              {reg.status_aplicado && (
+                                <span className="rounded bg-slate-200/80 px-1.5 py-0.5 text-[9px] font-bold text-slate-700">
+                                  {reg.status_aplicado}
+                                </span>
+                              )}
+                            </div>
+                            {dataFmt && (
+                              <span className="font-mono text-[10px] font-semibold text-slate-500">
+                                {dataFmt}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-800">
+                            {reg.mensagem}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
-            </button>
-          </div>
 
-          <div className="grid gap-3 md:grid-cols-12">
-            <div className="md:col-span-8">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-bold uppercase text-slate-700">
-                  Descrição das Pendências da Banca:
-                </label>
-                {grupoAtual.itens_insuficientes_grupo.length > 0 && (
+              <div className="grid gap-3 md:grid-cols-12">
+                <div className="md:col-span-8">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold uppercase text-slate-700">
+                      Descrição das Pendências da Banca (registra data e hora ao salvar):
+                    </label>
+                    {grupoAtual.itens_insuficientes_grupo.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPendenciasTexto(grupoAtual.itens_insuficientes_grupo.join('\n'))
+                        }
+                        className="text-[11px] font-semibold text-red-700 hover:underline cursor-pointer"
+                      >
+                        Carregar itens detectados ({grupoAtual.itens_insuficientes_grupo.length})
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={pendenciasTexto}
+                    onChange={(e) => setPendenciasTexto(e.target.value)}
+                    placeholder="Ex: Ajustar persistência em localStorage e enviar script .sql atualizado."
+                    className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-red-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="md:col-span-4 flex flex-col justify-between gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-slate-700 mb-1">
+                      Situação da Nota:
+                    </label>
+                    <select
+                      value={statusFinalPendEdit}
+                      onChange={(e) => setStatusFinalPendEdit(e.target.value as ResultadoFinalTipo)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 focus:border-red-500 focus:outline-none"
+                    >
+                      <option value="Aprovado">✅ Nota Liberada (Aprovado)</option>
+                      <option value="Nota Retida (Pendências)">⚠️ Nota Retida (Pendências)</option>
+                      <option value="Nova Chance (Data Futura)">❌ Nova Apresentação</option>
+                    </select>
+                  </div>
+
                   <button
                     type="button"
+                    disabled={salvando}
                     onClick={() =>
-                      setPendenciasTexto(grupoAtual.itens_insuficientes_grupo.join('\n'))
+                      void onAtualizarPendencias({
+                        possui_pendencias: Boolean(pendenciasTexto.trim()) || statusFinalPendEdit !== 'Aprovado',
+                        pendencias_descricao: pendenciasTexto,
+                        pendencias_cumpridas: pendenciasCumpridasEdit,
+                        novo_status_liberacao: statusFinalPendEdit,
+                        origem: 'banca',
+                      })
                     }
-                    className="text-[11px] font-semibold text-red-700 hover:underline cursor-pointer"
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
                   >
-                    Carregar itens detectados ({grupoAtual.itens_insuficientes_grupo.length})
+                    <Save className="h-3.5 w-3.5" />
+                    Salvar Pendências no Portal
                   </button>
-                )}
+                </div>
               </div>
-              <textarea
-                rows={2}
-                value={pendenciasTexto}
-                onChange={(e) => setPendenciasTexto(e.target.value)}
-                placeholder="Ex: Ajustar persistência em localStorage e enviar script .sql atualizado."
-                className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-red-500 focus:outline-none"
-              />
             </div>
-
-            <div className="md:col-span-4 flex flex-col justify-between gap-2">
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-700 mb-1">
-                  Situação da Nota:
-                </label>
-                <select
-                  value={statusFinalPendEdit}
-                  onChange={(e) => setStatusFinalPendEdit(e.target.value as ResultadoFinalTipo)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 focus:border-red-500 focus:outline-none"
-                >
-                  <option value="Aprovado">✅ Nota Liberada (Aprovado)</option>
-                  <option value="Nota Retida (Pendências)">⚠️ Nota Retida (Pendências)</option>
-                  <option value="Nova Chance (Data Futura)">❌ Nova Apresentação</option>
-                </select>
-              </div>
-
-              <button
-                type="button"
-                disabled={salvando}
-                onClick={() =>
-                  void onAtualizarPendencias({
-                    possui_pendencias: Boolean(pendenciasTexto.trim()) || statusFinalPendEdit !== 'Aprovado',
-                    pendencias_descricao: pendenciasTexto,
-                    pendencias_cumpridas: pendenciasCumpridasEdit,
-                    novo_status_liberacao: statusFinalPendEdit,
-                  })
-                }
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
-              >
-                <Save className="h-3.5 w-3.5" />
-                Salvar Pendências no Portal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
     </div>
   );
 };

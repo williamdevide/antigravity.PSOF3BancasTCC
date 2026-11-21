@@ -30,6 +30,12 @@ from .config_manager import (
     salvar_avaliacoes_salvas,
     salvar_env,
 )
+from .file_explorer import (
+    construir_arvore_tcc,
+    excluir_arquivo_tcc_seguro,
+    resolver_caminho_tcc_seguro,
+    visualizar_arquivo_tcc,
+)
 from .firebase_service import (
     listar_avaliacoes_firestore,
     sincronizar_avaliacao_firestore,
@@ -43,6 +49,7 @@ from .models import (
     ExecucaoHistorico,
     ExecutarAuditoriaRequest,
     SalvarAvaliacaoRequest,
+    SalvarPendenciasGrupoRequest,
 )
 from .regras_msep import CRONOGRAMA_OFICIAL_BANCAS, RUBRICAS_MSEP_OFICIAIS
 from .report_generator import (
@@ -58,6 +65,7 @@ from .tcc_auditor import (
     obter_meta_e_ordem_grupo,
     reabrir_banca_para_entregue_backend,
     recalcular_totais_avaliacao,
+    registrar_pendencia_e_status_backend,
     resolver_ou_criar_pasta_grupo,
     resolver_ou_criar_pasta_revisados,
     sincronizar_e_obter_todas_bancas,
@@ -755,6 +763,73 @@ def excluir_arquivo_revisado_grupo(grupo_id: str, nome_arquivo: str) -> dict[str
         "revisao_pos_banca": banca_atualizada.revisao_pos_banca.model_dump(),
         "banca": banca_atualizada.model_dump(),
     }
+
+
+@app.post("/api/bancas/{grupo_id}/pendencias")
+def registrar_pendencia_e_status_endpoint(
+    grupo_id: str,
+    payload: SalvarPendenciasGrupoRequest,
+) -> dict[str, Any]:
+    try:
+        banca_atualizada = registrar_pendencia_e_status_backend(
+            grupo_id=grupo_id,
+            mensagem=payload.mensagem,
+            origem=payload.origem,
+            autor=payload.autor,
+            pendencias_cumpridas=payload.pendencias_cumpridas,
+            novo_status_liberacao=payload.novo_status_liberacao,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return {
+        "ok": True,
+        "mensagem": "Histórico de pendências e status atualizados no servidor.",
+        "historico_pendencias": [h.model_dump() for h in banca_atualizada.historico_pendencias],
+        "banca": banca_atualizada.model_dump(),
+    }
+
+
+@app.get("/api/arquivos/arvore")
+def obter_arvore_arquivos_tcc() -> dict[str, Any]:
+    cfg = ler_env()
+    pasta_tcc = resolver_pasta_tcc(cfg.pasta_tcc)
+    return construir_arvore_tcc(pasta_tcc)
+
+
+@app.get("/api/arquivos/visualizar")
+def visualizar_conteudo_arquivo_tcc(
+    caminho: str = Query(...),
+    entrada_zip: str | None = Query(default=None),
+) -> dict[str, Any]:
+    cfg = ler_env()
+    pasta_tcc = resolver_pasta_tcc(cfg.pasta_tcc)
+    return visualizar_arquivo_tcc(pasta_tcc, caminho, entrada_zip=entrada_zip)
+
+
+@app.get("/api/arquivos/raw")
+def stream_arquivo_tcc_raw(
+    caminho: str = Query(...),
+    download: bool = Query(default=False),
+) -> FileResponse:
+    cfg = ler_env()
+    pasta_tcc = resolver_pasta_tcc(cfg.pasta_tcc)
+    alvo, _ = resolver_caminho_tcc_seguro(pasta_tcc, caminho)
+    if not alvo.exists() or not alvo.is_file():
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado em ./tcc.")
+    media, _ = mimetypes.guess_type(str(alvo))
+    return FileResponse(
+        path=alvo,
+        filename=alvo.name,
+        media_type=media or "application/octet-stream",
+        content_disposition_type="attachment" if download else "inline",
+    )
+
+
+@app.delete("/api/arquivos")
+def deletar_arquivo_tcc_arvore(caminho: str = Query(...)) -> dict[str, Any]:
+    cfg = ler_env()
+    pasta_tcc = resolver_pasta_tcc(cfg.pasta_tcc)
+    return excluir_arquivo_tcc_seguro(pasta_tcc, caminho)
 
 
 @app.post("/api/firebase/sync-all")

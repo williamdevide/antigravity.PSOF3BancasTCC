@@ -1,12 +1,15 @@
 import type {
   AgentStatus,
   AgentSummary,
+  ArvoreArquivosResponse,
   AvaliacaoGrupo,
   ConfigEnv,
   ExecucaoHistorico,
   ListaArquivosEntregaResponse,
   ListaArquivosRevisadosResponse,
   NotaIndividualIntegrante,
+  PreviewArquivoResponse,
+  RegistroHistoricoPendencia,
   RegrasOficiaisResponse,
   ResultadoFinalTipo,
   RevisaoPosBanca,
@@ -254,6 +257,7 @@ export const api = {
       observacao_professor: string;
       avaliador: string;
       novo_status_liberacao?: ResultadoFinalTipo | null;
+      pendencias_cumpridas?: boolean;
     },
   ) =>
     request<{
@@ -265,4 +269,45 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  salvarPendenciasBackend: (
+    grupoId: string,
+    payload: {
+      mensagem: string;
+      origem: 'banca' | 'revisados';
+      autor: string;
+      possui_pendencias: boolean;
+      pendencias_cumpridas: boolean;
+      novo_status_liberacao?: ResultadoFinalTipo | null;
+    },
+  ) =>
+    request<{
+      ok: boolean;
+      mensagem: string;
+      historico_pendencias: RegistroHistoricoPendencia[];
+      banca: AvaliacaoGrupo;
+    }>(`/api/bancas/${encodeURIComponent(grupoId)}/pendencias`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getArvoreArquivos: () => request<ArvoreArquivosResponse>('/api/arquivos/arvore'),
+
+  visualizarArquivoTcc: (caminho: string, entradaZip?: string | null) =>
+    request<PreviewArquivoResponse>(
+      `/api/arquivos/visualizar?caminho=${encodeURIComponent(caminho)}${
+        entradaZip ? `&entrada_zip=${encodeURIComponent(entradaZip)}` : ''
+      }`,
+    ),
+
+  getRawArquivoTccUrl: (caminho: string, download = false) =>
+    `${API_BASE}/api/arquivos/raw?caminho=${encodeURIComponent(caminho)}${
+      download ? '&download=true' : ''
+    }`,
+
+  excluirArquivoTcc: (caminho: string) =>
+    request<{ ok: boolean; mensagem: string; grupo_id_afetado: string | null }>(
+      `/api/arquivos?caminho=${encodeURIComponent(caminho)}`,
+      { method: 'DELETE' },
+    ),
 };

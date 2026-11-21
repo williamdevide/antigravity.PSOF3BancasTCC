@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import type { AgentSummary } from '../types';
 
-export type AbaAgente = 'bancas' | 'ficha' | 'consolidado' | 'regras' | 'configuracoes';
+export type AbaAgente = 'bancas' | 'ficha' | 'consolidado' | 'regras' | 'configuracoes' | 'arquivos';
 
 interface AgentHubProps {
   agentes: AgentSummary[];

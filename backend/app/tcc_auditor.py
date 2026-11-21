@@ -19,6 +19,7 @@ import re
 import time
 from typing import Any, Callable
 import unicodedata
+import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 import httpx
@@ -40,6 +41,7 @@ from .models import (
     NivelMSEP,
     NotaIndividualIntegrante,
     PerguntaArguicao,
+    RegistroHistoricoPendenciaModel,
     RevisaoPosBancaModel,
     RubricaItemAvaliacao,
 )
@@ -3082,6 +3084,7 @@ def avaliar_revisao_pos_banca_backend(
     av.revisao_pos_banca.atualizado_em = agora
 
     status_validos = ("Aprovado", "Nota Retida (Pendências)", "Nova Chance (Data Futura)")
+    status_aplicado_hist: str | None = None
     if aceito and novo_status_liberacao in status_validos:
         av.revisao_pos_banca.status_trabalho_aplicado = novo_status_liberacao  # type: ignore[assignment]
         av.status_liberacao_manual = novo_status_liberacao
@@ -3089,8 +3092,103 @@ def avaliar_revisao_pos_banca_backend(
         for ind in av.integrantes_notas:
             ind.resultado = novo_status_liberacao  # type: ignore[assignment]
         av.atualizado_em = agora
+        status_aplicado_hist = novo_status_liberacao
     elif not aceito:
         av.revisao_pos_banca.status_trabalho_aplicado = None
+
+    msg_obs = observacao_professor.strip()
+    if msg_obs:
+        ultimo = av.historico_pendencias[-1] if av.historico_pendencias else None
+        if not (
+            ultimo
+            and ultimo.origem == "revisados"
+            and ultimo.mensagem.strip() == msg_obs
+            and ultimo.status_aplicado == status_aplicado_hist
+        ):
+            av.historico_pendencias.append(
+                RegistroHistoricoPendenciaModel(
+                    id=uuid.uuid4().hex[:10],
+                    data_hora=agora,
+                    autor=avaliador.strip() or av.avaliador,
+                    origem="revisados",
+                    mensagem=msg_obs,
+                    status_aplicado=status_aplicado_hist,  # type: ignore[arg-type]
+                    pendencias_cumpridas=bool(aceito and novo_status_liberacao == "Aprovado"),
+                )
+            )
+
+    salvas[grupo_id] = av.model_dump()
+    salvar_avaliacoes_salvas(salvas)
+    return av
+
+
+def registrar_pendencia_e_status_backend(
+    grupo_id: str,
+    mensagem: str,
+    origem: str,
+    autor: str,
+    pendencias_cumpridas: bool,
+    novo_status_liberacao: str | None = None,
+) -> AvaliacaoGrupoModel:
+    """
+    Registra mensagem datada no histórico de pendências/revisão (origem 'banca' ou 'revisados')
+    e aplica a alteração de status do trabalho entre os 3 status possíveis.
+    """
+    info = obter_meta_e_ordem_grupo(grupo_id)
+    if not info:
+        raise ValueError(f"Grupo '{grupo_id}' não encontrado no cronograma oficial.")
+    meta, ordem = info
+
+    salvas = ler_avaliacoes_salvas()
+    registro = salvas.get(grupo_id)
+    av: AvaliacaoGrupoModel | None = None
+    if registro:
+        try:
+            av = AvaliacaoGrupoModel(**registro)
+        except Exception:
+            av = None
+
+    if av is None:
+        pasta_grp, _, _ = resolver_ou_criar_pasta_grupo(grupo_id, criar_se_ausente=False)
+        av = auditar_grupo_individual(
+            meta,
+            pasta_grp if pasta_grp and _pasta_possui_arquivos_reais(pasta_grp) else None,
+            ordem_apresentacao=ordem,
+        )
+
+    agora = datetime.now().isoformat(timespec="seconds")
+    status_validos = ("Aprovado", "Nota Retida (Pendências)", "Nova Chance (Data Futura)")
+    status_aplicado: str | None = None
+    if novo_status_liberacao in status_validos:
+        av.status_liberacao_manual = novo_status_liberacao
+        av.status_liberacao_nota = novo_status_liberacao
+        for ind in av.integrantes_notas:
+            ind.resultado = novo_status_liberacao  # type: ignore[assignment]
+        status_aplicado = novo_status_liberacao
+        av.atualizado_em = agora
+
+    msg_limpa = mensagem.strip()
+    if msg_limpa:
+        ultimo = av.historico_pendencias[-1] if av.historico_pendencias else None
+        origem_norm = "revisados" if origem == "revisados" else "banca"
+        if not (
+            ultimo
+            and ultimo.origem == origem_norm
+            and ultimo.mensagem.strip() == msg_limpa
+            and ultimo.status_aplicado == status_aplicado
+            and ultimo.pendencias_cumpridas == pendencias_cumpridas
+        ):
+            av.historico_pendencias.append(
+                RegistroHistoricoPendenciaModel(
+                    id=uuid.uuid4().hex[:10],
+                    data_hora=agora,
+                    autor=autor.strip() or av.avaliador,
+                    origem=origem_norm,  # type: ignore[arg-type]
+                    mensagem=msg_limpa,
+                    status_aplicado=status_aplicado,  # type: ignore[arg-type]
+                    pendencias_cumpridas=pendencias_cumpridas,
+                )
+            )
 
     salvas[grupo_id] = av.model_dump()
     salvar_avaliacoes_salvas(salvas)

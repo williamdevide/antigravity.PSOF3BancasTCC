@@ -307,6 +307,7 @@ export interface AvaliacaoGrupo {
   status_liberacao_nota: ResultadoFinalTipo;
   status_liberacao_manual?: ResultadoFinalTipo | null;
   revisao_pos_banca?: RevisaoPosBanca;
+  historico_pendencias?: RegistroHistoricoPendencia[];
 
   parecer_tecnico: string;
   parecer_estruturado: BlocoParecerTecnico[];
@@ -417,6 +418,7 @@ export interface SessaoBancaAoVivo {
   pendencias_cumpridas_em?: string | null;
   pendencias_atualizado_por?: string;
   revisao_pos_banca?: RevisaoPosBanca;
+  historico_pendencias?: RegistroHistoricoPendencia[];
   atualizado_em: string;
 }
 
@@ -493,5 +495,63 @@ export interface ListaArquivosRevisadosResponse {
   arquivos: ArquivoEntregaSalvo[];
   revisao_pos_banca: RevisaoPosBanca;
 }
+
+export interface RegistroHistoricoPendencia {
+  id: string;
+  data_hora: string;
+  autor: string;
+  origem: 'banca' | 'revisados';
+  mensagem: string;
+  status_aplicado?: ResultadoFinalTipo | null;
+  pendencias_cumpridas: boolean;
+}
+
+export interface NoArvoreArquivo {
+  nome: string;
+  caminho_relativo: string;
+  tipo: 'pasta' | 'arquivo';
+  tamanho_bytes: number;
+  modificado_em: string;
+  extensao: string;
+  tipo_detectado?: string;
+  protegido: boolean;
+  filhos: NoArvoreArquivo[];
+}
+
+export interface ArvoreArquivosResponse {
+  raiz_nome: string;
+  total_pastas: number;
+  total_arquivos: number;
+  tamanho_total_bytes: number;
+  filhos: NoArvoreArquivo[];
+}
+
+export interface EntradaZipItem {
+  caminho: string;
+  tamanho_bytes: number;
+  extensao: string;
+  visualizavel: boolean;
+}
+
+export interface PreviewArquivoResponse {
+  nome: string;
+  caminho_relativo: string;
+  extensao: string;
+  tamanho_bytes: number;
+  modificado_em: string;
+  tipo_detectado: string;
+  protegido: boolean;
+  modo: 'texto' | 'pdf' | 'imagem' | 'documento_extraido' | 'zip' | 'binario';
+  subtipo?: string;
+  linguagem: string;
+  truncado: boolean;
+  conteudo_texto: string | null;
+  url_raw: string;
+  url_download: string;
+  entradas_zip: EntradaZipItem[];
+  total_entradas_zip: number;
+  entrada_zip_atual?: string | null;
+}
+
 
 
