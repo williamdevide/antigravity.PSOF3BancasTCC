@@ -1,11 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
   type User,
@@ -21,7 +18,16 @@ import {
   getDocs,
   deleteDoc,
   where,
+  arrayUnion,
 } from 'firebase/firestore';
+import {
+  DOMINIO_DOCENTE_AUTORIZADO,
+  EMAIL_PROFESSOR_TITULAR,
+  normalizarEmailDocente,
+  isEmailDocenteSenai,
+  isUsuarioDocenteAutorizado,
+  isUsuarioProfessorTitular,
+} from './authPolicy';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyCV6RIWOXhJTfTD_SnagjDNM6xSunYmxOY',
@@ -37,18 +43,26 @@ export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfi
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Provedor Google configurado para prompt de seleção de conta
+// Provedor Google institucional restrito ao domínio @docente.senai.br
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
   prompt: 'select_account',
+  hd: 'docente.senai.br',
 });
 
 /**
- * Realiza autenticação via Popup com conta Google.
+ * Realiza autenticação via Popup exigindo estritamente conta Google Institucional @docente.senai.br verificada.
  */
 export async function loginComGoogle(): Promise<User> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    if (!isUsuarioDocenteAutorizado(result.user)) {
+      const emailInformado = result.user.email || 'desconhecido';
+      await signOut(auth);
+      throw new Error(
+        `Acesso negado para "${emailInformado}". Entre exclusivamente com uma conta Google Institucional verificada (${DOMINIO_DOCENTE_AUTORIZADO}).`,
+      );
+    }
     return result.user;
   } catch (err: unknown) {
     const error = err as { code?: string; message?: string };
@@ -63,16 +77,32 @@ export async function loginComGoogle(): Promise<User> {
         'Este domínio ainda não foi autorizado no Firebase Console. Adicione este host em Authentication > Settings > Authorized domains.',
       );
     }
-    throw new Error(error.message || 'Erro ao realizar login com o Google.');
+    throw new Error(error.message || 'Erro ao realizar login com conta Google @docente.senai.br.');
+  }
+}
+
+/**
+ * Retorna o Firebase ID Token atualizado do docente logado para autenticar chamadas ao backend FastAPI.
+ */
+export async function obterTokenIdUsuarioAtual(): Promise<string | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+  try {
+    return await user.getIdToken();
+  } catch {
+    return null;
   }
 }
 
 export {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
+  DOMINIO_DOCENTE_AUTORIZADO,
+  EMAIL_PROFESSOR_TITULAR,
+  normalizarEmailDocente,
+  isEmailDocenteSenai,
+  isUsuarioDocenteAutorizado,
+  isUsuarioProfessorTitular,
   signOut,
   onAuthStateChanged,
-  updateProfile,
   signInWithPopup,
   GoogleAuthProvider,
   doc,
@@ -84,5 +114,6 @@ export {
   getDocs,
   deleteDoc,
   where,
+  arrayUnion,
 };
 export type { User };

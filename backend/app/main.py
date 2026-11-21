@@ -13,7 +13,7 @@ import threading
 import uuid
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -37,8 +37,10 @@ from .file_explorer import (
     visualizar_arquivo_tcc,
 )
 from .firebase_service import (
+    EMAIL_PROFESSOR_TITULAR,
     listar_avaliacoes_firestore,
     sincronizar_avaliacao_firestore,
+    validar_permissao_docente_backend,
 )
 from .models import (
     AgentStatusResponse,
@@ -380,7 +382,11 @@ def obter_banca_detalhe(grupo_id: str) -> AvaliacaoGrupoModel:
 
 
 @app.post("/api/bancas/auditar")
-def disparar_auditoria(payload: ExecutarAuditoriaRequest) -> dict[str, str]:
+def disparar_auditoria(payload: ExecutarAuditoriaRequest, request: Request) -> dict[str, str]:
+    token, _ = validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     if runtime.snapshot().estado == "running":
         raise HTTPException(status_code=409, detail="Já existe uma auditoria em andamento.")
 
@@ -411,6 +417,7 @@ def disparar_auditoria(payload: ExecutarAuditoriaRequest) -> dict[str, str]:
                 grupo_ids_alvo=payload.grupo_ids,
                 turma_alvo=payload.turma,
                 sincronizar_firebase=payload.sincronizar_firebase,
+                firebase_id_token=token,
                 log_cb=runtime.adicionar_log,
                 progress_cb=runtime.atualizar_progresso,
             )
@@ -453,7 +460,15 @@ def disparar_auditoria(payload: ExecutarAuditoriaRequest) -> dict[str, str]:
 
 
 @app.put("/api/bancas/{grupo_id}/avaliacao", response_model=AvaliacaoGrupoModel)
-def salvar_avaliacao_grupo(grupo_id: str, payload: SalvarAvaliacaoRequest) -> AvaliacaoGrupoModel:
+def salvar_avaliacao_grupo(
+    grupo_id: str,
+    payload: SalvarAvaliacaoRequest,
+    request: Request,
+) -> AvaliacaoGrupoModel:
+    token, user_fb = validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=False,
+    )
     bancas = sincronizar_e_obter_todas_bancas(executar_auditoria_nos_entregues=False)
     alvo: AvaliacaoGrupoModel | None = None
     for b in bancas:
@@ -490,8 +505,11 @@ def salvar_avaliacao_grupo(grupo_id: str, payload: SalvarAvaliacaoRequest) -> Av
         for ind in alvo.integrantes_notas:
             ind.resultado = payload.status_liberacao_manual
 
-    if payload.sincronizar_firebase:
-        sincronizar_avaliacao_firestore(alvo)
+    pode_sync_titular = token is None or (
+        str((user_fb or {}).get("email", "")).strip().lower() == EMAIL_PROFESSOR_TITULAR
+    )
+    if payload.sincronizar_firebase and pode_sync_titular:
+        sincronizar_avaliacao_firestore(alvo, id_token=token)
 
     salvas = ler_avaliacoes_salvas()
     salvas[grupo_id] = alvo.model_dump()
@@ -500,11 +518,15 @@ def salvar_avaliacao_grupo(grupo_id: str, payload: SalvarAvaliacaoRequest) -> Av
 
 
 @app.post("/api/bancas/{grupo_id}/firebase-sync")
-def sincronizar_grupo_firebase_endpoint(grupo_id: str) -> dict[str, Any]:
+def sincronizar_grupo_firebase_endpoint(grupo_id: str, request: Request) -> dict[str, Any]:
+    token, _ = validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     bancas = sincronizar_e_obter_todas_bancas(executar_auditoria_nos_entregues=False)
     for b in bancas:
         if b.id == grupo_id:
-            ok, msg = sincronizar_avaliacao_firestore(b)
+            ok, msg = sincronizar_avaliacao_firestore(b, id_token=token)
             if not ok:
                 raise HTTPException(status_code=502, detail=msg)
             salvas = ler_avaliacoes_salvas()
@@ -535,8 +557,13 @@ def listar_arquivos_entrega_grupo(grupo_id: str) -> dict[str, Any]:
 @app.post("/api/bancas/{grupo_id}/arquivos")
 async def upload_arquivos_entrega_grupo(
     grupo_id: str,
+    request: Request,
     arquivos: list[UploadFile] = File(...),
 ) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     if not obter_meta_e_ordem_grupo(grupo_id):
         raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
     if banca_esta_concluida_no_backend(grupo_id):
@@ -583,7 +610,15 @@ def baixar_arquivo_entrega_grupo(grupo_id: str, nome_arquivo: str) -> FileRespon
 
 
 @app.delete("/api/bancas/{grupo_id}/arquivos/{nome_arquivo}")
-def excluir_arquivo_entrega_grupo(grupo_id: str, nome_arquivo: str) -> dict[str, Any]:
+def excluir_arquivo_entrega_grupo(
+    grupo_id: str,
+    nome_arquivo: str,
+    request: Request,
+) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     if not obter_meta_e_ordem_grupo(grupo_id):
         raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
     if banca_esta_concluida_no_backend(grupo_id):
@@ -616,7 +651,11 @@ def excluir_arquivo_entrega_grupo(grupo_id: str, nome_arquivo: str) -> dict[str,
 
 
 @app.delete("/api/bancas/{grupo_id}/arquivos")
-def limpar_arquivos_entrega_grupo(grupo_id: str) -> dict[str, Any]:
+def limpar_arquivos_entrega_grupo(grupo_id: str, request: Request) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     if not obter_meta_e_ordem_grupo(grupo_id):
         raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
     if banca_esta_concluida_no_backend(grupo_id):
@@ -644,7 +683,11 @@ def limpar_arquivos_entrega_grupo(grupo_id: str) -> dict[str, Any]:
 
 
 @app.post("/api/bancas/{grupo_id}/reabrir")
-def reabrir_banca_para_entregue_endpoint(grupo_id: str) -> dict[str, Any]:
+def reabrir_banca_para_entregue_endpoint(grupo_id: str, request: Request) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     try:
         banca_atualizada = reabrir_banca_para_entregue_backend(grupo_id)
     except ValueError as exc:
@@ -660,7 +703,12 @@ def reabrir_banca_para_entregue_endpoint(grupo_id: str) -> dict[str, Any]:
 def atualizar_adiamento_data_futura_endpoint(
     grupo_id: str,
     payload: AtualizarAdiamentoDataFuturaRequest,
+    request: Request,
 ) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     try:
         banca_atualizada = atualizar_adiamento_data_futura_backend(
             grupo_id=grupo_id,
@@ -707,8 +755,13 @@ def listar_arquivos_revisados_grupo(grupo_id: str) -> dict[str, Any]:
 @app.post("/api/bancas/{grupo_id}/revisados")
 async def upload_arquivos_revisados_grupo(
     grupo_id: str,
+    request: Request,
     arquivos: list[UploadFile] = File(...),
 ) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     if not obter_meta_e_ordem_grupo(grupo_id):
         raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
     if not arquivos:
@@ -736,7 +789,12 @@ async def upload_arquivos_revisados_grupo(
 def avaliar_revisao_pos_banca_endpoint(
     grupo_id: str,
     payload: AvaliarRevisaoPosBancaRequest,
+    request: Request,
 ) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     try:
         banca_atualizada = avaliar_revisao_pos_banca_backend(
             grupo_id=grupo_id,
@@ -778,7 +836,15 @@ def baixar_arquivo_revisado_grupo(grupo_id: str, nome_arquivo: str) -> FileRespo
 
 
 @app.delete("/api/bancas/{grupo_id}/revisados/{nome_arquivo}")
-def excluir_arquivo_revisado_grupo(grupo_id: str, nome_arquivo: str) -> dict[str, Any]:
+def excluir_arquivo_revisado_grupo(
+    grupo_id: str,
+    nome_arquivo: str,
+    request: Request,
+) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     if not obter_meta_e_ordem_grupo(grupo_id):
         raise HTTPException(status_code=404, detail=f"Grupo '{grupo_id}' não encontrado.")
     nome_limpo = _sanitizar_nome_arquivo_upload(nome_arquivo, validar_extensao=False)
@@ -807,7 +873,12 @@ def excluir_arquivo_revisado_grupo(grupo_id: str, nome_arquivo: str) -> dict[str
 def registrar_pendencia_e_status_endpoint(
     grupo_id: str,
     payload: SalvarPendenciasGrupoRequest,
+    request: Request,
 ) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     try:
         banca_atualizada = registrar_pendencia_e_status_backend(
             grupo_id=grupo_id,
@@ -864,21 +935,29 @@ def stream_arquivo_tcc_raw(
 
 
 @app.delete("/api/arquivos")
-def deletar_arquivo_tcc_arvore(caminho: str = Query(...)) -> dict[str, Any]:
+def deletar_arquivo_tcc_arvore(request: Request, caminho: str = Query(...)) -> dict[str, Any]:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     cfg = ler_env()
     pasta_tcc = resolver_pasta_tcc(cfg.pasta_tcc)
     return excluir_arquivo_tcc_seguro(pasta_tcc, caminho)
 
 
 @app.post("/api/firebase/sync-all")
-def sincronizar_todos_firebase_endpoint() -> dict[str, Any]:
+def sincronizar_todos_firebase_endpoint(request: Request) -> dict[str, Any]:
+    token, _ = validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     bancas = sincronizar_e_obter_todas_bancas(executar_auditoria_nos_entregues=False)
     salvas = ler_avaliacoes_salvas()
     sucesso = 0
     erros: list[str] = []
     for b in bancas:
         if b.entregue_na_pasta:
-            ok, msg = sincronizar_avaliacao_firestore(b)
+            ok, msg = sincronizar_avaliacao_firestore(b, id_token=token)
             if ok:
                 sucesso += 1
                 salvas[b.id] = b.model_dump()
@@ -959,7 +1038,11 @@ def obter_config() -> ConfigEnvModel:
 
 
 @app.put("/api/config", response_model=ConfigEnvModel)
-def atualizar_config(payload: ConfigEnvModel) -> ConfigEnvModel:
+def atualizar_config(payload: ConfigEnvModel, request: Request) -> ConfigEnvModel:
+    validar_permissao_docente_backend(
+        request.headers.get("Authorization"),
+        exigir_titular=True,
+    )
     salvar_env(payload)
     return ler_env()
 

@@ -6,7 +6,9 @@ from __future__ import annotations
 
 from datetime import datetime
 import json
+import os
 from typing import Any
+from fastapi import HTTPException
 import httpx
 
 from .config_manager import ler_env_bruto
@@ -14,6 +16,87 @@ from .models import AvaliacaoGrupoModel
 
 
 COLECAO_FIRESTORE = "psof3_avaliacoes_tcc"
+DOMINIO_DOCENTE_AUTORIZADO = "@docente.senai.br"
+EMAIL_PROFESSOR_TITULAR = "william.komel@docente.senai.br"
+
+
+def extrair_bearer_token(auth_header: str | None) -> str | None:
+    """Extrai o JWT Bearer token do cabeçalho Authorization."""
+    if not auth_header:
+        return None
+    partes = auth_header.strip().split(" ", 1)
+    if len(partes) == 2 and partes[0].lower() == "bearer" and partes[1].strip():
+        return partes[1].strip()
+    return None
+
+
+def verificar_id_token_firebase(id_token: str) -> dict[str, Any]:
+    """Valida um Firebase ID Token via Identity Toolkit API e garante conta institucional @docente.senai.br."""
+    _, api_key = obter_credenciais_firebase()
+    if not api_key:
+        raise HTTPException(status_code=500, detail="FIREBASE_API_KEY ausente no servidor.")
+
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={api_key}"
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.post(url, json={"idToken": id_token})
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Falha ao validar token institucional no Firebase Auth: {exc}",
+        ) from exc
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=401, detail="Sessão Firebase inválida ou expirada.")
+
+    users = (resp.json() or {}).get("users") or []
+    if not users:
+        raise HTTPException(status_code=401, detail="Usuário Firebase não encontrado.")
+
+    usuario = users[0]
+    email = str(usuario.get("email") or "").strip().lower()
+    email_verificado = bool(usuario.get("emailVerified"))
+    if not email_verificado or not email.endswith(DOMINIO_DOCENTE_AUTORIZADO):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Acesso restrito a contas verificadas {DOMINIO_DOCENTE_AUTORIZADO}.",
+        )
+    return usuario
+
+
+def validar_permissao_docente_backend(
+    auth_header: str | None,
+    exigir_titular: bool = False,
+) -> tuple[str | None, dict[str, Any] | None]:
+    """
+    Valida token Bearer quando presente e aplica restrição estrita em produção quando
+    EXIGIR_AUTH_FIREBASE_BACKEND='true' estiver configurada no .env / ambiente.
+    """
+    token = extrair_bearer_token(auth_header)
+    raw_env = ler_env_bruto()
+    exigir_auth = (
+        os.environ.get("EXIGIR_AUTH_FIREBASE_BACKEND", raw_env.get("EXIGIR_AUTH_FIREBASE_BACKEND", ""))
+        .strip()
+        .lower()
+        == "true"
+    )
+
+    if not token:
+        if exigir_auth:
+            raise HTTPException(
+                status_code=401,
+                detail=f"Autenticação institucional ({DOMINIO_DOCENTE_AUTORIZADO}) obrigatória.",
+            )
+        return None, None
+
+    usuario = verificar_id_token_firebase(token)
+    email = str(usuario.get("email") or "").strip().lower()
+    if exigir_titular and email != EMAIL_PROFESSOR_TITULAR:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Ação exclusiva do Professor Titular ({EMAIL_PROFESSOR_TITULAR}).",
+        )
+    return token, usuario
 
 
 def _converter_valor_firestore(val: Any) -> dict[str, Any]:
@@ -68,10 +151,13 @@ def obter_credenciais_firebase() -> tuple[str, str]:
     return project_id, api_key
 
 
-def sincronizar_avaliacao_firestore(avaliacao: AvaliacaoGrupoModel) -> tuple[bool, str]:
+def sincronizar_avaliacao_firestore(
+    avaliacao: AvaliacaoGrupoModel,
+    id_token: str | None = None,
+) -> tuple[bool, str]:
     """
     Salva/atualiza o documento da avaliação de um grupo diretamente na coleção
-    `psof3_avaliacoes_tcc` do Firebase Firestore configurado no `.env`.
+    `psof3_avaliacoes_tcc` do Firebase Firestore configurado no `.env`, autenticando com Bearer token quando disponível.
     """
     project_id, api_key = obter_credenciais_firebase()
     if not project_id or not api_key:
@@ -101,33 +187,38 @@ def sincronizar_avaliacao_firestore(avaliacao: AvaliacaoGrupoModel) -> tuple[boo
             "integrantes": _converter_valor_firestore(avaliacao.integrantes),
             "entregue_na_pasta": _converter_valor_firestore(avaliacao.entregue_na_pasta),
             "status_avaliacao": _converter_valor_firestore(avaliacao.status_avaliacao),
+            "banca_realizada": _converter_valor_firestore(bool(avaliacao.banca_realizada)),
             "avaliador": _converter_valor_firestore(avaliacao.avaliador),
             "p1_total": _converter_valor_firestore(avaliacao.p1_total),
             "p2_total": _converter_valor_firestore(avaliacao.p2_total),
             "p3_grupo_base": _converter_valor_firestore(avaliacao.p3_grupo_base),
             "media_nota_final_grupo": _converter_valor_firestore(avaliacao.media_nota_final_grupo),
+            "status_liberacao_nota": _converter_valor_firestore(avaliacao.status_liberacao_nota),
+            "adiamento_data_futura": _converter_valor_firestore(avaliacao.adiamento_data_futura.model_dump()),
+            "revisao_pos_banca": _converter_valor_firestore(avaliacao.revisao_pos_banca.model_dump()),
             "parecer_tecnico": _converter_valor_firestore(avaliacao.parecer_tecnico),
             "atualizado_em": _converter_valor_firestore(agora),
             "payload_json": _converter_valor_firestore(json.dumps(dados_dict, ensure_ascii=False)),
         }
     }
 
+    headers = {"Authorization": f"Bearer {id_token}"} if id_token else {}
     try:
         with httpx.Client(timeout=12.0) as client:
-            resp = client.patch(url, json=payload_firestore)
+            resp = client.patch(url, json=payload_firestore, headers=headers)
             if resp.status_code in (200, 201):
                 return True, f"Sincronizado com sucesso no Firebase ({project_id}/{COLECAO_FIRESTORE}/{doc_id})."
             if resp.status_code == 403:
                 return (
                     False,
-                    f"Salvo localmente em backend/data/avaliacoes.json. No Firebase ({project_id}), a coleção '{COLECAO_FIRESTORE}' aguarda liberação nas Firestore Rules (HTTP 403).",
+                    f"Salvo localmente em backend/data/avaliacoes.json. No Firebase ({project_id}), a coleção '{COLECAO_FIRESTORE}' exige autenticação do Professor Titular (HTTP 403).",
                 )
             return False, f"Firestore retornou HTTP {resp.status_code}: {resp.text[:200]}"
     except Exception as exc:
         return False, f"Falha de conexão com Firebase Firestore: {exc}"
 
 
-def listar_avaliacoes_firestore() -> tuple[bool, dict[str, dict[str, Any]], str]:
+def listar_avaliacoes_firestore(id_token: str | None = None) -> tuple[bool, dict[str, dict[str, Any]], str]:
     """Busca todos os documentos salvos na coleção `psof3_avaliacoes_tcc` do Firebase Firestore."""
     project_id, api_key = obter_credenciais_firebase()
     if not project_id or not api_key:
@@ -138,9 +229,10 @@ def listar_avaliacoes_firestore() -> tuple[bool, dict[str, dict[str, Any]], str]
         f"/databases/(default)/documents/{COLECAO_FIRESTORE}?pageSize=100&key={api_key}"
     )
 
+    headers = {"Authorization": f"Bearer {id_token}"} if id_token else {}
     try:
         with httpx.Client(timeout=12.0) as client:
-            resp = client.get(url)
+            resp = client.get(url, headers=headers)
             if resp.status_code != 200:
                 return False, {}, f"HTTP {resp.status_code}: {resp.text[:200]}"
             data = resp.json()

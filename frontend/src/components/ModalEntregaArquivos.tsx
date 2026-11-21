@@ -111,7 +111,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
   bancaConcluida,
   auditoriaEmAndamento,
   statusAuditoria,
-  isProfessorTitular = true,
+  isProfessorTitular = false,
   professorNome = 'Prof. Titular',
   revisaoInicial = null,
   statusTrabalhoAtual,
@@ -811,7 +811,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                         Ir para Arquivos Revisados
                       </button>
 
-                      {!confirmarReabertura && (
+                      {isProfessorTitular && !confirmarReabertura && (
                         <button
                           type="button"
                           disabled={processandoAcao !== null}
@@ -825,7 +825,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                     </div>
                   </div>
 
-                  {confirmarReabertura && (
+                  {isProfessorTitular && confirmarReabertura && (
                     <div className="mt-3 rounded-lg border border-amber-400 bg-white p-3">
                       <p className="font-bold text-slate-900">
                         Confirmar reabertura da banca de {grupo.projeto}?
@@ -861,7 +861,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : isProfessorTitular ? (
                 /* Zona Drag & Drop Originais */
                 <div className="space-y-3">
                   <div
@@ -1001,6 +1001,10 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                     </div>
                   )}
                 </div>
+              ) : (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                  <span className="font-bold text-slate-800">Modo Leitura (Docente Avaliador):</span> Apenas o Professor Titular pode enviar novos arquivos originais, excluir entregas ou disparar reauditoria em <code>./tcc</code>. Você pode baixar todos os arquivos abaixo.
+                </div>
               )}
 
               {/* Lista de Arquivos Originais Salvos na Pasta */}
@@ -1019,7 +1023,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    {!bancaConcluida && arquivosSalvos.length > 0 && (
+                    {isProfessorTitular && !bancaConcluida && arquivosSalvos.length > 0 && (
                       <button
                         type="button"
                         disabled={processandoAcao !== null || auditoriaEmAndamento}
@@ -1031,7 +1035,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                       </button>
                     )}
 
-                    {!bancaConcluida && arquivosSalvos.length > 0 && !confirmarLimparTodos && (
+                    {isProfessorTitular && !bancaConcluida && arquivosSalvos.length > 0 && !confirmarLimparTodos && (
                       <button
                         type="button"
                         disabled={processandoAcao !== null}
@@ -1045,7 +1049,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                   </div>
                 </div>
 
-                {confirmarLimparTodos && !bancaConcluida && (
+                {isProfessorTitular && confirmarLimparTodos && !bancaConcluida && (
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2.5 text-xs text-red-900">
                     <span className="font-bold">
                       Tem certeza que deseja excluir todos os {arquivosSalvos.length} arquivo(s)
@@ -1127,7 +1131,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                             Baixar
                           </a>
 
-                          {!bancaConcluida && (
+                          {isProfessorTitular && !bancaConcluida && (
                             <button
                               type="button"
                               disabled={processandoAcao !== null}
@@ -1190,8 +1194,9 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                     </p>
                   </div>
 
-                  {/* Dropzone para Arquivos Corrigidos */}
-                  <div className="space-y-3">
+                  {/* Dropzone para Arquivos Corrigidos (exclusivo Prof. Titular) */}
+                  {isProfessorTitular ? (
+                    <div className="space-y-3">
                     <div
                       onDragOver={(e) => {
                         e.preventDefault();
@@ -1311,7 +1316,12 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                         </div>
                       </div>
                     )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                      <span className="font-bold text-slate-800">Modo Leitura (Docente Avaliador):</span> Apenas o Professor Titular pode enviar arquivos para <code>revisados/</code>, excluí-los ou aceitar correções pós-banca.
+                    </div>
+                  )}
 
                   {/* Lista dos Arquivos Recebidos em revisados/ */}
                   <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
@@ -1393,19 +1403,21 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
                                 <Download className="h-3.5 w-3.5" />
                                 Baixar
                               </a>
-                              <button
-                                type="button"
-                                disabled={processandoAcao !== null}
-                                onClick={() => void handleExcluirArquivoRevisado(arq.nome)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50 cursor-pointer"
-                              >
-                                {processandoAcao === `del-rev:${arq.nome}` ? (
-                                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                )}
-                                Excluir
-                              </button>
+                              {isProfessorTitular && (
+                                <button
+                                  type="button"
+                                  disabled={processandoAcao !== null}
+                                  onClick={() => void handleExcluirArquivoRevisado(arq.nome)}
+                                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50 cursor-pointer"
+                                >
+                                  {processandoAcao === `del-rev:${arq.nome}` ? (
+                                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  )}
+                                  Excluir
+                                </button>
+                              )}
                             </div>
                           </li>
                         ))}

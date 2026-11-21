@@ -1,3 +1,4 @@
+import { obterTokenIdUsuarioAtual } from './firebase';
 import type {
   AdiamentoDataFutura,
   AgentStatus,
@@ -21,10 +22,26 @@ const API_BASE =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? 'http://127.0.0.1:8000' : window.location.origin);
 
+async function montarHeadersComAuth(
+  headersBase?: HeadersInit,
+  incluirJson = true,
+): Promise<Headers> {
+  const headers = new Headers(headersBase);
+  if (incluirJson && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  const token = await obterTokenIdUsuarioAtual();
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return headers;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const headers = await montarHeadersComAuth(options?.headers, !(options?.body instanceof FormData));
   const resp = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...options,
+    headers,
   });
   if (!resp.ok) {
     const erro = await resp.json().catch(() => ({ detail: resp.statusText }));
@@ -189,7 +206,14 @@ export const api = {
 
       xhr.onerror = () => reject(new Error('Falha de rede durante o upload dos arquivos.'));
       xhr.onabort = () => reject(new Error('Upload dos arquivos cancelado.'));
-      xhr.send(formData);
+      void obterTokenIdUsuarioAtual()
+        .then((token) => {
+          if (token) {
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          }
+          xhr.send(formData);
+        })
+        .catch(() => xhr.send(formData));
     }),
 
   excluirArquivoGrupo: (grupoId: string, nomeArquivo: string) =>
@@ -253,10 +277,12 @@ export const api = {
     arquivos.forEach((arq) => {
       formData.append('arquivos', arq);
     });
+    const headers = await montarHeadersComAuth(undefined, false);
     const resp = await fetch(
       `${API_BASE}/api/bancas/${encodeURIComponent(grupoId)}/revisados`,
       {
         method: 'POST',
+        headers,
         body: formData,
       },
     );

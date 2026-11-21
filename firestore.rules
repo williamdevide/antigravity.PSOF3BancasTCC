@@ -11,50 +11,67 @@ rules_version = '2';
 //      - turma: string (ex: 'I2DEV-A' ou 'I2DEV-B')
 //      - projeto: string (Nome do projeto do TCC)
 //      - status: string ('aguardando_inicio' | 'pendente' | 'em_andamento' | 'concluida')
-//      - titular_uid: string (UID do professor responsável pela presidência da banca)
+//      - titular_uid: string (UID do professor titular responsável pela banca)
 //      - titular_nome: string (Nome de exibição do professor titular)
-//      - titular_email: string (E-mail institucional/Google do titular)
-//      - iniciado_em: string (ISO 8601 do início da contagem do cronômetro) ou null
-//      - encerrado_em: string (ISO 8601 do término oficial) ou null
-//      - duracao_segundos: number (tempo total acumulado em segundos)
-//      - duracao_formatada: string (tempo formatado mm:ss)
-//      - avaliadores_presentes: list de strings (nomes/UIDs dos avaliadores na sala)
-//      - avaliacoes_concluidas: list de strings (UIDs dos professores que finalizaram)
-//      - contingencia_um_avaliador: bool (opcional, ativação de contingência)
-//      - justificativa_contingencia: string (opcional)
-//      - media_final_consolidada: number (opcional, média final calculada)
-//      - banca_consolidada: map (opcional, espelho dos cálculos e notas consolidadas)
+//      - titular_email: string (Opcional - e-mail institucional do titular)
+//      - iniciado_em: string | null (ISO 8601 do início da contagem do cronômetro)
+//      - encerrado_em: string | null (ISO 8601 do término oficial)
+//      - duracao_segundos: number (Tempo total acumulado em segundos)
+//      - duracao_formatada: string (Tempo formatado mm:ss)
+//      - avaliadores_presentes: list (Nomes/UIDs dos avaliadores presentes na sala)
+//      - avaliacoes_concluidas: list (UIDs dos professores que finalizaram a avaliação)
+//      - contingencia_um_avaliador: bool (Opcional - ativação de contingência)
+//      - justificativa_contingencia: string (Opcional)
+//      - media_final_consolidada: number (Opcional - média final consolidada)
+//      - status_liberacao_final: string (Opcional - resultado final consolidado)
+//      - banca_consolidada: map (Opcional - espelho dos cálculos e notas consolidadas)
+//      - possui_pendencias, pendencias_descricao, pendencias_cumpridas,
+//        pendencias_cumpridas_em, pendencias_atualizado_por (Opcionais - pendências)
+//      - revisao_pos_banca, adiamento_data_futura, historico_pendencias (Opcionais)
 //      - atualizado_em: string (ISO 8601 do timestamp da última atualização)
 //
 // 2. Coleção: psof3_avaliacoes_professores/{docId}
-//    ID do documento: {grupoId}_{professorUid}
-//    Avaliação individual emitida por cada professor (Titular ou Convidado) para a banca.
+//    ID do documento: {grupo_id}_{professor_uid}
+//    Avaliação individual emitida por cada professor docente para a banca.
 //    Campos principais:
-//      - grupo_id: string
-//      - turma: string
-//      - projeto: string
-//      - professor_uid: string (UID do autor da avaliação)
+//      - grupo_id: string (Obrigatório para vínculo do documento)
+//      - professor_uid: string (UID do autor da avaliação, igual ao sufixo de docId)
 //      - professor_nome: string
 //      - professor_email: string
-//      - p1_doc_nota: number (0 a 30)
-//      - p2_sis_nota: number (0 a 40)
-//      - p3_apr_nota: number (0 a 15)
-//      - p4_eng_nota: number (0 a 15)
-//      - nota_final: number (0 a 100)
-//      - rubricas: map (pontuação detalhada dos itens MSEP)
-//      - integrantes_notas: list (notas individuais de cada aluno)
-//      - parecer_tecnico: string (considerações do professor)
-//      - status_liberacao: string ('liberada' | 'retida')
-//      - concluido: bool (true quando o professor encerra sua avaliação)
+//      - rubricas: list (Pontuação detalhada dos itens MSEP)
+//      - integrantes_notas: list (Notas individuais de cada integrante)
+//      - p1_total, p2_total, p3_grupo_base, p3_total, nota_final_grupo: number
+//      - parecer_tecnico: string (Considerações do professor)
+//      - concluido: bool (Opcional - true quando o professor encerra sua avaliação)
+//      - status_liberacao_manual: string | null (Opcional)
 //      - atualizado_em: string (ISO 8601)
 //
-// 3. Coleção: psof3_analises_automaticas/{grupoId}
-//    Auditoria prévia determinística calculada pelo backend e espelhada no Firestore.
-//    Campos: grupo_id, turma, projeto, tema, p1_total, p2_total, p3_grupo_base,
-//            rubricas, integrantes_notas, parecer_tecnico, atualizado_em, etc.
+// 3. Coleção: psof3_rascunhos_professores/{docId}
+//    ID do documento: {grupo_id}_{professor_uid}
+//    Rascunhos individuais de avaliação salvos pelos docentes antes da conclusão.
+//    Campos principais:
+//      - grupo_id: string (Obrigatório para vínculo do documento)
+//      - professor_uid: string (UID do docente proprietário, igual ao sufixo de docId)
+//      - rubricas: list
+//      - integrantes_notas: list
+//      - parecer_tecnico: string
+//      - status_liberacao_manual: string | null (Opcional)
+//      - auditado_em_base: string | null (Opcional)
+//      - salvo_em / atualizado_em: string (ISO 8601)
 //
-// 4. Coleção: psof3_avaliacoes_tcc/{docId}
+// 4. Coleção: psof3_analises_automaticas/{grupoId}
+//    Auditoria prévia determinística calculada pelo backend e espelhada no Firestore.
+//    Campos principais: grupo_id, turma, projeto, tema, integrantes, data_banca,
+//    horario, ordem_apresentacao, p1_total, p2_total, p3_grupo_base,
+//    media_nota_final_grupo, rubricas, integrantes_notas, parecer_tecnico,
+//    status_liberacao_nota, atualizado_em.
+//
+// 5. Coleção: psof3_avaliacoes_tcc/{docId}
 //    Registros consolidados gerados pelo backend/serviço FastAPI para relatórios e backup.
+//    Campos principais: id, turma, grupo, projeto, tema, data_banca, horario,
+//    integrantes, entregue_na_pasta, status_avaliacao, avaliador, p1_total,
+//    p2_total, p3_grupo_base, media_nota_final_grupo, parecer_tecnico,
+//    atualizado_em, payload_json.
 //
 // ===============================================================
 
@@ -65,61 +82,105 @@ service cloud.firestore {
     // Funções Auxiliares Globais (Security Helpers)
     // ===============================================================
 
-    // Verifica se a requisição possui usuário autenticado via Firebase Auth
-    function isAuthenticated() {
-      return request.auth != null && request.auth.uid != null;
+    // Verifica se o usuário está autenticado com e-mail verificado
+    // pertencente exclusivamente ao domínio docente oficial do SENAI (@docente.senai.br).
+    function isSenaiDocente() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('^[^@\\s]+@docente\\.senai\\.br$');
+    }
+
+    // Verifica se o usuário autenticado é o Professor Titular autorizado
+    // (exige aprovação prévia em isSenaiDocente()).
+    function isProfessorTitular() {
+      return isSenaiDocente()
+        && request.auth.token.email.lower() == 'william.komel@docente.senai.br';
     }
 
     // ===============================================================
     // 1. Coleção: psof3_sessoes_banca (Sessões e Cronômetro Ao Vivo)
     // ===============================================================
-    // Leitura: Pública e aberta a todos os usuários (painéis de sala, telões e cronômetro).
-    // Criação/Atualização: Restrita a docentes autenticados, validando transição de status.
-    // Exclusão: Permitida a docentes autenticados para viabilizar reset e limpeza da banca.
+    // Leitura: Pública e aberta para o Portal Público dos Alunos e painel ao vivo.
+    // Criação: Exclusiva do Professor Titular, exigindo status permitido.
+    // Atualização:
+    //   - Professor Titular: atualização completa mantendo status válido;
+    //   - Demais docentes SENAI: permitida apenas com sessão 'em_andamento' e
+    //     restrita aos campos avaliacoes_concluidas, avaliadores_presentes e atualizado_em.
+    // Exclusão: Exclusiva do Professor Titular.
     match /psof3_sessoes_banca/{grupoId} {
       allow read: if true;
-      allow create, update: if isAuthenticated()
-                            && request.resource.data.status in ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida'];
-      allow delete: if isAuthenticated();
+
+      allow create: if isProfessorTitular()
+        && request.resource.data.status in ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida'];
+
+      allow update: if (isProfessorTitular()
+          && request.resource.data.status in ['aguardando_inicio', 'pendente', 'em_andamento', 'concluida'])
+        || (isSenaiDocente()
+          && resource.data.status == 'em_andamento'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['avaliacoes_concluidas', 'avaliadores_presentes', 'atualizado_em']));
+
+      allow delete: if isProfessorTitular();
     }
 
     // ===============================================================
-    // 2. Coleção: psof3_avaliacoes_professores (Notas Individuais dos Docentes)
+    // 2. Coleção: psof3_avaliacoes_professores (Notas Individuais)
     // ===============================================================
-    // Leitura: Permitida a qualquer usuário autenticado (professores da banca consultam médias).
-    // Criação/Atualização: Usuários autenticados informando os IDs de referência.
-    // Exclusão: Permitida a qualquer professor autenticado (essencial para que o Titular
-    //           da banca possa resetar e limpar todas as avaliações do grupo).
+    // Leitura: Restrita a docentes SENAI com e-mail verificado.
+    // Criação/Atualização:
+    //   - Professor Titular: pode salvar/ajustar qualquer avaliação da banca;
+    //   - Demais docentes SENAI: apenas o próprio documento no formato {grupo_id}_{uid}.
+    // Exclusão: Exclusiva do Professor Titular (ex.: reset completo da banca).
     match /psof3_avaliacoes_professores/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if isSenaiDocente();
 
-      allow create, update: if isAuthenticated()
-                            && request.resource.data.grupo_id is string
-                            && request.resource.data.professor_uid is string;
+      allow create, update: if isProfessorTitular()
+        || (isSenaiDocente()
+          && request.resource.data.grupo_id is string
+          && request.resource.data.professor_uid == request.auth.uid
+          && docId == (request.resource.data.grupo_id + '_' + request.auth.uid));
 
-      allow delete: if isAuthenticated();
+      allow delete: if isProfessorTitular();
     }
 
     // ===============================================================
-    // 3. Coleção: psof3_analises_automaticas (Auditoria Automática do Backend)
+    // 3. Coleção: psof3_rascunhos_professores (Rascunhos Individuais)
+    // ===============================================================
+    // Leitura: Professor Titular ou o próprio docente identificado pelo sufixo _{uid}.
+    // Criação/Atualização: Docente SENAI autenticado, exclusivamente para o próprio
+    //                      documento no padrão {grupo_id}_{uid}.
+    // Exclusão: Professor Titular ou o próprio docente identificado pelo sufixo _{uid}.
+    match /psof3_rascunhos_professores/{docId} {
+      allow read: if isProfessorTitular()
+        || (isSenaiDocente() && docId.matches('^.+_' + request.auth.uid + '$'));
+
+      allow create, update: if isSenaiDocente()
+        && request.resource.data.grupo_id is string
+        && request.resource.data.professor_uid == request.auth.uid
+        && docId == (request.resource.data.grupo_id + '_' + request.auth.uid);
+
+      allow delete: if isProfessorTitular()
+        || (isSenaiDocente() && docId.matches('^.+_' + request.auth.uid + '$'));
+    }
+
+    // ===============================================================
+    // 4. Coleção: psof3_analises_automaticas (Auditoria Automática)
     // ===============================================================
     // Leitura: Pública e aberta para consulta das análises prévias do TCC.
-    // Escrita/Exclusão: Usuários autenticados (sincronização e reset).
+    // Criação/Atualização/Exclusão: Exclusiva do Professor Titular.
     match /psof3_analises_automaticas/{grupoId} {
       allow read: if true;
-      allow create, update: if isAuthenticated();
-      allow delete: if isAuthenticated();
+      allow create, update, delete: if isProfessorTitular();
     }
 
     // ===============================================================
-    // 4. Coleção: psof3_avaliacoes_tcc (Histórico e Registros Gerais)
+    // 5. Coleção: psof3_avaliacoes_tcc (Histórico e Registros Gerais)
     // ===============================================================
-    // Leitura: Aberta para consulta pública ou relatórios.
-    // Escrita/Exclusão: Restrita a usuários autenticados.
+    // Leitura: Pública e aberta para consulta e geração de relatórios.
+    // Criação/Atualização/Exclusão: Exclusiva do Professor Titular.
     match /psof3_avaliacoes_tcc/{docId} {
       allow read: if true;
-      allow create, update: if isAuthenticated();
-      allow delete: if isAuthenticated();
+      allow create, update, delete: if isProfessorTitular();
     }
 
     // ===============================================================

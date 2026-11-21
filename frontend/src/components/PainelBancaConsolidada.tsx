@@ -251,8 +251,8 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
             </div>
           )}
 
-          {/* 4. BOTÃO RESETAR / EXCLUIR AVALIAÇÕES & BANCA (SEMPRE ACESSÍVEL) */}
-          {onResetarBanca && (
+          {/* 4. BOTÃO RESETAR / EXCLUIR AVALIAÇÕES & BANCA (EXCLUSIVO TITULAR) */}
+          {isProfessorTitular && onResetarBanca && (
             <button
               type="button"
               onClick={() => setModalResetAberto(true)}
@@ -614,14 +614,18 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
 
                 <button
                   type="button"
+                  disabled={!isProfessorTitular}
                   onClick={() => {
+                    if (!isProfessorTitular) return;
                     const proximo = !pendenciasCumpridasEdit;
                     setPendenciasCumpridasEdit(proximo);
                     if (proximo) {
                       setStatusFinalPendEdit('Aprovado');
                     }
                   }}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-extrabold transition shadow-xs cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-extrabold transition shadow-xs ${
+                    !isProfessorTitular ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'
+                  } ${
                     pendenciasCumpridasEdit
                       ? 'border border-emerald-500 bg-emerald-600 text-white hover:bg-emerald-700'
                       : 'border border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200'
@@ -698,68 +702,74 @@ export const PainelBancaConsolidada: React.FC<PainelBancaConsolidadaProps> = ({
                 </div>
               )}
 
-              <div className="grid gap-3 md:grid-cols-12">
-                <div className="md:col-span-8">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-bold uppercase text-slate-700">
-                      Descrição das Pendências da Banca (registra data e hora ao salvar):
-                    </label>
-                    {grupoAtual.itens_insuficientes_grupo.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setPendenciasTexto(grupoAtual.itens_insuficientes_grupo.join('\n'))
-                        }
-                        className="text-[11px] font-semibold text-red-700 hover:underline cursor-pointer"
+              {isProfessorTitular ? (
+                <div className="grid gap-3 md:grid-cols-12">
+                  <div className="md:col-span-8">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] font-bold uppercase text-slate-700">
+                        Descrição das Pendências da Banca (registra data e hora ao salvar):
+                      </label>
+                      {grupoAtual.itens_insuficientes_grupo.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPendenciasTexto(grupoAtual.itens_insuficientes_grupo.join('\n'))
+                          }
+                          className="text-[11px] font-semibold text-red-700 hover:underline cursor-pointer"
+                        >
+                          Carregar itens detectados ({grupoAtual.itens_insuficientes_grupo.length})
+                        </button>
+                      )}
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={pendenciasTexto}
+                      onChange={(e) => setPendenciasTexto(e.target.value)}
+                      placeholder="Ex: Ajustar persistência em localStorage e enviar script .sql atualizado."
+                      className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="md:col-span-4 flex flex-col justify-between gap-2">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-slate-700 mb-1">
+                        Situação da Nota:
+                      </label>
+                      <select
+                        value={statusFinalPendEdit}
+                        onChange={(e) => setStatusFinalPendEdit(e.target.value as ResultadoFinalTipo)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 focus:border-red-500 focus:outline-none"
                       >
-                        Carregar itens detectados ({grupoAtual.itens_insuficientes_grupo.length})
-                      </button>
-                    )}
-                  </div>
-                  <textarea
-                    rows={2}
-                    value={pendenciasTexto}
-                    onChange={(e) => setPendenciasTexto(e.target.value)}
-                    placeholder="Ex: Ajustar persistência em localStorage e enviar script .sql atualizado."
-                    className="w-full rounded-lg border border-slate-300 bg-white p-2.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-red-500 focus:outline-none"
-                  />
-                </div>
+                        <option value="Aprovado">✅ Nota Liberada (Aprovado)</option>
+                        <option value="Nota Retida (Pendências)">⚠️ Nota Retida (Pendências)</option>
+                        <option value="Nova Chance (Data Futura)">❌ Nova Apresentação</option>
+                      </select>
+                    </div>
 
-                <div className="md:col-span-4 flex flex-col justify-between gap-2">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase text-slate-700 mb-1">
-                      Situação da Nota:
-                    </label>
-                    <select
-                      value={statusFinalPendEdit}
-                      onChange={(e) => setStatusFinalPendEdit(e.target.value as ResultadoFinalTipo)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-800 focus:border-red-500 focus:outline-none"
+                    <button
+                      type="button"
+                      disabled={salvando}
+                      onClick={() =>
+                        void onAtualizarPendencias({
+                          possui_pendencias: Boolean(pendenciasTexto.trim()) || statusFinalPendEdit !== 'Aprovado',
+                          pendencias_descricao: pendenciasTexto,
+                          pendencias_cumpridas: pendenciasCumpridasEdit,
+                          novo_status_liberacao: statusFinalPendEdit,
+                          origem: 'banca',
+                        })
+                      }
+                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
                     >
-                      <option value="Aprovado">✅ Nota Liberada (Aprovado)</option>
-                      <option value="Nota Retida (Pendências)">⚠️ Nota Retida (Pendências)</option>
-                      <option value="Nova Chance (Data Futura)">❌ Nova Apresentação</option>
-                    </select>
+                      <Save className="h-3.5 w-3.5" />
+                      Salvar Pendências no Portal
+                    </button>
                   </div>
-
-                  <button
-                    type="button"
-                    disabled={salvando}
-                    onClick={() =>
-                      void onAtualizarPendencias({
-                        possui_pendencias: Boolean(pendenciasTexto.trim()) || statusFinalPendEdit !== 'Aprovado',
-                        pendencias_descricao: pendenciasTexto,
-                        pendencias_cumpridas: pendenciasCumpridasEdit,
-                        novo_status_liberacao: statusFinalPendEdit,
-                        origem: 'banca',
-                      })
-                    }
-                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
-                  >
-                    <Save className="h-3.5 w-3.5" />
-                    Salvar Pendências no Portal
-                  </button>
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-lg border border-amber-200 bg-white/80 px-3 py-2 text-xs text-slate-600">
+                  <span className="font-bold text-slate-800">Modo Leitura:</span> Apenas o Prof. Titular pode editar pendências e alterar a situação final de liberação da nota.
+                </div>
+              )}
             </div>
           );
         })()}

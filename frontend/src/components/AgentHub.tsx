@@ -25,9 +25,15 @@ interface AgentHubProps {
   agentes: AgentSummary[];
   onAbrirAgente: (agentId: string, abaInicial?: AbaAgente) => void;
   onExecutarRapido: (agentId: string) => void;
+  isProfessorTitular?: boolean;
 }
 
-export function AgentHub({ agentes, onAbrirAgente, onExecutarRapido }: AgentHubProps) {
+export function AgentHub({
+  agentes,
+  onAbrirAgente,
+  onExecutarRapido,
+  isProfessorTitular = false,
+}: AgentHubProps) {
   const [busca, setBusca] = useState('');
   const [categoriaAtiva, setCategoriaAtiva] = useState<string>('Todas');
   const [mostrarGuiaNovoAgente, setMostrarGuiaNovoAgente] = useState(false);
@@ -275,24 +281,26 @@ export function AgentHub({ agentes, onAbrirAgente, onExecutarRapido }: AgentHubP
                   Consolidado
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => onExecutarRapido(ag.id)}
-                  disabled={rodando}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {rodando ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Auditando...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4" />
-                      Auditar ./tcc
-                    </>
-                  )}
-                </button>
+                {isProfessorTitular && (
+                  <button
+                    type="button"
+                    onClick={() => onExecutarRapido(ag.id)}
+                    disabled={rodando}
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {rodando ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Auditando...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4" />
+                        Auditar ./tcc
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           );

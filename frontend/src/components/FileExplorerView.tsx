@@ -30,6 +30,7 @@ import type {
 
 interface FileExplorerViewProps {
   onArquivoExcluido?: () => Promise<void> | void;
+  podeExcluir?: boolean;
 }
 
 function formatarBytes(bytes: number): string {
@@ -84,7 +85,10 @@ function filtrarArvore(nos: NoArvoreArquivo[], termo: string): NoArvoreArquivo[]
   return resultado;
 }
 
-export const FileExplorerView: React.FC<FileExplorerViewProps> = ({ onArquivoExcluido }) => {
+export const FileExplorerView: React.FC<FileExplorerViewProps> = ({
+  onArquivoExcluido,
+  podeExcluir = false,
+}) => {
   const [arvore, setArvore] = useState<ArvoreArquivosResponse | null>(null);
   const [pastasAbertas, setPastasAbertas] = useState<Record<string, boolean>>({});
   const [buscaArvore, setBuscaArvore] = useState<string>('');
@@ -443,7 +447,7 @@ export const FileExplorerView: React.FC<FileExplorerViewProps> = ({ onArquivoExc
                     Baixar
                   </a>
 
-                  {!preview.protegido && !confirmarExclusao && (
+                  {podeExcluir && !preview.protegido && !confirmarExclusao && (
                     <button
                       type="button"
                       onClick={() => setConfirmarExclusao(true)}
@@ -457,7 +461,7 @@ export const FileExplorerView: React.FC<FileExplorerViewProps> = ({ onArquivoExc
               </div>
 
               {/* Confirmação Inline de Exclusão */}
-              {confirmarExclusao && !preview.protegido && (
+              {podeExcluir && confirmarExclusao && !preview.protegido && (
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-red-200 bg-red-50 px-5 py-2.5 text-xs text-red-950">
                   <span className="font-bold">
                     Confirmar exclusão definitiva de <code>{preview.nome}</code>?

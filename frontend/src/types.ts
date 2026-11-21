@@ -437,9 +437,10 @@ export interface SessaoBancaAoVivo {
   atualizado_em: string;
 }
 
-export interface DraftAvaliacaoLocal {
+export interface RascunhoAvaliacaoFirestore {
   grupo_id: string;
   professor_uid: string;
+  professor_email?: string;
   rubricas: RubricaItemAvaliacao[];
   integrantes_notas: NotaIndividualIntegrante[];
   parecer_tecnico: string;
@@ -447,6 +448,8 @@ export interface DraftAvaliacaoLocal {
   auditado_em_base?: string | null;
   salvo_em: string;
 }
+
+export type DraftAvaliacaoLocal = RascunhoAvaliacaoFirestore;
 
 export interface BancaConsolidada {
   grupo_id: string;

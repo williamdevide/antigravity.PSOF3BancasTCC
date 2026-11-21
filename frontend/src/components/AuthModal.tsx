@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import {
-  auth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updateProfile,
+  DOMINIO_DOCENTE_AUTORIZADO,
+  EMAIL_PROFESSOR_TITULAR,
+  isUsuarioProfessorTitular,
   loginComGoogle,
   type User,
 } from '../services/firebase';
-import { LogIn, UserPlus, X, Shield, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { X, Shield, CheckCircle, AlertCircle, ArrowLeft, Crown, Lock } from 'lucide-react';
 
 interface AuthModalProps {
   aberto: boolean;
@@ -18,6 +17,7 @@ interface AuthModalProps {
   onSucesso?: (user: User) => void;
   onLoginSucesso?: (user: User) => void;
   obrigatorio?: boolean;
+  erroExterno?: string | null;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -28,19 +28,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onSucesso,
   onLoginSucesso,
   obrigatorio = false,
+  erroExterno = null,
 }) => {
   const fechar = onClose || onFechar || (() => {});
   const sucessoLogin = onSucesso || onLoginSucesso || (() => {});
-  const [isCadastro, setIsCadastro] = useState(false);
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [carregando, setCarregando] = useState(false);
   const [carregandoGoogle, setCarregandoGoogle] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
 
   if (!aberto) return null;
+
+  const erroExibido = erro || erroExterno;
 
   const handleLoginGoogle = async () => {
     setErro(null);
@@ -48,9 +46,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setCarregandoGoogle(true);
     try {
       const user = await loginComGoogle();
-      setSucesso(`Autenticado com o Google: ${user.displayName || user.email}!`);
+      const ehTitular = isUsuarioProfessorTitular(user);
+      setSucesso(
+        `Autenticado (${ehTitular ? 'Professor Titular' : 'Avaliador SENAI'}): ${user.displayName || user.email}`,
+      );
       sucessoLogin(user);
-      setTimeout(fechar, 1200);
+      setTimeout(fechar, 900);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setErro(msg);
@@ -59,52 +60,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErro(null);
-    setSucesso(null);
-    setCarregando(true);
-
-    try {
-      if (isCadastro) {
-        if (!nome.trim()) {
-          throw new Error('Informe o nome completo do professor avaliador.');
-        }
-        const cred = await createUserWithEmailAndPassword(auth, email.trim(), senha);
-        await updateProfile(cred.user, { displayName: nome.trim() });
-        setSucesso('Conta de avaliador criada com sucesso!');
-        sucessoLogin(cred.user);
-        setTimeout(fechar, 1200);
-      } else {
-        const cred = await signInWithEmailAndPassword(auth, email.trim(), senha);
-        setSucesso(`Bem-vindo(a), ${cred.user.displayName || cred.user.email}!`);
-        sucessoLogin(cred.user);
-        setTimeout(fechar, 1200);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password')) {
-        setErro('E-mail ou senha incorretos.');
-      } else if (msg.includes('auth/email-already-in-use')) {
-        setErro('Este e-mail já está cadastrado. Alterne para Entrar.');
-      } else if (msg.includes('auth/weak-password')) {
-        setErro('A senha deve ter pelo menos 6 caracteres.');
-      } else {
-        setErro(msg);
-      }
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  const preencherAtalho = (emailAtalho: string, nomeAtalho: string) => {
-    setEmail(emailAtalho);
-    setNome(nomeAtalho);
-    setSenha('senai@2026');
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-xs">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-slate-100 shadow-2xl">
         {/* Cabeçalho */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/80 px-5 py-4">
@@ -114,22 +71,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-extrabold uppercase tracking-wider text-white">
-                {isCadastro ? 'Cadastrar Novo Avaliador' : 'Acesso do Professor Avaliador'}
+                Acesso Institucional Docente
               </h3>
               <p className="text-[11px] text-slate-400">
-                Firebase Authentication • Avaliação Simultânea da Banca
+                Somente conta Google {DOMINIO_DOCENTE_AUTORIZADO} • Cloud Firestore
               </p>
             </div>
           </div>
           {obrigatorio ? (
             <span className="rounded-full border border-amber-500/40 bg-amber-500/20 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-300">
-              Obrigatório
+              Restrito SENAI
             </span>
           ) : (
             <button
               type="button"
               onClick={fechar}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer"
+              aria-label="Fechar modal"
             >
               <X className="h-5 w-5" />
             </button>
@@ -139,17 +97,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Corpo */}
         <div className="space-y-4 p-5">
           {obrigatorio && (
-            <div className="flex items-center gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
-              <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
               <p className="leading-snug">
-                <strong>Identificação Obrigatória:</strong> Identifique-se com sua conta de avaliador para ter acesso às análises e avaliações das bancas.
+                <strong>Autenticação Institucional Obrigatória:</strong> Entre exclusivamente com
+                sua conta Google <strong>{DOMINIO_DOCENTE_AUTORIZADO}</strong> para acessar a área
+                dos professores.
               </p>
             </div>
           )}
-          {erro && (
-            <div className="flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-950/50 p-3 text-xs text-red-200">
-              <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
-              <span>{erro}</span>
+
+          {erroExibido && (
+            <div className="flex items-start gap-2 rounded-lg border border-red-500/50 bg-red-950/60 p-3 text-xs text-red-200">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+              <span>{erroExibido}</span>
             </div>
           )}
 
@@ -160,12 +121,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          {/* Botão de Login com Conta Google */}
+          {/* Regras de Perfil Institucional */}
+          <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-950/70 p-3.5 text-[11px] text-slate-300">
+            <div className="flex items-center gap-2 text-amber-300 font-bold">
+              <Crown className="h-3.5 w-3.5 shrink-0" />
+              <span>Professor Titular: {EMAIL_PROFESSOR_TITULAR}</span>
+            </div>
+            <p className="leading-relaxed text-slate-400">
+              Gestão completa de bancas, início/consolidação, revisão pós-banca, adiamentos e
+              arquivos exclusiva da conta titular. Outras contas{' '}
+              <code className="text-slate-200">{DOMINIO_DOCENTE_AUTORIZADO}</code> acessam em modo
+              avaliador para lançar suas notas individuais no Firestore.
+            </p>
+          </div>
+
+          {/* Botão Único de Login Institucional Google (@docente.senai.br) */}
           <button
             type="button"
             onClick={handleLoginGoogle}
-            disabled={carregando || carregandoGoogle}
-            className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-600 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 shadow-md transition hover:bg-slate-100 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={carregandoGoogle}
+            className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-xs font-extrabold text-slate-900 shadow-md transition hover:bg-slate-100 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">
               <path
@@ -186,122 +161,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               />
             </svg>
             <span>
-              {carregandoGoogle ? 'Conectando ao Google...' : 'Continuar com conta Google'}
+              {carregandoGoogle
+                ? 'Validando conta @docente.senai.br...'
+                : 'Entrar com Google Institucional (@docente.senai.br)'}
             </span>
           </button>
-
-          {/* Divisor Visual */}
-          <div className="relative my-4 flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-800"></div>
-            </div>
-            <span className="relative bg-slate-900 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              ou com e-mail institucional
-            </span>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {isCadastro && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-300">
-                  Nome Completo do Professor:
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Ex: Prof. William Devidé Komel"
-                  className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300">E-mail:</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu.email@docente.senai.br"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300">Senha de Acesso:</label>
-              <input
-                type="password"
-                required
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                placeholder="••••••••"
-                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none"
-              />
-            </div>
-
-            {/* Atalhos Rápidos para Bancas SENAI */}
-            <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Atalhos Rápidos de Credenciais para a Banca:
-              </span>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    preencherAtalho('william.komel@docente.senai.br', 'Prof. William Devidé Komel')
-                  }
-                  className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:border-red-500 hover:bg-slate-700"
-                >
-                  👨‍🏫 Prof. William Devidé
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    preencherAtalho('avaliador2.senai@docente.senai.br', 'Prof. Segundo Avaliador')
-                  }
-                  className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:border-indigo-500 hover:bg-slate-700"
-                >
-                  👨‍🏫 Prof. 2º Avaliador
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={carregando || carregandoGoogle}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-red-900/30 hover:bg-red-700 disabled:opacity-50"
-            >
-              {isCadastro ? (
-                <>
-                  <UserPlus className="h-4 w-4" />
-                  {carregando ? 'Cadastrando...' : 'Criar Conta com E-mail'}
-                </>
-              ) : (
-                <>
-                  <LogIn className="h-4 w-4" />
-                  {carregando ? 'Entrando...' : 'Entrar com E-mail'}
-                </>
-              )}
-            </button>
-
-            <div className="text-center pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsCadastro(!isCadastro);
-                  setErro(null);
-                  setSucesso(null);
-                }}
-                className="text-xs text-slate-400 hover:text-red-400 hover:underline"
-              >
-                {isCadastro
-                  ? 'Já possui cadastro? Clique aqui para Entrar.'
-                  : 'Primeira vez avaliando? Clique para Criar Conta de Avaliador.'}
-              </button>
-            </div>
-          </form>
 
           {onVoltarPortal && (
             <div className="border-t border-slate-800 pt-3 text-center">

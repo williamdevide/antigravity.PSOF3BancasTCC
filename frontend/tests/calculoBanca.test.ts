@@ -1,5 +1,12 @@
 import assert from 'node:assert/strict';
 import {
+  DOMINIO_DOCENTE_AUTORIZADO,
+  EMAIL_PROFESSOR_TITULAR,
+  isEmailDocenteSenai,
+  isUsuarioDocenteAutorizado,
+  isUsuarioProfessorTitular,
+} from '../src/services/authPolicy.ts';
+import {
   aplicarDiffConsensoNaAvaliacao,
   calcularMediaBanca,
   calcularNivelMsep,
@@ -414,4 +421,70 @@ function criarGrupoBase(): AvaliacaoGrupo {
   assert.equal(rubCorrigidas[0].nivel, 'Pleno');
 }
 
-console.log('✅ Todos os testes unitários de calculoBanca passaram com 100% de exatidão!');
+// 5. Política institucional de acesso docente (@docente.senai.br) e Professor Titular exclusivo
+{
+  assert.equal(DOMINIO_DOCENTE_AUTORIZADO, '@docente.senai.br');
+  assert.equal(EMAIL_PROFESSOR_TITULAR, 'william.komel@docente.senai.br');
+
+  assert.equal(isEmailDocenteSenai('william.komel@docente.senai.br'), true);
+  assert.equal(isEmailDocenteSenai('  Edivan.Souza@DOCENTE.SENAI.BR '), true);
+  assert.equal(isEmailDocenteSenai('williamdevide@gmail.com'), false);
+  assert.equal(isEmailDocenteSenai('aluno@aluno.senai.br'), false);
+  assert.equal(isEmailDocenteSenai('docente.senai.br@gmail.com'), false);
+  assert.equal(isEmailDocenteSenai(null), false);
+
+  assert.equal(
+    isUsuarioDocenteAutorizado({
+      email: 'professor@docente.senai.br',
+      emailVerified: true,
+    }),
+    true,
+  );
+  assert.equal(
+    isUsuarioDocenteAutorizado({
+      email: 'professor@docente.senai.br',
+      emailVerified: false,
+    }),
+    false,
+  );
+  assert.equal(
+    isUsuarioDocenteAutorizado({
+      email: 'williamdevide@gmail.com',
+      emailVerified: true,
+    }),
+    false,
+  );
+
+  // Apenas william.komel@docente.senai.br (e-mail verificado) é Professor Titular
+  assert.equal(
+    isUsuarioProfessorTitular({
+      email: 'William.Komel@docente.senai.br',
+      emailVerified: true,
+    }),
+    true,
+  );
+  assert.equal(
+    isUsuarioProfessorTitular({
+      email: 'william.komel@docente.senai.br',
+      emailVerified: false,
+    }),
+    false,
+  );
+  assert.equal(
+    isUsuarioProfessorTitular({
+      email: 'outro.docente@docente.senai.br',
+      emailVerified: true,
+    }),
+    false,
+  );
+  assert.equal(
+    isUsuarioProfessorTitular({
+      email: 'williamdevide@gmail.com',
+      emailVerified: true,
+    }),
+    false,
+  );
+  assert.equal(isUsuarioProfessorTitular(null), false);
+}
+
+console.log('✅ Todos os testes unitários (calculoBanca + authPolicy) passaram com 100% de exatidão!');

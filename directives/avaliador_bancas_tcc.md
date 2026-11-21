@@ -151,6 +151,18 @@ Automatizar a auditoria técnica, documental e estrutural dos Trabalhos de Concl
    - Em *Auditoria & Bancas*, para qualquer grupo ainda não concluído (com ou sem arquivos entregues), o avaliador pode acionar **"Não Apresentou / Data Futura"**, registrando motivo opcional (com sugestão padrão) e nova data prevista opcional (`"A definir"` quando omitida).
    - Tanto em *Auditoria & Bancas* quanto no *Portal dos Alunos*, grupos nessa condição recebem **borda vermelha** (`border-2 border-red-600`) com status dedicado **"Não Apresentou / Data Futura"**, **sem exibir notas P1–P4 nem notas individuais**, aparecendo fora de *"Já Realizadas"* e incluídos em *"Com Pendências / Retidas"*.
    - O gerenciamento e a auditoria de arquivos permanecem liberados normalmente enquanto adiado; ao concluir futuramente a banca na *Ficha MSEP & Arguição*, o estado `adiamento_data_futura.ativo` é limpo automaticamente preservando o registro datado no histórico.
+
+---
+
+## 7. Segurança Institucional (`@docente.senai.br`), Professor Titular e Persistência 100% Firestore (Zero `localStorage`)
+
+1. **Autenticação Institucional Obrigatória:**
+   - O acesso à área docente (`/professor`) exige login via **Google Institucional `@docente.senai.br`** (`emailVerified == true`), sendo rejeitada qualquer outra conta (inclusive `@gmail.com`).
+2. **Segregação de Privilégios (`william.komel@docente.senai.br`):**
+   - Somente **`william.komel@docente.senai.br`** atua como **Professor Titular / Presidente da Banca**, detendo exclusividade sobre sessão ao vivo (iniciar/consolidar/reabrir/resetar), consenso dos 2 avaliadores, pendências, arquivos revisados, adiamento ("Data Futura"), upload/exclusão/reauditoria de entregáveis e configurações `.env`.
+   - Demais contas verificadas `@docente.senai.br` atuam como avaliadores convidados, com permissão restrita à visualização e ao lançamento/edição/encerramento de sua própria avaliação individual.
+3. **Persistência 100% Firestore (`localStorage` eliminado):**
+   - Nenhum dado da aplicação é armazenado em `localStorage`/`sessionStorage`; os rascunhos da Ficha MSEP em andamento são salvos em **`psof3_rascunhos_professores`**, avaliações individuais em **`psof3_avaliacoes_professores`**, sessões ao vivo e pós-banca em **`psof3_sessoes_banca`**, análises em **`psof3_analises_automaticas`** e espelho geral autenticado via ID Token em **`psof3_avaliacoes_tcc`**.
    - Tanto na guia *Ficha MSEP & Arguição* (durante ou após a banca) quanto na aba *Arquivos Revisados*, o painel **Controle de Pendências & Cumprimento (Portal dos Alunos)** registra mensagens cronológicas com data/hora e origem (`Durante a Banca` vs `Arquivos Revisados`) em `historico_pendencias`, permitindo atualizar pendências e status entre os 3 possíveis (mantendo a exigência de aceite explícito para alterações vinculadas ao parecer da revisão).
    - Os cards da fila de grupos em *Auditoria & Bancas* seguem exatamente o mesmo código de bordas semânticas da Landing Page pública (amarelo = aguardando, verde = nota liberada, laranja = nota retida, vermelho = nova apresentação ou ao vivo).
    - A guia **Gestão de Arquivos** na navegação principal exibe a árvore completa de `./tcc` com visualizador rico por tipo de arquivo (texto/código, PDF embutido, imagem, DOCX/PPTX extraído e inspeção interna de `.zip`), além de download e exclusão segura (protegendo `./tcc/regras/` e planilhas oficiais).

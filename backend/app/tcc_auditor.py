@@ -3115,6 +3115,7 @@ def sincronizar_e_obter_todas_bancas(
     sincronizar_firebase: bool = False,
     log_cb: Callable[[str], None] | None = None,
     progress_cb: Callable[[int, int, str], None] | None = None,
+    firebase_id_token: str | None = None,
 ) -> list[AvaliacaoGrupoModel]:
     """
     Retorna a lista completa das 25 bancas do cronograma oficial combinada com
@@ -3213,7 +3214,7 @@ def sincronizar_e_obter_todas_bancas(
                 step_cb=_reportar_etapa,
             )
             if sincronizar_firebase and cfg.firebase_sincronizacao_ativa:
-                ok_fb, msg_fb = sincronizar_avaliacao_firestore(av)
+                ok_fb, msg_fb = sincronizar_avaliacao_firestore(av, id_token=firebase_id_token)
                 if log_cb:
                     log_cb(f"   ☁️ Firebase: {msg_fb}")
             salvas[gid] = av.model_dump()

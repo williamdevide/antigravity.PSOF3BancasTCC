@@ -1041,6 +1041,117 @@ def test_adiamento_data_futura_fluxo_completo():
         salvar_avaliacoes_salvas(salvas_rest)
 
 
+def test_autenticacao_docente_senai_e_titular_backend(monkeypatch):
+    import backend.app.firebase_service as fb_svc
+    from fastapi import HTTPException
+
+    class FakeResp:
+        def __init__(self, status_code, data):
+            self.status_code = status_code
+            self._data = data
+
+        def json(self):
+            return self._data
+
+    class FakeClient:
+        def __init__(self, users):
+            self.users = users
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def post(self, url, json=None):
+            return FakeResp(200, {"users": self.users})
+
+    monkeypatch.setattr(fb_svc, "obter_credenciais_firebase", lambda: ("proj-id", "fake-api-key"))
+    monkeypatch.setenv("EXIGIR_AUTH_FIREBASE_BACKEND", "true")
+
+    # Conta @gmail.com deve ser rejeitada com HTTP 403
+    monkeypatch.setattr(
+        fb_svc.httpx,
+        "Client",
+        lambda timeout=10.0: FakeClient([{"email": "williamdevide@gmail.com", "emailVerified": True}]),
+    )
+    try:
+        fb_svc.verificar_id_token_firebase("tok-gmail")
+        raise AssertionError("Conta @gmail.com deveria ser bloqueada com 403.")
+    except HTTPException as exc:
+        assert exc.status_code == 403
+
+    # Conta @docente.senai.br sem verificação deve falhar com HTTP 403
+    monkeypatch.setattr(
+        fb_svc.httpx,
+        "Client",
+        lambda timeout=10.0: FakeClient([{"email": "edivan@docente.senai.br", "emailVerified": False}]),
+    )
+    try:
+        fb_svc.verificar_id_token_firebase("tok-unverified")
+        raise AssertionError("Conta não verificada deveria ser bloqueada com 403.")
+    except HTTPException as exc:
+        assert exc.status_code == 403
+
+    # Sem token -> endpoints mutáveis retornam 401
+    cfg_payload = {
+        "escola": "X",
+        "disciplina": "Y",
+        "avaliador_padrao": "Z",
+        "pasta_tcc": "./tcc",
+        "pasta_destino": "./downloads_relatorios",
+        "github_token_configurado": False,
+        "github_token_preview": "",
+        "gemini_api_key": "",
+    }
+    assert client.put("/api/config", json=cfg_payload).status_code == 401
+    assert client.post("/api/bancas/auditar", json={}).status_code == 401
+    assert client.post(
+        "/api/bancas/I2DEV-A_Grupo05/adiamento-data-futura",
+        json={"ativo": True, "motivo": "Teste"},
+    ).status_code == 401
+
+    # Outro docente @docente.senai.br verificado: pode avaliar sua ficha, mas recebe 403 em ações de Titular
+    monkeypatch.setattr(
+        fb_svc.httpx,
+        "Client",
+        lambda timeout=10.0: FakeClient([{"email": "edivan@docente.senai.br", "emailVerified": True}]),
+    )
+    headers_docente = {"Authorization": "Bearer tok-edivan"}
+    assert client.put("/api/config", json=cfg_payload, headers=headers_docente).status_code == 403
+    assert client.post("/api/bancas/I2DEV-A_Grupo05/reabrir", headers=headers_docente).status_code == 403
+    assert client.post(
+        "/api/bancas/I2DEV-A_Grupo05/adiamento-data-futura",
+        json={"ativo": True, "motivo": "Teste"},
+        headers=headers_docente,
+    ).status_code == 403
+    assert client.post("/api/firebase/sync-all", headers=headers_docente).status_code == 403
+
+    r_eval_doc = client.put(
+        "/api/bancas/GRUPO_INEXISTENTE/avaliacao",
+        json={
+            "avaliador": "Prof. Edivan",
+            "rubricas": [],
+            "integrantes_notas": [],
+            "parecer_tecnico": "",
+            "sincronizar_firebase": False,
+        },
+        headers=headers_docente,
+    )
+    assert r_eval_doc.status_code == 404
+
+    # Professor Titular oficial (william.komel@docente.senai.br): autorizado para ações exclusivas
+    monkeypatch.setattr(
+        fb_svc.httpx,
+        "Client",
+        lambda timeout=10.0: FakeClient([{"email": "William.Komel@docente.senai.br", "emailVerified": True}]),
+    )
+    tok_t, user_t = fb_svc.validar_permissao_docente_backend("Bearer tok-titular", exigir_titular=True)
+    assert tok_t == "tok-titular"
+    assert str(user_t["email"]).lower() == fb_svc.EMAIL_PROFESSOR_TITULAR
+
+
+
 
 
 

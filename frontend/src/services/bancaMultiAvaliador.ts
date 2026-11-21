@@ -8,13 +8,14 @@ import {
   getDocs,
   deleteDoc,
   where,
+  arrayUnion,
 } from './firebase';
 import type {
   AdiamentoDataFutura,
   AvaliacaoGrupo,
   AvaliacaoProfessorIndividual,
   BancaConsolidada,
-  DraftAvaliacaoLocal,
+  RascunhoAvaliacaoFirestore,
   RegistroHistoricoPendencia,
   ResultadoFinalTipo,
   RevisaoPosBanca,
@@ -54,6 +55,8 @@ export {
 export const COLECAO_AVALIACOES_PROFESSORES = 'psof3_avaliacoes_professores';
 export const COLECAO_SESSOES_BANCA = 'psof3_sessoes_banca';
 export const COLECAO_ANALISES_AUTOMATICAS = 'psof3_analises_automaticas';
+export const COLECAO_RASCUNHOS_PROFESSORES = 'psof3_rascunhos_professores';
+export const COLECAO_AVALIACOES_TCC = 'psof3_avaliacoes_tcc';
 
 function formatarErroFirestore(err: unknown, acao: string): string {
   const msg = err instanceof Error ? err.message : String(err);
@@ -325,21 +328,26 @@ export async function encerrarMinhaAvaliacao(
     };
     await setDoc(docAvRef, avCompleta, { merge: true });
 
-    // 2. Adicionar o professor na lista de avaliacoes_concluidas da sessão
+    // 2. Registrar conclusão deste docente via arrayUnion mantendo somente campos autorizados na regra do avaliador
     const docSessaoRef = doc(db, COLECAO_SESSOES_BANCA, grupoId);
-    // Para simplificar e evitar race conditions, atualizamos a lista de concluídos
+    const nomeAval =
+      avaliacao.professor_nome || avaliacao.professor_email?.split('@')[0] || 'Avaliador';
     await setDoc(
       docSessaoRef,
       {
-        avaliacoes_concluidas: [avaliacao.professor_uid],
+        avaliacoes_concluidas: arrayUnion(avaliacao.professor_uid),
+        avaliadores_presentes: arrayUnion(nomeAval),
         atualizado_em: new Date().toISOString(),
       },
       { merge: true },
     );
 
+    // 3. Limpar o rascunho em nuvem desse docente após encerramento oficial
+    await limparRascunhoFirestore(grupoId, avaliacao.professor_uid);
+
     return {
       ok: true,
-      mensagem: `Avaliação do Prof. ${avaliacao.professor_nome} encerrada com sucesso!`,
+      mensagem: `Avaliação do Prof. ${avaliacao.professor_nome} encerrada com sucesso no Firestore!`,
     };
   } catch (err: unknown) {
     return { ok: false, mensagem: formatarErroFirestore(err, 'encerrar avaliação individual') };
@@ -411,6 +419,7 @@ export async function encerrarEConsolidarBanca(
     }
 
     await setDoc(docSessaoRef, dadosConsolidacao, { merge: true });
+    await limparTodosRascunhosGrupoFirestore(grupoId);
 
     return {
       ok: true,
@@ -422,53 +431,158 @@ export async function encerrarEConsolidarBanca(
 }
 
 // =========================================================================
-// AUTO-SAVE EM LOCALSTORAGE (Resiliência Local)
+// RASCUNHOS EM TEMPO REAL 100% NO CLOUD FIRESTORE (ZERO localStorage)
 // =========================================================================
 
-export function salvarDraftLocalStorage(draft: DraftAvaliacaoLocal): void {
+export async function salvarRascunhoFirestore(
+  rascunho: RascunhoAvaliacaoFirestore,
+): Promise<void> {
   try {
-    const chave = `psof3_draft_${draft.grupo_id}_${draft.professor_uid}`;
-    localStorage.setItem(chave, JSON.stringify(draft));
+    const docRef = doc(
+      db,
+      COLECAO_RASCUNHOS_PROFESSORES,
+      `${rascunho.grupo_id}_${rascunho.professor_uid}`,
+    );
+    await setDoc(docRef, rascunho, { merge: true });
   } catch {
-    // Ignorar falha de cota de localStorage
+    // Falha transitória de rede não bloqueia a edição na tela
   }
 }
 
-export function carregarDraftLocalStorage(
+export function escutarRascunhoFirestore(
   grupoId: string,
   professorUid: string,
-): DraftAvaliacaoLocal | null {
+  onUpdate: (rascunho: RascunhoAvaliacaoFirestore | null) => void,
+  onError?: (err: Error) => void,
+): () => void {
   try {
-    const chave = `psof3_draft_${grupoId}_${professorUid}`;
-    const bruto = localStorage.getItem(chave);
-    if (!bruto) return null;
-    return JSON.parse(bruto) as DraftAvaliacaoLocal;
-  } catch {
-    return null;
+    const docRef = doc(db, COLECAO_RASCUNHOS_PROFESSORES, `${grupoId}_${professorUid}`);
+    return onSnapshot(
+      docRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          onUpdate(snapshot.data() as RascunhoAvaliacaoFirestore);
+        } else {
+          onUpdate(null);
+        }
+      },
+      (error) => {
+        if (onError) onError(error);
+      },
+    );
+  } catch (e: unknown) {
+    if (onError && e instanceof Error) onError(e);
+    return () => {};
   }
 }
 
-export function limparDraftLocalStorage(grupoId: string, professorUid: string): void {
+export async function limparRascunhoFirestore(
+  grupoId: string,
+  professorUid: string,
+): Promise<void> {
   try {
-    const chave = `psof3_draft_${grupoId}_${professorUid}`;
-    localStorage.removeItem(chave);
+    const docRef = doc(db, COLECAO_RASCUNHOS_PROFESSORES, `${grupoId}_${professorUid}`);
+    await deleteDoc(docRef);
   } catch {
-    // Ignorar
+    // Ignorar se o rascunho não existir ou houver falha momentânea
   }
 }
 
-export function limparTodosDraftsGrupoLocalStorage(grupoId: string): void {
+export async function limparTodosRascunhosGrupoFirestore(grupoId: string): Promise<void> {
   try {
-    const chavesParaRemover: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const chave = localStorage.key(i);
-      if (chave && chave.startsWith(`psof3_draft_${grupoId}_`)) {
-        chavesParaRemover.push(chave);
-      }
-    }
-    chavesParaRemover.forEach((chave) => localStorage.removeItem(chave));
+    const colRef = collection(db, COLECAO_RASCUNHOS_PROFESSORES);
+    const q = query(colRef, where('grupo_id', '==', grupoId));
+    const snap = await getDocs(q);
+    await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
   } catch {
-    // Ignorar falhas de acesso ao localStorage
+    // Permissões de exclusão em lote pertencem ao Professor Titular
+  }
+}
+
+/**
+ * Grava a avaliação consolidada/auditada completa do grupo na coleção psof3_avaliacoes_tcc do Firestore
+ */
+export async function sincronizarAvaliacaoTccFirestore(
+  grupo: AvaliacaoGrupo,
+): Promise<{ ok: boolean; mensagem: string }> {
+  try {
+    const docRef = doc(db, COLECAO_AVALIACOES_TCC, grupo.id);
+    const agora = new Date().toISOString();
+    await setDoc(
+      docRef,
+      {
+        id: grupo.id,
+        turma: grupo.turma,
+        grupo: grupo.grupo,
+        projeto: grupo.projeto,
+        tema: grupo.tema,
+        data_banca: grupo.data_banca,
+        horario: grupo.horario,
+        integrantes: grupo.integrantes,
+        entregue_na_pasta: grupo.entregue_na_pasta,
+        status_avaliacao: grupo.status_avaliacao,
+        banca_realizada: Boolean(grupo.banca_realizada),
+        avaliador: grupo.avaliador,
+        p1_total: grupo.p1_total,
+        p2_total: grupo.p2_total,
+        p3_grupo_base: grupo.p3_grupo_base,
+        media_nota_final_grupo: grupo.media_nota_final_grupo,
+        status_liberacao_nota: grupo.status_liberacao_nota,
+        adiamento_data_futura: grupo.adiamento_data_futura || null,
+        revisao_pos_banca: grupo.revisao_pos_banca || null,
+        historico_pendencias: grupo.historico_pendencias || [],
+        parecer_tecnico: grupo.parecer_tecnico,
+        atualizado_em: agora,
+        payload_json: JSON.stringify({
+          ...grupo,
+          sincronizado_firebase: true,
+          firebase_sync_em: agora,
+        }),
+      },
+      { merge: true },
+    );
+    return { ok: true, mensagem: `Grupo ${grupo.projeto} gravado em psof3_avaliacoes_tcc.` };
+  } catch (err: unknown) {
+    return { ok: false, mensagem: formatarErroFirestore(err, 'gravar em psof3_avaliacoes_tcc') };
+  }
+}
+
+/**
+ * Escuta em tempo real todos os documentos da coleção psof3_avaliacoes_tcc no Cloud Firestore
+ */
+export function escutarTodasAvaliacoesTccFirestore(
+  onUpdate: (mapa: Record<string, AvaliacaoGrupo>) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  try {
+    const colRef = collection(db, COLECAO_AVALIACOES_TCC);
+    const q = query(colRef);
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const mapa: Record<string, AvaliacaoGrupo> = {};
+        snapshot.docs.forEach((d) => {
+          const dados = d.data() as Record<string, unknown>;
+          if (typeof dados.payload_json === 'string' && dados.payload_json) {
+            try {
+              const parsed = JSON.parse(dados.payload_json) as AvaliacaoGrupo;
+              if (parsed?.id) {
+                mapa[parsed.id] = parsed;
+              }
+            } catch {
+              // Ignorar registro malformado
+            }
+          }
+        });
+        onUpdate(mapa);
+      },
+      (error) => {
+        if (onError) onError(error);
+      },
+    );
+  } catch (e: unknown) {
+    if (onError && e instanceof Error) onError(e);
+    return () => {};
   }
 }
 
@@ -476,7 +590,7 @@ export function limparTodosDraftsGrupoLocalStorage(grupoId: string): void {
  * O Professor Titular reseta e exclui a banca e as avaliações de um grupo específico:
  * 1. Remove do Firestore todas as avaliações individuais dos professores daquele grupo (psof3_avaliacoes_professores)
  * 2. Redefine o status da sessão (psof3_sessoes_banca) para 'aguardando_inicio', zerando cronômetro e consolidação
- * 3. Limpa rascunhos de localStorage do grupo
+ * 3. Limpa rascunhos daquele grupo em psof3_rascunhos_professores no Firestore
  */
 export async function resetarBancaGrupo(
   grupo: AvaliacaoGrupo,
@@ -516,8 +630,8 @@ export async function resetarBancaGrupo(
     };
     await setDoc(docSessaoRef, sessaoResetada, { merge: false });
 
-    // 3. Limpar drafts locais no localStorage do navegador para este grupo
-    limparTodosDraftsGrupoLocalStorage(grupo.id);
+    // 3. Limpar rascunhos do grupo diretamente no Cloud Firestore
+    await limparTodosRascunhosGrupoFirestore(grupo.id);
 
     return {
       ok: true,

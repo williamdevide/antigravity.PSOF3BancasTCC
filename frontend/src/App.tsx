@@ -39,6 +39,7 @@ import {
   Server,
   Settings,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   Terminal,
   Users,
@@ -57,7 +58,16 @@ import { PainelBancaConsolidada } from './components/PainelBancaConsolidada';
 import { StudentLandingPage } from './components/StudentLandingPage';
 import { APP_VERSION } from './config/version';
 import { api } from './services/api';
-import { auth, onAuthStateChanged, signOut, type User } from './services/firebase';
+import {
+  auth,
+  DOMINIO_DOCENTE_AUTORIZADO,
+  EMAIL_PROFESSOR_TITULAR,
+  isUsuarioDocenteAutorizado,
+  isUsuarioProfessorTitular,
+  onAuthStateChanged,
+  signOut,
+  type User,
+} from './services/firebase';
 import {
   salvarAvaliacaoNoFirestore,
   escutarAvaliacoesGrupoFirestore,
@@ -86,10 +96,12 @@ import {
   resetarBancaGrupo,
   recalcularEConsolidarBancaAposEdicao,
   salvarAnaliseAutomaticaFirestore,
-  salvarDraftLocalStorage,
-  carregarDraftLocalStorage,
-  limparDraftLocalStorage,
-  limparTodosDraftsGrupoLocalStorage,
+  salvarRascunhoFirestore,
+  escutarRascunhoFirestore,
+  limparRascunhoFirestore,
+  limparTodosRascunhosGrupoFirestore,
+  sincronizarAvaliacaoTccFirestore,
+  escutarTodasAvaliacoesTccFirestore,
   type DiffConsensoBanca,
 } from './services/bancaMultiAvaliador';
 import type {
@@ -103,6 +115,7 @@ import type {
   ItemPersistenciaForaBD,
   NivelMSEP,
   NotaIndividualIntegrante,
+  RascunhoAvaliacaoFirestore,
   RegrasOficiaisResponse,
   ResultadoFinalTipo,
   RubricaItemAvaliacao,
@@ -258,6 +271,12 @@ function compararBancasTurmaDataHorario(a: AvaliacaoGrupo, b: AvaliacaoGrupo): n
   return (a.ordem_apresentacao || 999) - (b.ordem_apresentacao || 999);
 }
 
+function dataIsoMs(valor?: string | null): number {
+  if (!valor) return 0;
+  const ts = Date.parse(valor);
+  return Number.isNaN(ts) ? 0 : ts;
+}
+
 function detectarRotaInicial(): 'alunos' | 'professor' {
   if (typeof window === 'undefined') return 'alunos';
   const caminho = window.location.pathname.toLowerCase();
@@ -271,7 +290,34 @@ export function App() {
   const [abaAtiva, setAbaAtiva] = useState<AbaAgente>('bancas');
 
   const [agentesCatalogo, setAgentesCatalogo] = useState<AgentSummary[]>([]);
-  const [bancas, setBancas] = useState<AvaliacaoGrupo[]>([]);
+  const [bancasBackend, setBancas] = useState<AvaliacaoGrupo[]>([]);
+  const [mapaAvaliacoesTccFirestore, setMapaAvaliacoesTccFirestore] = useState<
+    Record<string, AvaliacaoGrupo>
+  >({});
+  const bancas = useMemo(() => {
+    if (bancasBackend.length === 0) {
+      return Object.values(mapaAvaliacoesTccFirestore).sort(compararBancasTurmaDataHorario);
+    }
+    return bancasBackend.map((b) => {
+      const fb = mapaAvaliacoesTccFirestore[b.id];
+      if (!fb) return b;
+      const fbTs = Math.max(dataIsoMs(fb.atualizado_em), dataIsoMs(fb.auditado_em));
+      const bkTs = Math.max(dataIsoMs(b.atualizado_em), dataIsoMs(b.auditado_em));
+      if (fbTs > bkTs) {
+        return {
+          ...b,
+          ...fb,
+          sincronizado_firebase: true,
+        };
+      }
+      return {
+        ...b,
+        sincronizado_firebase: b.sincronizado_firebase || fb.sincronizado_firebase,
+        firebase_sync_em: b.firebase_sync_em || fb.firebase_sync_em,
+      };
+    });
+  }, [bancasBackend, mapaAvaliacoesTccFirestore]);
+
   const [grupoSelecionadoId, setGrupoSelecionadoId] = useState<string>('I2DEV-B_Grupo08');
   const [turmaFiltro, setTurmaFiltro] = useState<'Todas' | 'I2DEV-A' | 'I2DEV-B'>('Todas');
   const [dataFiltro, setDataFiltro] = useState<string>('');
@@ -282,6 +328,7 @@ export function App() {
   // Estados de Autenticação Firebase & Avaliação Multi-Docente (2 Professores)
   const [usuarioAuth, setUsuarioAuth] = useState<User | null>(null);
   const [authModalAberto, setAuthModalAberto] = useState<boolean>(false);
+  const [erroAuthModal, setErroAuthModal] = useState<string | null>(null);
   const [modalReauditoriaAberto, setModalReauditoriaAberto] = useState<boolean>(false);
   const [modalArquivosAberto, setModalArquivosAberto] = useState<boolean>(false);
   const [abaModalArquivos, setAbaModalArquivos] = useState<'originais' | 'revisados'>('originais');
@@ -294,6 +341,9 @@ export function App() {
   const [mapaAvaliacoesProfessores, setMapaAvaliacoesProfessores] = useState<
     Record<string, AvaliacaoProfessorIndividual[]>
   >({});
+  const [rascunhoFirestoreGrupo, setRascunhoFirestoreGrupo] =
+    useState<RascunhoAvaliacaoFirestore | null>(null);
+  const [rascunhoFirestorePronto, setRascunhoFirestorePronto] = useState<boolean>(false);
   const [sessaoAoVivo, setSessaoAoVivo] = useState<SessaoBancaAoVivo | null>(null);
   const [sessoesAtivas, setSessoesAtivas] = useState<SessaoBancaAoVivo[]>([]);
   const [mapaSessoesBanca, setMapaSessoesBanca] = useState<Record<string, SessaoBancaAoVivo>>({});
@@ -305,6 +355,9 @@ export function App() {
   );
   const statusAlteradoSessaoRef = useRef<boolean>(false);
   const assinaturasAutoSyncRef = useRef<Set<string>>(new Set());
+  const assinaturasAnaliseTccSyncRef = useRef<Set<string>>(new Set());
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ultimaAssinaturaDraftRef = useRef<string>('');
   const prevStatusEstadoRef = useRef<AgentStatus['estado']>('idle');
 
   // Estados editáveis da Ficha MSEP do grupo selecionado
@@ -406,9 +459,26 @@ export function App() {
     return () => window.removeEventListener('popstate', aoNavegarHistorico);
   }, []);
 
-  // Monitorar estado de autenticação Firebase dos Professores Avaliadores (Identificação Obrigatória na rota /professor)
+  // Monitorar estado de autenticação Firebase dos Professores Avaliadores (Domínio Institucional @docente.senai.br obrigatório)
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user && !isUsuarioDocenteAutorizado(user)) {
+        const emailNegado = user.email || 'conta sem e-mail';
+        try {
+          await signOut(auth);
+        } catch {
+          // Ignora erro eventual de signOut
+        }
+        setUsuarioAuth(null);
+        setAuthPronto(true);
+        setErroAuthModal(
+          `Acesso restrito a docentes com e-mail institucional ${DOMINIO_DOCENTE_AUTORIZADO}. A conta '${emailNegado}' foi desconectada.`,
+        );
+        setAuthModalAberto(true);
+        return;
+      }
+
+      setErroAuthModal(null);
       setUsuarioAuth(user);
       setAuthPronto(true);
       if (user) {
@@ -546,9 +616,16 @@ export function App() {
     ? (!euJaEncerreiMinhaAvaliacao || modoEdicaoReaberto)
     : (statusSessaoBancaAtual === 'concluida' && modoEdicaoReaberto);
 
-  // Determinar se o usuário logado possui privilégios de Professor Titular / Presidente da Banca
-  // Como o sistema é exclusivo dos docentes avaliadores, qualquer professor autenticado tem poderes de gestão da banca
-  const isProfessorTitular = Boolean(usuarioAuth);
+  // Somente a conta institucional oficial do Prof. Titular possui poderes administrativos e de consolidação
+  const isProfessorTitular = isUsuarioProfessorTitular(usuarioAuth);
+
+  // Escutar avaliações consolidadas oficiais em psof3_avaliacoes_tcc no Firestore (consumido no Portal e Área Docente)
+  useEffect(() => {
+    const unsub = escutarTodasAvaliacoesTccFirestore((mapa) => {
+      setMapaAvaliacoesTccFirestore(mapa);
+    });
+    return () => unsub();
+  }, []);
 
   // Escutar todas as sessões de bancas cadastradas no Firestore (para status dos cards e banner ao vivo)
   useEffect(() => {
@@ -572,6 +649,27 @@ export function App() {
     return () => unsub();
   }, [rotaAtual, grupoAtual?.id]);
 
+  // Escutar rascunho individual em nuvem (psof3_rascunhos_professores) — zero localStorage
+  useEffect(() => {
+    setRascunhoFirestoreGrupo(null);
+    setRascunhoFirestorePronto(false);
+    if (rotaAtual !== 'professor' || !grupoAtual?.id || !usuarioAuth?.uid) {
+      return;
+    }
+    const unsub = escutarRascunhoFirestore(
+      grupoAtual.id,
+      usuarioAuth.uid,
+      (rascunho) => {
+        setRascunhoFirestoreGrupo(rascunho);
+        setRascunhoFirestorePronto(true);
+      },
+      () => {
+        setRascunhoFirestorePronto(true);
+      },
+    );
+    return () => unsub();
+  }, [rotaAtual, grupoAtual?.id, usuarioAuth?.uid]);
+
   // Escutar TODAS as avaliações individuais em psof3_avaliacoes_professores em tempo real (fonte soberana)
   useEffect(() => {
     if (rotaAtual !== 'professor' || !usuarioAuth) {
@@ -584,11 +682,11 @@ export function App() {
     return () => unsub();
   }, [rotaAtual, usuarioAuth?.uid]);
 
-  // Auto-sincronizar snapshots de bancas concluídas e backend quando divergirem das rubricas recalculadas
+  // Auto-sincronizar snapshots de bancas concluídas e backend quando divergirem (somente Prof. Titular)
   useEffect(() => {
     if (
       rotaAtual !== 'professor' ||
-      !usuarioAuth ||
+      !isProfessorTitular ||
       modoEdicaoReaberto ||
       salvandoFicha ||
       bancas.length === 0
@@ -629,7 +727,7 @@ export function App() {
     });
   }, [
     rotaAtual,
-    usuarioAuth?.uid,
+    isProfessorTitular,
     modoEdicaoReaberto,
     salvandoFicha,
     bancas,
@@ -637,12 +735,23 @@ export function App() {
     mapaAvaliacoesProfessores,
   ]);
 
-  // Persistir a análise prévia automática no Firebase Firestore apenas quando professor autenticado na área docente
+  // Persistir a análise prévia automática e snapshot psof3_avaliacoes_tcc no Firestore (somente Prof. Titular)
   useEffect(() => {
-    if (rotaAtual === 'professor' && usuarioAuth && grupoAtual && grupoAtual.entregue_na_pasta) {
+    if (rotaAtual === 'professor' && isProfessorTitular && grupoAtual && grupoAtual.entregue_na_pasta) {
+      const assinatura = `${grupoAtual.id}|${grupoAtual.auditado_em || ''}|${grupoAtual.media_nota_final_grupo}|${grupoAtual.banca_realizada ? '1' : '0'}`;
+      if (assinaturasAnaliseTccSyncRef.current.has(assinatura)) return;
+      assinaturasAnaliseTccSyncRef.current.add(assinatura);
       void salvarAnaliseAutomaticaFirestore(grupoAtual);
+      void sincronizarAvaliacaoTccFirestore(grupoAtual);
     }
-  }, [rotaAtual, usuarioAuth?.uid, grupoAtual?.id, grupoAtual?.media_nota_final_grupo]);
+  }, [
+    rotaAtual,
+    isProfessorTitular,
+    grupoAtual?.id,
+    grupoAtual?.auditado_em,
+    grupoAtual?.media_nota_final_grupo,
+    grupoAtual?.banca_realizada,
+  ]);
 
   // Sincronizar estados da Ficha MSEP respeitando a soberania absoluta das notas da banca concluída
   useEffect(() => {
@@ -789,8 +898,11 @@ export function App() {
       return;
     }
 
-    // Helper comum para validar se um rascunho local ainda é válido frente à auditoria mais recente
-    const draft = usuarioAuth ? carregarDraftLocalStorage(grupoAtual.id, usuarioAuth.uid) : null;
+    // Helper comum para validar se o rascunho em nuvem (Firestore) ainda é válido frente à auditoria mais recente
+    const draft =
+      usuarioAuth && rascunhoFirestoreGrupo?.grupo_id === grupoAtual.id
+        ? rascunhoFirestoreGrupo
+        : null;
     const draftP1 = draft
       ? draft.rubricas.filter((r) => r.pilar === 1).reduce((a, r) => a + Number(r.nota || 0), 0)
       : 0;
@@ -821,11 +933,14 @@ export function App() {
         !draftMaisAntigoQueAuditoria,
     );
 
-    // 3. Banca em andamento: preserva edições ao vivo; prioriza avaliação salva mais recente no Firestore sobre rascunho antigo
+    // 3. Banca em andamento: preserva edições ao vivo; prioriza avaliação salva mais recente no Firestore sobre rascunho em nuvem
     if (modoFichaAtual === 'andamento_editando') {
+      if (usuarioAuth && !rascunhoFirestorePronto) {
+        return;
+      }
       const chaveEdicao = `${grupoAtual.id}|andamento|${usuarioAuth?.uid || ''}|${
         minhaAvaliacaoSalvaFirestore?.atualizado_em || 'none'
-      }`;
+      }|draftReady:${rascunhoFirestorePronto ? '1' : '0'}`;
       if (chaveEdicaoAtivaRef.current === chaveEdicao) return;
       chaveEdicaoAtivaRef.current = chaveEdicao;
 
@@ -837,40 +952,50 @@ export function App() {
               new Date(draft.salvo_em).getTime()),
       );
 
+      let rubInicial: RubricaItemAvaliacao[];
+      let intInicial: NotaIndividualIntegrante[];
+      let parecerInicial: string;
+      let statusInicial: ResultadoFinalTipo | null;
+
       if (minhaAvaliacaoSalvaFirestore && firestoreMaisRecenteQueDraft) {
-        setRubricasEdit(
-          mesclarRubricasSoberanasComBase(
-            minhaAvaliacaoSalvaFirestore.rubricas,
-            grupoAtual.rubricas,
-          ),
+        rubInicial = mesclarRubricasSoberanasComBase(
+          minhaAvaliacaoSalvaFirestore.rubricas,
+          grupoAtual.rubricas,
         );
-        setIntegrantesEdit(
-          mesclarIntegrantesSoberanosComBase(
-            minhaAvaliacaoSalvaFirestore.integrantes_notas,
-            grupoAtual.integrantes_notas,
-          ),
+        intInicial = mesclarIntegrantesSoberanosComBase(
+          minhaAvaliacaoSalvaFirestore.integrantes_notas,
+          grupoAtual.integrantes_notas,
         );
-        setParecerEdit(minhaAvaliacaoSalvaFirestore.parecer_tecnico || '');
-        setStatusManualLiberacao(minhaAvaliacaoSalvaFirestore.status_liberacao_manual || null);
+        parecerInicial = minhaAvaliacaoSalvaFirestore.parecer_tecnico || '';
+        statusInicial = minhaAvaliacaoSalvaFirestore.status_liberacao_manual || null;
       } else if (draftValido && draft) {
-        setRubricasEdit(mesclarRubricasSoberanasComBase(draft.rubricas, grupoAtual.rubricas));
-        setIntegrantesEdit(
-          mesclarIntegrantesSoberanosComBase(
-            draft.integrantes_notas,
-            grupoAtual.integrantes_notas,
-          ),
+        rubInicial = mesclarRubricasSoberanasComBase(draft.rubricas, grupoAtual.rubricas);
+        intInicial = mesclarIntegrantesSoberanosComBase(
+          draft.integrantes_notas,
+          grupoAtual.integrantes_notas,
         );
-        setParecerEdit(draft.parecer_tecnico);
-        setStatusManualLiberacao(draft.status_liberacao_manual || null);
+        parecerInicial = draft.parecer_tecnico;
+        statusInicial = draft.status_liberacao_manual || null;
       } else {
         if (draft && usuarioAuth) {
-          limparDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
+          void limparRascunhoFirestore(grupoAtual.id, usuarioAuth.uid);
         }
-        setRubricasEdit(normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r }))));
-        setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
-        setParecerEdit('');
-        setStatusManualLiberacao(null);
+        rubInicial = normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r })));
+        intInicial = grupoAtual.integrantes_notas.map((i) => ({ ...i }));
+        parecerInicial = '';
+        statusInicial = null;
       }
+
+      ultimaAssinaturaDraftRef.current = JSON.stringify({
+        rubricas: rubInicial,
+        integrantes: intInicial,
+        parecer: parecerInicial,
+        status: statusInicial,
+      });
+      setRubricasEdit(rubInicial);
+      setIntegrantesEdit(intInicial);
+      setParecerEdit(parecerInicial);
+      setStatusManualLiberacao(statusInicial);
       setAvaliadorEdit(usuarioAuth?.displayName || grupoAtual.avaliador || env.avaliador_padrao);
       return;
     }
@@ -900,7 +1025,7 @@ export function App() {
       );
     } else {
       if (draft && !draftValido && usuarioAuth) {
-        limparDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
+        void limparRascunhoFirestore(grupoAtual.id, usuarioAuth.uid);
       }
       setRubricasEdit(normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r }))));
       setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
@@ -921,29 +1046,65 @@ export function App() {
     escopoEdicaoConcluida,
     minhaAvaliacaoSalvaFirestore,
     consolidadaSoberanaAtual,
+    rascunhoFirestorePronto,
+    rascunhoFirestoreGrupo,
   ]);
 
-  // Auto-save local em tempo real no localStorage APENAS enquanto a banca ao vivo está aberta (nunca sobrescreve banca concluída)
+  // Auto-save em nuvem (Firestore psof3_rascunhos_professores) com debounce durante a banca ao vivo — zero localStorage
   useEffect(() => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+    }
     if (
-      podeEditarFicha &&
-      statusSessaoBancaAtual !== 'concluida' &&
-      grupoAtual &&
-      usuarioAuth &&
-      rubricasEdit.length > 0
+      !rascunhoFirestorePronto ||
+      !podeEditarFicha ||
+      statusSessaoBancaAtual !== 'em_andamento' ||
+      !grupoAtual ||
+      !usuarioAuth ||
+      rubricasEdit.length === 0
     ) {
-      salvarDraftLocalStorage({
-        grupo_id: grupoAtual.id,
-        professor_uid: usuarioAuth.uid,
+      return;
+    }
+
+    const assinaturaAtual = JSON.stringify({
+      rubricas: rubricasEdit,
+      integrantes: integrantesEdit,
+      parecer: parecerEdit,
+      status: statusManualLiberacao,
+    });
+    if (assinaturaAtual === ultimaAssinaturaDraftRef.current) {
+      return;
+    }
+
+    const grupoSnapshotId = grupoAtual.id;
+    const auditadoEmBaseSnapshot = grupoAtual.auditado_em || null;
+    const userUidSnapshot = usuarioAuth.uid;
+    const userEmailSnapshot = usuarioAuth.email || '';
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      ultimaAssinaturaDraftRef.current = assinaturaAtual;
+      void salvarRascunhoFirestore({
+        grupo_id: grupoSnapshotId,
+        professor_uid: userUidSnapshot,
+        professor_email: userEmailSnapshot,
         rubricas: rubricasEdit,
         integrantes_notas: integrantesEdit,
         parecer_tecnico: parecerEdit,
         status_liberacao_manual: statusManualLiberacao,
-        auditado_em_base: grupoAtual.auditado_em || null,
+        auditado_em_base: auditadoEmBaseSnapshot,
         salvo_em: new Date().toISOString(),
       });
-    }
+    }, 700);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+    };
   }, [
+    rascunhoFirestorePronto,
     podeEditarFicha,
     statusSessaoBancaAtual,
     grupoAtual?.id,
@@ -1143,9 +1304,16 @@ export function App() {
   };
 
   const handleAuditarAgora = async (grupoIds?: string[] | null, turma?: string | null) => {
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode executar auditoria ou reauditoria em ./tcc.`,
+      });
+      return;
+    }
     setAviso(null);
     if (grupoIds && grupoIds.length > 0) {
-      grupoIds.forEach((gid) => limparTodosDraftsGrupoLocalStorage(gid));
+      await Promise.all(grupoIds.map((gid) => limparTodosRascunhosGrupoFirestore(gid)));
     }
     try {
       await api.auditarBancas({
@@ -1172,6 +1340,13 @@ export function App() {
     if (!grupoAtual) return false;
     if (!usuarioAuth) {
       setAuthModalAberto(true);
+      return false;
+    }
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode reabrir uma banca concluída.`,
+      });
       return false;
     }
     setSalvandoFicha(true);
@@ -1237,6 +1412,9 @@ export function App() {
       sincronizar_firebase: false,
     });
     setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
+    if (isProfessorTitular) {
+      void sincronizarAvaliacaoTccFirestore(atualizado);
+    }
     return atualizado;
   };
 
@@ -1310,6 +1488,22 @@ export function App() {
       // Se a banca já estava concluída e foi editada, respeita o escopo ('minha' ou 'consenso' nos 2 avaliadores)
       let atualizado: AvaliacaoGrupo;
       if (sessaoAtual?.status === 'concluida') {
+        if (!isProfessorTitular) {
+          await salvarAvaliacaoNoFirestore(avaliacaoIndividual, grupoAtual);
+          await limparRascunhoFirestore(grupoAtual.id, usuarioAuth.uid);
+          chaveEdicaoAtivaRef.current = '';
+          rubricasEditadasSessaoRef.current.clear();
+          integrantesEditadosSessaoRef.current.clear();
+          statusAlteradoSessaoRef.current = false;
+          setModoEdicaoReaberto(false);
+          setEscopoEdicaoConcluida('minha');
+          setAviso({
+            tipo: 'ok',
+            texto: `Avaliação individual de ${nomeProfessor} salva no Firestore e aguardará homologação automática da média pelo Prof. Titular (${EMAIL_PROFESSOR_TITULAR}).`,
+          });
+          return;
+        }
+
         const avaliacoesFallbackSessao = Object.values(
           sessaoAtual.banca_consolidada?.avaliacoes_individuais || {},
         );
@@ -1318,7 +1512,8 @@ export function App() {
           : sessaoAtual.status_liberacao_final ?? null;
 
         let resRecons: { ok: boolean; mensagem: string; consolidada?: BancaConsolidada };
-        if (escopoEdicaoConcluida === 'consenso') {
+        const escopoEfetivo = isProfessorTitular ? escopoEdicaoConcluida : 'minha';
+        if (escopoEfetivo === 'consenso') {
           const rubricasAlteradas = new Map<string, { nota: number; nivel: NivelMSEP }>();
           rubricasEdit.forEach((r) => {
             if (rubricasEditadasSessaoRef.current.has(r.codigo)) {
@@ -1392,7 +1587,7 @@ export function App() {
           throw new Error(resRecons.mensagem);
         }
 
-        limparDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
+        await limparRascunhoFirestore(grupoAtual.id, usuarioAuth.uid);
         chaveEdicaoAtivaRef.current = '';
         rubricasEditadasSessaoRef.current.clear();
         integrantesEditadosSessaoRef.current.clear();
@@ -1413,12 +1608,16 @@ export function App() {
             integrantes_notas: recalculados,
             parecer_tecnico: parecerEdit,
             status_liberacao_manual: statusManualLiberacao,
-            sincronizar_firebase: true,
+            sincronizar_firebase: isProfessorTitular,
           });
           setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
+          if (isProfessorTitular) {
+            void sincronizarAvaliacaoTccFirestore(atualizado);
+          }
         }
       } else {
         await salvarAvaliacaoNoFirestore(avaliacaoIndividual, grupoAtual);
+        await limparRascunhoFirestore(grupoAtual.id, usuarioAuth.uid);
         setModoEdicaoReaberto(false);
         atualizado = await api.salvarAvaliacao(grupoAtual.id, {
           avaliador: nomeProfessor,
@@ -1426,9 +1625,12 @@ export function App() {
           integrantes_notas: recalculados,
           parecer_tecnico: parecerEdit,
           status_liberacao_manual: statusManualLiberacao,
-          sincronizar_firebase: true,
+          sincronizar_firebase: isProfessorTitular,
         });
         setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
+        if (isProfessorTitular) {
+          void sincronizarAvaliacaoTccFirestore(atualizado);
+        }
       }
       setAviso({
         tipo: 'ok',
@@ -1450,6 +1652,13 @@ export function App() {
     if (!grupoAtual) return;
     if (!usuarioAuth) {
       setAuthModalAberto(true);
+      return;
+    }
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode iniciar oficialmente a sessão da banca.`,
+      });
       return;
     }
     setSalvandoFicha(true);
@@ -1531,14 +1740,14 @@ export function App() {
 
       const res = await encerrarMinhaAvaliacao(grupoAtual.id, avaliacaoIndividual);
 
-      // Salva também no backend FastAPI local
+      // Salva também no backend FastAPI local (sincronização oficial em psof3_avaliacoes_tcc somente pelo Titular)
       await api.salvarAvaliacao(grupoAtual.id, {
         avaliador: nomeProfessor,
         rubricas: rubricasEdit,
         integrantes_notas: recalculados,
         parecer_tecnico: parecerEdit,
         status_liberacao_manual: statusManualLiberacao,
-        sincronizar_firebase: true,
+        sincronizar_firebase: isProfessorTitular,
       });
 
       setAviso({
@@ -1561,6 +1770,13 @@ export function App() {
       setAuthModalAberto(true);
       return;
     }
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode encerrar e consolidar a banca.`,
+      });
+      return;
+    }
     setSalvandoFicha(true);
     setAviso(null);
     try {
@@ -1579,7 +1795,7 @@ export function App() {
         adiamentoAnterior,
       );
       if (res.ok) {
-        limparTodosDraftsGrupoLocalStorage(grupoAtual.id);
+        await limparTodosRascunhosGrupoFirestore(grupoAtual.id);
         chaveEdicaoAtivaRef.current = '';
         await sincronizarConsolidadaNoBackend(
           grupoAtual,
@@ -1631,6 +1847,13 @@ export function App() {
     if (!grupoAtual) return;
     if (!usuarioAuth) {
       setAuthModalAberto(true);
+      return;
+    }
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode atualizar pendências ou alterar o status final.`,
+      });
       return;
     }
     setSalvandoFicha(true);
@@ -1687,6 +1910,13 @@ export function App() {
       setAuthModalAberto(true);
       return;
     }
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode marcar ou remover o adiamento para data futura.`,
+      });
+      return;
+    }
     setSalvandoAdiamento(true);
     setAviso(null);
     try {
@@ -1728,6 +1958,13 @@ export function App() {
     if (!grupoAtual) return;
     if (!usuarioAuth) {
       setAuthModalAberto(true);
+      return;
+    }
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode resetar ou excluir avaliações da banca.`,
+      });
       return;
     }
     setSalvandoFicha(true);
@@ -1839,6 +2076,13 @@ export function App() {
   };
 
   const handleSincronizarTodosFirebase = async () => {
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode sincronizar todos os registros com o Firestore.`,
+      });
+      return;
+    }
     setAviso(null);
     try {
       const res = await api.sincronizarTodosFirebase();
@@ -1860,6 +2104,13 @@ export function App() {
 
   const handleSalvarConfig = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isProfessorTitular) {
+      setAviso({
+        tipo: 'erro',
+        texto: `Apenas o Professor Titular (${EMAIL_PROFESSOR_TITULAR}) pode alterar as configurações do servidor.`,
+      });
+      return;
+    }
     setAviso(null);
     try {
       const atualizado = await api.saveConfig(env);
@@ -2264,6 +2515,16 @@ export function App() {
                   <div className="flex items-center gap-1.5 font-bold text-emerald-300">
                     <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span>{usuarioAuth.displayName || usuarioAuth.email?.split('@')[0]}</span>
+                    {isProfessorTitular ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-950">
+                        <ShieldCheck className="h-3 w-3" />
+                        Prof. Titular
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full border border-emerald-400/60 bg-emerald-900/70 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-200">
+                        Docente Avaliador
+                      </span>
+                    )}
                   </div>
                   <span className="text-[10px] text-emerald-400/80">{usuarioAuth.email}</span>
                 </div>
@@ -2333,6 +2594,7 @@ export function App() {
         ) : !agenteAtivo ? (
           <AgentHub
             agentes={agentesCatalogo}
+            isProfessorTitular={isProfessorTitular}
             onAbrirAgente={(id, aba = 'bancas') => {
               setAgenteAtivo(id);
               setAbaAtiva(aba);
@@ -2398,15 +2660,17 @@ export function App() {
                   <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
                     <p className="text-xs font-medium text-slate-500">Ações Rápidas em Lote</p>
                     <div className="mt-2 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setModalReauditoriaAberto(true)}
-                        disabled={status.estado === 'running'}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
-                      >
-                        <Play className="h-3.5 w-3.5" />
-                        Reauditar ./tcc
-                      </button>
+                      {isProfessorTitular && (
+                        <button
+                          type="button"
+                          onClick={() => setModalReauditoriaAberto(true)}
+                          disabled={status.estado === 'running'}
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+                        >
+                          <Play className="h-3.5 w-3.5" />
+                          Reauditar ./tcc
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => void handleExportarConsolidadoXlsx(turmaFiltro)}
@@ -2888,7 +3152,7 @@ export function App() {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
-                            {!bancaJaRealizadaAtual && (
+                            {isProfessorTitular && !bancaJaRealizadaAtual && (
                               <button
                                 type="button"
                                 onClick={() => setModalAdiamentoAberto(true)}
@@ -3005,31 +3269,33 @@ export function App() {
                                   futuramente, este status será encerrado automaticamente.
                                 </p>
                               </div>
-                              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => setModalAdiamentoAberto(true)}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-[11px] font-bold text-red-800 hover:bg-red-100 cursor-pointer"
-                                >
-                                  <Edit3 className="h-3.5 w-3.5" />
-                                  Editar
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={salvandoAdiamento}
-                                  onClick={() =>
-                                    void handleAtualizarAdiamentoDataFutura({
-                                      ativo: false,
-                                      motivo: '',
-                                      nova_data_prevista: '',
-                                    })
-                                  }
-                                  className="inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-900 hover:bg-amber-100 disabled:opacity-50 cursor-pointer"
-                                >
-                                  <RotateCcw className="h-3.5 w-3.5" />
-                                  Restaurar Aguardando
-                                </button>
-                              </div>
+                              {isProfessorTitular && (
+                                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => setModalAdiamentoAberto(true)}
+                                    className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-[11px] font-bold text-red-800 hover:bg-red-100 cursor-pointer"
+                                  >
+                                    <Edit3 className="h-3.5 w-3.5" />
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={salvandoAdiamento}
+                                    onClick={() =>
+                                      void handleAtualizarAdiamentoDataFutura({
+                                        ativo: false,
+                                        motivo: '',
+                                        nova_data_prevista: '',
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-900 hover:bg-amber-100 disabled:opacity-50 cursor-pointer"
+                                  >
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                    Restaurar Aguardando
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
@@ -5056,16 +5322,18 @@ export function App() {
                       <FileText className="h-4 w-4 text-indigo-600" />
                       Baixar Dossiê (.PDF / .MD)
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleResetarBanca()}
-                      disabled={salvandoFicha}
-                      className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-700 shadow-2xs transition hover:bg-red-100 hover:border-red-400 disabled:opacity-50 cursor-pointer"
-                      title="Excluir as avaliações dos professores, zerar médias e reiniciar a banca deste grupo"
-                    >
-                      <RotateCcw className="h-4 w-4 text-red-600" />
-                      Resetar / Excluir Banca
-                    </button>
+                    {isProfessorTitular && (
+                      <button
+                        type="button"
+                        onClick={() => void handleResetarBanca()}
+                        disabled={salvandoFicha}
+                        className="flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-700 shadow-2xs transition hover:bg-red-100 hover:border-red-400 disabled:opacity-50 cursor-pointer"
+                        title="Excluir as avaliações dos professores, zerar médias e reiniciar a banca deste grupo"
+                      >
+                        <RotateCcw className="h-4 w-4 text-red-600" />
+                        Resetar / Excluir Banca
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -5200,17 +5468,19 @@ export function App() {
                           >
                             Editar somente minha avaliação
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => setEscopoEdicaoConcluida('consenso')}
-                            className={`rounded-md px-3 py-1 text-[11px] font-bold transition cursor-pointer ${
-                              escopoEdicaoConcluida === 'consenso'
-                                ? 'bg-indigo-700 text-white'
-                                : 'text-slate-700 hover:bg-indigo-50'
-                            }`}
-                          >
-                            Aplicar ajuste de consenso nos 2 avaliadores
-                          </button>
+                          {isProfessorTitular && (
+                            <button
+                              type="button"
+                              onClick={() => setEscopoEdicaoConcluida('consenso')}
+                              className={`rounded-md px-3 py-1 text-[11px] font-bold transition cursor-pointer ${
+                                escopoEdicaoConcluida === 'consenso'
+                                  ? 'bg-indigo-700 text-white'
+                                  : 'text-slate-700 hover:bg-indigo-50'
+                              }`}
+                            >
+                              Aplicar ajuste de consenso nos 2 avaliadores
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
@@ -6278,14 +6548,16 @@ export function App() {
                       </button>
                     ))}
 
-                    <button
-                      type="button"
-                      onClick={() => void handleSincronizarTodosFirebase()}
-                      className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-800 transition hover:bg-indigo-100"
-                    >
-                      <CloudUpload className="h-4 w-4" />
-                      Sincronizar Firebase
-                    </button>
+                    {isProfessorTitular && (
+                      <button
+                        type="button"
+                        onClick={() => void handleSincronizarTodosFirebase()}
+                        className="flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-800 transition hover:bg-indigo-100"
+                      >
+                        <CloudUpload className="h-4 w-4" />
+                        Sincronizar Firebase
+                      </button>
+                    )}
 
                     <button
                       type="button"
@@ -6502,6 +6774,15 @@ export function App() {
                   </p>
                 </div>
 
+                {!isProfessorTitular && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-950">
+                    <strong>Modo Leitura (Docente Avaliador):</strong> Somente o Professor Titular (
+                    <code>{EMAIL_PROFESSOR_TITULAR}</code>) pode editar as configurações do servidor <code>.env</code>.
+                  </div>
+                )}
+
+                <fieldset disabled={!isProfessorTitular} className="space-y-6 disabled:opacity-80">
+
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
                     <label className="block text-xs font-bold uppercase text-slate-600">
@@ -6594,15 +6875,19 @@ export function App() {
                   </div>
                 </div>
 
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-red-700"
-                  >
-                    <Save className="h-4 w-4" />
-                    Salvar Configurações
-                  </button>
-                </div>
+                </fieldset>
+
+                {isProfessorTitular && (
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs transition hover:bg-red-700"
+                    >
+                      <Save className="h-4 w-4" />
+                      Salvar Configurações
+                    </button>
+                  </div>
+                )}
               </form>
             )}
 
@@ -6610,7 +6895,10 @@ export function App() {
             {/* ABA 6: GESTÃO DE ARQUIVOS (ÁRVORE ./tcc + VISUALIZADOR DE CONTEÚDO) */}
             {/* =================================================================== */}
             {abaAtiva === 'arquivos' && (
-              <FileExplorerView onArquivoExcluido={carregarTudo} />
+              <FileExplorerView
+                onArquivoExcluido={carregarTudo}
+                podeExcluir={isProfessorTitular}
+              />
             )}
           </>
         )}
@@ -6620,11 +6908,13 @@ export function App() {
       <AuthModal
         aberto={rotaAtual === 'professor' && (authModalAberto || (!usuarioAuth && authPronto))}
         obrigatorio={!usuarioAuth}
+        erroExterno={erroAuthModal}
         onVoltarPortal={() => navegarPara('alunos')}
         onClose={() => {
           if (usuarioAuth) setAuthModalAberto(false);
         }}
         onSucesso={(usuario: User) => {
+          setErroAuthModal(null);
           setUsuarioAuth(usuario);
           setAuthModalAberto(false);
           if (usuario.displayName) {
@@ -6688,7 +6978,7 @@ export function App() {
           }}
           onReabrirBanca={handleReabrirBancaParaEntregue}
           onSincronizarRevisaoFirestore={async (revisao, novoStatus) => {
-            if (!usuarioAuth) return;
+            if (!usuarioAuth || !isProfessorTitular) return;
             const resSync = await sincronizarRevisaoPosBancaFirestore(
               grupoAtual,
               sessaoAtual || null,

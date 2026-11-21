@@ -847,3 +847,25 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
    - Envio, substituição, exclusão e auditoria de arquivos originais permanecem liberados mesmo com o grupo adiado, preservando `adiamento_data_futura`.
    - Ao concluir/encerrar a banca na nova data via Ficha MSEP, `adiamento_data_futura.ativo` é limpo automaticamente, mantendo o histórico datado em `historico_pendencias`.
    - No `Portal dos Alunos`, grupos adiados não entram em `"Já Realizadas (Com Notas)"` e também aparecem no filtro `"Com Pendências / Retidas"`.
+
+
+---
+
+## Sessão 36 — Persistência 100% Firestore (Zero `localStorage`) e Autenticação Institucional `@docente.senai.br` / Professor Titular Exclusivo (21/11/2026)
+
+### Prompt 36
+```text
+/agente-orquestrador /grill-me /goal perfeito, fechamos nossas mudanças, uma ultima verificação. garanta que todos os nossos dados estão sendo gravados e consumidos do firestore. nada deve ficar no localstore. outra coisa, para entrar como professor, garanta que é necessário uma conta @docente.senai.br para logar e que a minha é a do professor titular
+```
+
+### Decisões Consolidadas (/grill-me)
+1. **Autenticação Google Institucional Estrita:**
+   - Permitir acesso à Área do Professor exclusivamente por **Login com Google Institucional `@docente.senai.br`** (`hd: 'docente.senai.br'` e `emailVerified === true`).
+   - Remover login/cadastro por e-mail e senha e remover os atalhos com senha fixa do modal; contas fora de `@docente.senai.br` são desconectadas imediatamente.
+2. **Papel Exclusivo do Professor Titular (`william.komel@docente.senai.br`):**
+   - Exclusivo do Titular: iniciar/encerrar/consolidar/reabrir/resetar banca, aceitar arquivos revisados pós-banca, alterar status final / pendências / data futura, editar consenso nos 2 avaliadores, gerenciar/excluir arquivos, disparar reauditoria e salvar configurações `.env`.
+   - Demais docentes `@docente.senai.br`: podem visualizar auditorias, arquivos e fichas e lançar, salvar, encerrar e editar exclusivamente sua própria avaliação individual e seu rascunho no Firestore.
+3. **100% Cloud Firestore (Zero `localStorage`):**
+   - Eliminar integralmente todas as leituras e gravações em `localStorage` (`psof3_draft_*`).
+   - Migrar rascunhos ao vivo para a coleção `psof3_rascunhos_professores/{grupoId}_{professorUid}` no Firestore.
+   - Encaminhar `Authorization: Bearer <Firebase ID Token>` do frontend ao backend para que `psof3_avaliacoes_tcc` grave/leia autenticado como Professor Titular sem HTTP 403 e seja consumido em tempo real na interface, respaldado por `firestore.rules` atualizado.
