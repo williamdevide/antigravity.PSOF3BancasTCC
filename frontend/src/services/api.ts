@@ -144,23 +144,12 @@ export const api = {
       `/api/bancas/${encodeURIComponent(grupoId)}/arquivos`,
     ),
 
-  uploadArquivosGrupo: async (grupoId: string, arquivos: File[]) => {
-    const formData = new FormData();
-    arquivos.forEach((arq) => {
-      formData.append('arquivos', arq);
-    });
-    const resp = await fetch(
-      `${API_BASE}/api/bancas/${encodeURIComponent(grupoId)}/arquivos`,
-      {
-        method: 'POST',
-        body: formData,
-      },
-    );
-    if (!resp.ok) {
-      const erro = await resp.json().catch(() => ({ detail: resp.statusText }));
-      throw new Error(erro.detail || 'Erro ao enviar arquivos da entrega');
-    }
-    return resp.json() as Promise<{
+  uploadArquivosGrupo: (
+    grupoId: string,
+    arquivos: File[],
+    onProgress?: (percentual: number) => void,
+  ) =>
+    new Promise<{
       ok: boolean;
       mensagem: string;
       pasta_nome: string;
@@ -168,8 +157,39 @@ export const api = {
       substituidos: string[];
       arquivos: ListaArquivosEntregaResponse['arquivos'];
       banca: AvaliacaoGrupo;
-    }>;
-  },
+    }>((resolve, reject) => {
+      const formData = new FormData();
+      arquivos.forEach((arq) => {
+        formData.append('arquivos', arq);
+      });
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/api/bancas/${encodeURIComponent(grupoId)}/arquivos`);
+
+      xhr.upload.onprogress = (ev) => {
+        if (onProgress && ev.lengthComputable && ev.total > 0) {
+          onProgress(Math.min(100, Math.round((ev.loaded / ev.total) * 100)));
+        }
+      };
+
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText || '{}');
+          if (xhr.status >= 200 && xhr.status < 300) {
+            if (onProgress) onProgress(100);
+            resolve(data);
+          } else {
+            reject(new Error(data?.detail || xhr.statusText || 'Erro ao enviar arquivos da entrega'));
+          }
+        } catch {
+          reject(new Error(xhr.statusText || 'Resposta inválida ao enviar arquivos da entrega'));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Falha de rede durante o upload dos arquivos.'));
+      xhr.onabort = () => reject(new Error('Upload dos arquivos cancelado.'));
+      xhr.send(formData);
+    }),
 
   excluirArquivoGrupo: (grupoId: string, nomeArquivo: string) =>
     request<{

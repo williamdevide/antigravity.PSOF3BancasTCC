@@ -2458,6 +2458,7 @@ def auditar_grupo_individual(
     avaliacao_anterior: dict[str, Any] | None = None,
     ordem_apresentacao: int = 1,
     log_cb: Callable[[str], None] | None = None,
+    step_cb: Callable[[int, int, str], None] | None = None,
 ) -> AvaliacaoGrupoModel:
     """Executa a auditoria completa de um grupo do cronograma."""
     cfg = ler_env()
@@ -2578,6 +2579,8 @@ def auditar_grupo_individual(
         log_cb(f"🔎 Iniciando auditoria profunda: [{avaliacao.turma}] {avaliacao.grupo} — {avaliacao.projeto}")
 
     # 1. Nomenclatura e localização dos arquivos
+    if step_cb:
+        step_cb(1, 8, f"[{avaliacao.turma} • {avaliacao.grupo}] Verificando arquivos entregues e nomenclatura CTDS-2026-02...")
     itens_arq, pct_nom, mapa_arq = _analisar_nomenclatura_arquivos(
         pasta_grupo, avaliacao.projeto, avaliacao.integrantes
     )
@@ -2589,6 +2592,8 @@ def auditar_grupo_individual(
     det = AuditoriaTecnicaDetalhada()
 
     # 2. Monografia (DOCX / PDF)
+    if step_cb:
+        step_cb(2, 8, f"[{avaliacao.turma} • {avaliacao.grupo}] Analisando monografia TCC (.docx/.pdf) e conformidade ABNT...")
     texto_monografia = _analisar_monografia(mapa_arq.get("TCC_DOCX"), mapa_arq.get("TCC_PDF"), det)
     if log_cb:
         log_cb(
@@ -2608,6 +2613,8 @@ def auditar_grupo_individual(
         det.deploy_provedor = "InfinityFree / ByetHost Cloud (PHP)"
 
     # 4. Banco de Dados (.sql)
+    if step_cb:
+        step_cb(3, 8, f"[{avaliacao.turma} • {avaliacao.grupo}] Inspecionando script SQL e correspondência com o DER...")
     ddl_detalhes_sql: dict[str, dict[str, Any]] = {}
     if "BD_SQL" in mapa_arq:
         ddl_detalhes_sql = _analisar_script_sql(mapa_arq["BD_SQL"], det) or {}
@@ -2618,6 +2625,8 @@ def auditar_grupo_individual(
             )
 
     # 5. Código-Fonte (.zip) e Auditoria de Persistência LocalStorage vs Banco em Nuvem / VM Oracle
+    if step_cb:
+        step_cb(4, 8, f"[{avaliacao.turma} • {avaliacao.grupo}] Auditando código-fonte (.zip), rotas CRUD e persistência...")
     snippets: list[tuple[str, str]] = []
     if "SISTEMA_ZIP" in mapa_arq:
         snippets = _analisar_arquivo_zip(mapa_arq["SISTEMA_ZIP"], det)
@@ -2631,6 +2640,8 @@ def auditar_grupo_individual(
         analisar_correspondencia_der_e_crud_zip(None, texto_monografia, det, ddl_detalhes_sql)
 
     # 6. Slides (.pptx / .pdf)
+    if step_cb:
+        step_cb(5, 8, f"[{avaliacao.turma} • {avaliacao.grupo}] Avaliando apresentação de slides (.pptx/.pdf)...")
     _analisar_slides(mapa_arq.get("SLIDES_PPTX"), mapa_arq.get("SLIDES_PDF"), det)
     if log_cb:
         log_cb(
@@ -2639,6 +2650,8 @@ def auditar_grupo_individual(
         )
 
     # 7. Links Online (GitHub, Deploy & VM Oracle) + Comparação Versão Deploy <-> GitHub
+    if step_cb:
+        step_cb(6, 8, f"[{avaliacao.turma} • {avaliacao.grupo}] Validando repositório GitHub e deploy online...")
     _auditar_online_github_e_deploy(
         gh_url,
         deploy_url,
@@ -2652,6 +2665,8 @@ def auditar_grupo_individual(
     avaliacao.auditoria_tecnica = det
 
     # 7. Calcular rubricas sugeridas (incluindo médias reais do Pilar 4 e itens 3.1/3.2 Pendentes)
+    if step_cb:
+        step_cb(7, 8, f"[{avaliacao.turma} • {avaliacao.grupo}] Calculando rubricas MSEP (Pilares 1 a 4) e arguição...")
     avaliacao.rubricas = _calcular_rubricas_deterministicas(det, pct_nom, media_4_1=media_4_1, media_4_2=media_4_2)
 
     # 8. Inicializar notas individuais dos integrantes (com dados exatos dos PDFs do Pilar 4 e 3.1 Pendente)
@@ -2709,6 +2724,8 @@ def auditar_grupo_individual(
     recalcular_totais_avaliacao(avaliacao)
 
     # 10. Parecer Técnico Estruturado, Pontos Fortes e Pontos de Atenção
+    if step_cb:
+        step_cb(8, 8, f"[{avaliacao.turma} • {avaliacao.grupo}] Sintetizando parecer técnico detalhado...")
     parecer, fortes, atencao, blocos_parecer = _sintetizar_parecer_deterministico(avaliacao)
     avaliacao.parecer_tecnico = parecer
     avaliacao.parecer_estruturado = blocos_parecer
@@ -2786,6 +2803,8 @@ def sincronizar_e_obter_todas_bancas(
 
     total_alvos = len(alvos_auditoria)
     concluidos = 0
+    ETAPAS_POR_GRUPO = 8
+    total_passos = max(1, total_alvos * ETAPAS_POR_GRUPO)
 
     resultados: list[AvaliacaoGrupoModel] = []
     alterou_salvas = False
@@ -2804,8 +2823,14 @@ def sincronizar_e_obter_todas_bancas(
             banca_ja_realizada = True
 
         deve_auditar_agora = any(m["id"] == gid for m in alvos_auditoria)
-        # Se a pasta existe mas ainda não tem os novos campos de auditoria (parecer_estruturado / data_banca_iso), re-audita automaticamente apenas se NÃO foi realizada
-        if pasta_grupo and not banca_ja_realizada and (not ja_salva or not ja_salva.get("parecer_estruturado")):
+        # Se a pasta existe mas ainda não tem os novos campos de auditoria (parecer_estruturado / data_banca_iso), re-audita automaticamente apenas se NÃO foi realizada e NÃO estiver aguardando auditoria explícita pós-upload
+        status_salvo = ja_salva.get("status_avaliacao") if ja_salva else None
+        if (
+            pasta_grupo
+            and not banca_ja_realizada
+            and status_salvo != "entregue_nao_auditado"
+            and (not ja_salva or not ja_salva.get("parecer_estruturado"))
+        ):
             deve_auditar_agora = True
 
         if banca_ja_realizada:
@@ -2814,16 +2839,26 @@ def sincronizar_e_obter_todas_bancas(
         if deve_auditar_agora and pasta_grupo:
             if progress_cb and total_alvos > 0:
                 progress_cb(
-                    concluidos,
-                    total_alvos,
-                    f"Auditando {meta['turma']} • {meta['grupo']} ({meta['projeto']})...",
+                    concluidos * ETAPAS_POR_GRUPO,
+                    total_passos,
+                    f"Iniciando {meta['turma']} • {meta['grupo']} ({meta['projeto']})...",
                 )
+
+            def _reportar_etapa(passo: int, _total_etapas: int, msg: str) -> None:
+                if progress_cb and total_alvos > 0:
+                    progress_cb(
+                        concluidos * ETAPAS_POR_GRUPO + min(passo, ETAPAS_POR_GRUPO),
+                        total_passos,
+                        msg,
+                    )
+
             av = auditar_grupo_individual(
                 meta,
                 pasta_grupo,
                 avaliacao_anterior=ja_salva,
                 ordem_apresentacao=ordem_ap,
                 log_cb=log_cb,
+                step_cb=_reportar_etapa,
             )
             if sincronizar_firebase and cfg.firebase_sincronizacao_ativa:
                 ok_fb, msg_fb = sincronizar_avaliacao_firestore(av)
@@ -2834,9 +2869,9 @@ def sincronizar_e_obter_todas_bancas(
             concluidos += 1
             if progress_cb and total_alvos > 0:
                 progress_cb(
-                    concluidos,
-                    total_alvos,
-                    f"Auditado {meta['turma']} • {meta['grupo']} ({meta['projeto']})",
+                    concluidos * ETAPAS_POR_GRUPO,
+                    total_passos,
+                    f"Concluído: {meta['turma']} • {meta['grupo']} ({meta['projeto']})",
                 )
             resultados.append(av)
         elif ja_salva:

@@ -751,6 +751,22 @@ na barra de navegação ao lado do botão configurações crie um botão para o 
 4. **Paridade Visual dos Cards em *Auditoria & Bancas*:**
    - Mesmas bordas coloridas da Landing Page dos alunos (amarelo = aguardando, verde = nota liberada, laranja = nota retida, vermelho = nova apresentação ou ao vivo).
 
+---
+
+## Sessão 31 — 21/11/2026 (13:49)
+
+### Prompt 31 (21/11/2026 - 13:49)
+```text
+/agente-orquestrador /grill-me /goal ao receber os arquivos de uma banca demorou algum tempo até processa-los, quero que exiba uma barra de carregamento enquanto estiver analisando os arquivos. alem disso, apesar de ter analisado tudo só apareceu as notas do pilar 4, as notas dos pilares 1, 2 e da apresentação do 3 não apareceram, mas foram calculadas, pois ele deu uma nota final. também não atribuiu o nivel msep a cada parcial.
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 31
+1. **Experiência da Barra de Carregamento Durante Upload & Análise:**
+   - Barra de progresso em 2 fases (**Fase 1: Upload %** via `XMLHttpRequest` + **Fase 2: Análise Técnica etapa por etapa 1..8**) dentro do modal de entrega e espelhada em um banner fixo no topo da aba *Auditoria & Bancas* (permitindo fechar o modal e continuar acompanhando até as notas recarregarem automaticamente).
+2. **Atribuição e Exibição do Nível MSEP nas Parciais:**
+   - Sincronização automática do nível MSEP e nota em todos os subitens (`1.1–1.8`, `2.1–2.5`, `3.3`) dentro da *Ficha MSEP & Arguição* após a auditoria (eliminando estado obsoleto em `rubricasEdit` / rascunhos pré-auditoria e closure obsoleto em `bancaConsolidada`), além de exibir badges de **Nível MSEP** (`Insuficiente` / `Pleno` / `Avançado`) nos cards dos 4 Pilares em *Auditoria & Bancas* e nos cabeçalhos/tabela de consolidação da *Ficha MSEP & Arguição*.
+
+
 
 
 

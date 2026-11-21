@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import type {
+  AgentStatus,
   ArquivoEntregaSalvo,
   AvaliacaoGrupo,
   RegistroHistoricoPendencia,
@@ -54,6 +55,7 @@ interface ModalEntregaArquivosProps {
   abaInicial?: 'originais' | 'revisados';
   bancaConcluida: boolean;
   auditoriaEmAndamento: boolean;
+  statusAuditoria?: AgentStatus;
   isProfessorTitular?: boolean;
   professorNome?: string;
   revisaoInicial?: RevisaoPosBanca | null;
@@ -108,6 +110,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
   abaInicial = 'originais',
   bancaConcluida,
   auditoriaEmAndamento,
+  statusAuditoria,
   isProfessorTitular = true,
   professorNome = 'Prof. Titular',
   revisaoInicial = null,
@@ -162,6 +165,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
 
   const [carregandoLista, setCarregandoLista] = useState<boolean>(false);
   const [processandoAcao, setProcessandoAcao] = useState<string | null>(null);
+  const [uploadPercentual, setUploadPercentual] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
 
   const recarregarListas = async () => {
@@ -198,6 +202,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
       setFilaRevisados([]);
       setConfirmarReabertura(false);
       setConfirmarLimparTodos(false);
+      setUploadPercentual(null);
       setFeedback(null);
       setCarregandoLista(true);
       try {
@@ -299,21 +304,26 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
   const handleEnviarArquivosOriginais = async (auditarDepois: boolean) => {
     if (bancaConcluida || filaUpload.length === 0) return;
     setProcessandoAcao(auditarDepois ? 'enviar-auditar' : 'enviar-salvar');
+    setUploadPercentual(0);
     setFeedback(null);
     try {
-      const res = await api.uploadArquivosGrupo(grupo.id, filaUpload);
+      const res = await api.uploadArquivosGrupo(grupo.id, filaUpload, (pct) => {
+        setUploadPercentual(pct);
+      });
+      setUploadPercentual(100);
       setArquivosSalvos(res.arquivos || []);
       setPastaNome(res.pasta_nome || '');
       setFilaUpload([]);
-      await onAtualizarBancas();
 
       if (auditarDepois) {
         await onDispararAuditoriaGrupo(grupo.id);
+        await onAtualizarBancas();
         setFeedback({
           tipo: 'ok',
-          texto: `${res.enviados.length} arquivo(s) salvo(s) em "${res.pasta_nome}". Auditoria técnica do grupo iniciada!`,
+          texto: `${res.enviados.length} arquivo(s) salvo(s) em "${res.pasta_nome}". Análise técnica em execução!`,
         });
       } else {
+        await onAtualizarBancas();
         const infoSub =
           res.substituidos.length > 0
             ? ` (${res.substituidos.length} substituído(s))`
@@ -330,6 +340,7 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
       });
     } finally {
       setProcessandoAcao(null);
+      setUploadPercentual(null);
     }
   };
 
@@ -657,22 +668,116 @@ export const ModalEntregaArquivos: React.FC<ModalEntregaArquivosProps> = ({
             </div>
           )}
 
-          {/* Indicador de Auditoria em Andamento */}
-          {auditoriaEmAndamento && (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-950">
-              <div className="flex items-center gap-2 font-semibold">
-                <RefreshCw className="h-4 w-4 animate-spin text-amber-700" />
-                <span>Auditoria técnica do agente em execução no servidor...</span>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg border border-amber-400 bg-white px-2.5 py-1 text-[11px] font-bold text-amber-900 hover:bg-amber-100 cursor-pointer"
-              >
-                Acompanhar no Painel
-              </button>
-            </div>
-          )}
+          {/* Painel de Barra de Carregamento em 2 Fases (Upload % + Análise MSEP) */}
+          {(processandoAcao === 'enviar-auditar' ||
+            processandoAcao === 'enviar-salvar' ||
+            processandoAcao === 'auditar' ||
+            auditoriaEmAndamento) &&
+            (() => {
+              const emUpload =
+                uploadPercentual !== null &&
+                (processandoAcao === 'enviar-auditar' || processandoAcao === 'enviar-salvar') &&
+                uploadPercentual < 100;
+              const analisePct =
+                statusAuditoria && statusAuditoria.progresso_total > 0
+                  ? Math.min(
+                      100,
+                      Math.round(
+                        (statusAuditoria.progresso_atual / statusAuditoria.progresso_total) * 100,
+                      ),
+                    )
+                  : 10;
+              const ultimoLog =
+                statusAuditoria && statusAuditoria.logs.length > 0
+                  ? statusAuditoria.logs[statusAuditoria.logs.length - 1]
+                  : null;
+              const barraPct = emUpload
+                ? Math.max(5, uploadPercentual ?? 0)
+                : Math.max(10, analisePct);
+
+              return (
+                <div className="rounded-2xl border-2 border-indigo-300 bg-linear-to-r from-indigo-50 via-white to-amber-50 p-4 shadow-sm space-y-3 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <RefreshCw className="h-5 w-5 animate-spin text-indigo-600 shrink-0" />
+                      <div>
+                        <p className="font-extrabold text-slate-900">
+                          {emUpload
+                            ? `Fase 1/2 — Enviando arquivos para ./tcc/${grupo.turma}/ (${uploadPercentual ?? 0}%)`
+                            : 'Fase 2/2 — Analisando arquivos e calculando rubricas MSEP...'}
+                        </p>
+                        <p className="text-[11px] font-semibold text-indigo-800">
+                          {emUpload
+                            ? 'Transferindo monografia, scripts SQL, código ZIP e slides para o servidor...'
+                            : statusAuditoria?.progresso_etapa ||
+                              'Extraindo evidências de ABNT, DER, SQL, código-fonte e links online...'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-indigo-600 px-3 py-0.5 font-mono text-xs font-black text-white">
+                        {barraPct}%
+                      </span>
+                      {!emUpload && (
+                        <button
+                          type="button"
+                          onClick={onClose}
+                          className="rounded-lg border border-indigo-300 bg-white px-2.5 py-1 text-[11px] font-bold text-indigo-900 hover:bg-indigo-100 cursor-pointer"
+                        >
+                          Acompanhar no Painel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Badges das 2 fases */}
+                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-bold ${
+                        emUpload
+                          ? 'bg-indigo-600 text-white'
+                          : 'border border-emerald-300 bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {emUpload ? `1. Upload (${uploadPercentual ?? 0}%)` : '1. Upload concluído (100%)'}
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-bold ${
+                        emUpload ? 'bg-slate-200 text-slate-600' : 'bg-amber-500 text-white'
+                      }`}
+                    >
+                      {statusAuditoria && statusAuditoria.progresso_total > 0 && !emUpload
+                        ? `2. Análise MSEP (Etapa ${statusAuditoria.progresso_atual}/${statusAuditoria.progresso_total})`
+                        : '2. Análise MSEP'}
+                    </span>
+                  </div>
+
+                  {/* Barra de progresso visual */}
+                  <div className="h-3 w-full overflow-hidden rounded-full border border-indigo-200 bg-indigo-100">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        emUpload
+                          ? 'bg-linear-to-r from-indigo-600 to-blue-500'
+                          : 'bg-linear-to-r from-red-600 via-amber-500 to-emerald-500'
+                      }`}
+                      style={{ width: `${barraPct}%` }}
+                    />
+                  </div>
+
+                  {ultimoLog && !emUpload && (
+                    <p className="truncate font-mono text-[11px] text-slate-600">{ultimoLog}</p>
+                  )}
+
+                  <p className="text-[11px] text-slate-500">
+                    Você pode manter esta janela aberta ou clicar em{' '}
+                    <strong>Acompanhar no Painel</strong> para fechar o modal — a barra continua
+                    visível no topo de <em>Auditoria &amp; Bancas</em> até as notas serem
+                    atualizadas.
+                  </p>
+                </div>
+              );
+            })()}
 
           {abaAtiva === 'originais' ? (
             <>

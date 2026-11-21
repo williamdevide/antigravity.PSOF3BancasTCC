@@ -429,6 +429,7 @@ export interface DraftAvaliacaoLocal {
   integrantes_notas: NotaIndividualIntegrante[];
   parecer_tecnico: string;
   status_liberacao_manual?: ResultadoFinalTipo | null;
+  auditado_em_base?: string | null;
   salvo_em: string;
 }
 

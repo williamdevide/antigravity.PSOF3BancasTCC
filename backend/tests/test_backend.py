@@ -656,6 +656,67 @@ def test_explorador_arquivos_tcc_e_historico_pendencias():
         salvar_avaliacoes_salvas(salvas_rest)
 
 
+def test_upload_nao_bloqueia_get_bancas_e_auditoria_reporta_progresso_granular():
+    """Garante que GET /api/bancas não bloqueia em entrega recém-enviada e que a auditoria emite 8 etapas + níveis MSEP."""
+    import shutil
+    from backend.app.config_manager import ler_avaliacoes_salvas, salvar_avaliacoes_salvas
+    from backend.app.regras_msep import CRONOGRAMA_OFICIAL_BANCAS
+    from backend.app.tcc_auditor import auditar_grupo_individual, calcular_nivel_msep, resolver_ou_criar_pasta_grupo
+
+    gid = "I2DEV-A_Grupo01"
+    meta = next(m for m in CRONOGRAMA_OFICIAL_BANCAS if m["id"] == gid)
+    salvas_orig = ler_avaliacoes_salvas()
+    registro_orig = dict(salvas_orig[gid]) if gid in salvas_orig else None
+    pasta_criada = None
+
+    try:
+        r_up = client.post(
+            f"/api/bancas/{gid}/arquivos",
+            files=[
+                ("arquivos", ("links.txt", b"GitHub: https://github.com/exemplo/repo\n", "text/plain")),
+                ("arquivos", ("CTDS-2026-02-BD-Teste.sql", b"CREATE TABLE usuarios (id INT PRIMARY KEY);", "text/plain")),
+            ],
+        )
+        assert r_up.status_code == 200
+        pasta_criada, _, _ = resolver_ou_criar_pasta_grupo(gid, criar_se_ausente=False)
+        assert pasta_criada is not None
+
+        # GET /api/bancas deve preservar 'entregue_nao_auditado' sem disparar auditoria síncrona bloqueante
+        r_list = client.get("/api/bancas")
+        assert r_list.status_code == 200
+        b_item = next(b for b in r_list.json()["bancas"] if b["id"] == gid)
+        assert b_item["status_avaliacao"] == "entregue_nao_auditado"
+        assert b_item["entregue_na_pasta"] is True
+
+        # Auditoria reporta exatamente 8 sub-etapas granulares e preenche níveis MSEP em todas as parciais
+        etapas_registradas: list[tuple[int, int, str]] = []
+        av = auditar_grupo_individual(
+            meta,
+            pasta_criada,
+            ordem_apresentacao=1,
+            step_cb=lambda passo, total, msg: etapas_registradas.append((passo, total, msg)),
+        )
+        assert len(etapas_registradas) == 8
+        assert [e[0] for e in etapas_registradas] == [1, 2, 3, 4, 5, 6, 7, 8]
+        assert all(e[1] == 8 and bool(e[2]) for e in etapas_registradas)
+        assert av.p1_total > 0 or av.p2_total > 0
+        for rub in av.rubricas:
+            if rub.codigo in ("3.1", "3.2"):
+                continue
+            assert rub.nivel in ("Avançado", "Pleno", "Insuficiente")
+            assert rub.nivel == calcular_nivel_msep(rub.nota, rub.peso_max)
+            assert rub.nivel_sugerido_ia == rub.nivel
+    finally:
+        if pasta_criada and pasta_criada.exists():
+            shutil.rmtree(pasta_criada, ignore_errors=True)
+        salvas_rest = ler_avaliacoes_salvas()
+        if registro_orig is not None:
+            salvas_rest[gid] = registro_orig
+        else:
+            salvas_rest.pop(gid, None)
+        salvar_avaliacoes_salvas(salvas_rest)
+
+
 
 
 

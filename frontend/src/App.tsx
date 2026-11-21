@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -74,6 +74,8 @@ import {
   salvarAnaliseAutomaticaFirestore,
   salvarDraftLocalStorage,
   carregarDraftLocalStorage,
+  limparDraftLocalStorage,
+  limparTodosDraftsGrupoLocalStorage,
 } from './services/bancaMultiAvaliador';
 import type {
   AgentStatus,
@@ -114,6 +116,48 @@ function calcularNivel(nota: number, pesoMax: number): NivelMSEP {
   if (pct < 50) return 'Insuficiente';
   if (pct < 90) return 'Pleno';
   return 'Avançado';
+}
+
+function normalizarRubricasComNivel(rubricas: RubricaItemAvaliacao[]): RubricaItemAvaliacao[] {
+  return rubricas.map((r) => {
+    const nivel =
+      r.nivel === 'Pendente'
+        ? 'Pendente'
+        : r.nivel === 'Avançado' || r.nivel === 'Pleno' || r.nivel === 'Insuficiente'
+        ? r.nivel
+        : calcularNivel(Number(r.nota || 0), r.peso_max);
+    const nivelSugerido =
+      r.nivel_sugerido_ia === 'Pendente'
+        ? 'Pendente'
+        : r.nivel_sugerido_ia === 'Avançado' ||
+          r.nivel_sugerido_ia === 'Pleno' ||
+          r.nivel_sugerido_ia === 'Insuficiente'
+        ? r.nivel_sugerido_ia
+        : calcularNivel(Number(r.nota_sugerida_ia ?? r.nota ?? 0), r.peso_max);
+    return {
+      ...r,
+      nivel,
+      nivel_sugerido_ia: nivelSugerido,
+    };
+  });
+}
+
+function badgeNivelMsep(nivel: NivelMSEP, prefixo?: string) {
+  const estilo =
+    nivel === 'Avançado'
+      ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
+      : nivel === 'Pleno'
+      ? 'border-blue-300 bg-blue-100 text-blue-800'
+      : nivel === 'Insuficiente'
+      ? 'border-red-300 bg-red-100 text-red-800'
+      : 'border-amber-300 bg-amber-100 text-amber-900';
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${estilo}`}
+    >
+      {prefixo ? `${prefixo}: ` : ''}MSEP: {nivel}
+    </span>
+  );
 }
 
 function parseDataIso(dataBr: string): string {
@@ -183,10 +227,14 @@ export function App() {
   const [modalArquivosAberto, setModalArquivosAberto] = useState<boolean>(false);
   const [abaModalArquivos, setAbaModalArquivos] = useState<'originais' | 'revisados'>('originais');
   const [authPronto, setAuthPronto] = useState<boolean>(false);
-  const [bancaConsolidada, setBancaConsolidada] = useState<BancaConsolidada | null>(null);
+  const [avaliacoesFirestoreGrupo, setAvaliacoesFirestoreGrupo] = useState<
+    AvaliacaoProfessorIndividual[]
+  >([]);
   const [sessaoAoVivo, setSessaoAoVivo] = useState<SessaoBancaAoVivo | null>(null);
   const [sessoesAtivas, setSessoesAtivas] = useState<SessaoBancaAoVivo[]>([]);
   const [mapaSessoesBanca, setMapaSessoesBanca] = useState<Record<string, SessaoBancaAoVivo>>({});
+  const ultimoGrupoSyncIdRef = useRef<string | null>(null);
+  const prevStatusEstadoRef = useRef<AgentStatus['estado']>('idle');
 
   // Estados editáveis da Ficha MSEP do grupo selecionado
   const [rubricasEdit, setRubricasEdit] = useState<RubricaItemAvaliacao[]>([]);
@@ -238,6 +286,7 @@ export function App() {
       setAgentesCatalogo(agRes.agentes || []);
       setBancas(bancasRes.bancas || []);
       setEnv(cfgRes);
+      prevStatusEstadoRef.current = stRes.estado;
       setStatus(stRes);
       setRegrasOficiais(regRes);
 
@@ -308,33 +357,39 @@ export function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Polling de status quando a auditoria estiver rodando
+  // Polling de status com cadência rápida (700ms) quando a auditoria estiver rodando
   useEffect(() => {
+    const intervaloMs = status.estado === 'running' ? 700 : 2000;
     const timer = setInterval(async () => {
       try {
         const st = await api.getStatus();
-        setStatus((prev) => {
-          if (prev.estado === 'running' && st.estado !== 'running') {
-            void carregarTudo();
-            if (st.estado === 'success') {
-              setAviso({
-                tipo: 'ok',
-                texto: st.progresso_etapa || 'Auditoria das bancas concluída com sucesso!',
-              });
-            } else if (st.estado === 'error' && st.erro) {
-              setAviso({ tipo: 'erro', texto: st.erro });
-            }
+        const estadoAnterior = prevStatusEstadoRef.current;
+        prevStatusEstadoRef.current = st.estado;
+        setStatus(st);
+        if (estadoAnterior === 'running' && st.estado !== 'running') {
+          await carregarTudo();
+          if (st.estado === 'success') {
+            setAviso({
+              tipo: 'ok',
+              texto: st.progresso_etapa || 'Auditoria das bancas concluída com sucesso!',
+            });
+          } else if (st.estado === 'error' && st.erro) {
+            setAviso({ tipo: 'erro', texto: st.erro });
           }
-          return st;
-        });
+        }
       } catch {
         // Ignorar falha momentânea de rede
       }
-    }, 1800);
+    }, intervaloMs);
     return () => clearInterval(timer);
-  }, []);
+  }, [status.estado]);
 
   const grupoAtual = bancas.find((b) => b.id === grupoSelecionadoId) || bancas[0] || null;
+
+  const bancaConsolidada: BancaConsolidada | null = useMemo(() => {
+    if (rotaAtual !== 'professor' || !grupoAtual) return null;
+    return calcularMediaBanca(avaliacoesFirestoreGrupo, grupoAtual);
+  }, [rotaAtual, grupoAtual, avaliacoesFirestoreGrupo]);
 
   // Dados consolidados e sessão ao vivo pós-banca para o grupo selecionado
   const sessaoAtual = (grupoAtual ? mapaSessoesBanca[grupoAtual.id] : null) || sessaoAoVivo;
@@ -387,31 +442,74 @@ export function App() {
     }
   }, [rotaAtual, usuarioAuth?.uid, grupoAtual?.id, grupoAtual?.media_nota_final_grupo]);
 
-  // Sincronizar estados editáveis com draft de localStorage ou dados originais
+  // Sincronizar estados editáveis com draft de localStorage ou dados recalculados do grupo
   useEffect(() => {
-    setModoEdicaoReaberto(false);
+    if (grupoAtual?.id !== ultimoGrupoSyncIdRef.current) {
+      ultimoGrupoSyncIdRef.current = grupoAtual?.id || null;
+      setModoEdicaoReaberto(false);
+    }
     if (grupoAtual && usuarioAuth) {
       const draft = carregarDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
-      if (draft && draft.rubricas.length > 0) {
-        setRubricasEdit(draft.rubricas);
+      const draftP1 = draft
+        ? draft.rubricas.filter((r) => r.pilar === 1).reduce((a, r) => a + Number(r.nota || 0), 0)
+        : 0;
+      const draftP2 = draft
+        ? draft.rubricas.filter((r) => r.pilar === 2).reduce((a, r) => a + Number(r.nota || 0), 0)
+        : 0;
+      const grupoAuditadoComNotas =
+        grupoAtual.p1_total > 0 || grupoAtual.p2_total > 0 || grupoAtual.p3_grupo_base > 0;
+      const draftPreAuditoriaZerado = grupoAuditadoComNotas && draftP1 === 0 && draftP2 === 0;
+      const draftDesatualizadoPorAuditoria = Boolean(
+        draft &&
+          grupoAtual.auditado_em &&
+          draft.auditado_em_base &&
+          draft.auditado_em_base !== grupoAtual.auditado_em,
+      );
+      const draftMaisAntigoQueAuditoria = Boolean(
+        draft &&
+          grupoAtual.auditado_em &&
+          !draft.auditado_em_base &&
+          draft.salvo_em &&
+          new Date(draft.salvo_em).getTime() < new Date(grupoAtual.auditado_em).getTime(),
+      );
+
+      if (
+        draft &&
+        draft.rubricas.length > 0 &&
+        !draftPreAuditoriaZerado &&
+        !draftDesatualizadoPorAuditoria &&
+        !draftMaisAntigoQueAuditoria
+      ) {
+        setRubricasEdit(normalizarRubricasComNivel(draft.rubricas));
         setIntegrantesEdit(draft.integrantes_notas);
         setParecerEdit(draft.parecer_tecnico);
         setStatusManualLiberacao(draft.status_liberacao_manual || null);
       } else {
-        setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
+        if (draft) {
+          limparDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
+        }
+        setRubricasEdit(normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r }))));
         setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
         setParecerEdit('');
         setStatusManualLiberacao(null);
       }
       setAvaliadorEdit(usuarioAuth.displayName || grupoAtual.avaliador || env.avaliador_padrao);
     } else if (grupoAtual) {
-      setRubricasEdit(grupoAtual.rubricas.map((r) => ({ ...r })));
+      setRubricasEdit(normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r }))));
       setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
       setParecerEdit('');
       setStatusManualLiberacao(null);
       setAvaliadorEdit(grupoAtual.avaliador || env.avaliador_padrao);
     }
-  }, [grupoAtual?.id, usuarioAuth?.uid]);
+  }, [
+    grupoAtual?.id,
+    grupoAtual?.auditado_em,
+    grupoAtual?.status_avaliacao,
+    grupoAtual?.p1_total,
+    grupoAtual?.p2_total,
+    grupoAtual?.p3_grupo_base,
+    usuarioAuth?.uid,
+  ]);
 
   // Auto-save local em tempo real no localStorage APENAS quando a edição for ativamente permitida
   useEffect(() => {
@@ -423,20 +521,20 @@ export function App() {
         integrantes_notas: integrantesEdit,
         parecer_tecnico: parecerEdit,
         status_liberacao_manual: statusManualLiberacao,
+        auditado_em_base: grupoAtual.auditado_em || null,
         salvo_em: new Date().toISOString(),
       });
     }
-  }, [podeEditarFicha, grupoAtual?.id, usuarioAuth?.uid, rubricasEdit, integrantesEdit, parecerEdit, statusManualLiberacao]);
+  }, [podeEditarFicha, grupoAtual?.id, grupoAtual?.auditado_em, usuarioAuth?.uid, rubricasEdit, integrantesEdit, parecerEdit, statusManualLiberacao]);
 
-  // Escutar avaliações dos 2 professores no Firestore em tempo real
+  // Escutar avaliações dos 2 professores no Firestore em tempo real (sem closure obsoleta de grupoAtual)
   useEffect(() => {
     if (rotaAtual !== 'professor' || !grupoAtual?.id) {
-      setBancaConsolidada(null);
+      setAvaliacoesFirestoreGrupo([]);
       return;
     }
     const unsub = escutarAvaliacoesGrupoFirestore(grupoAtual.id, (avaliacoes) => {
-      const consolidada = calcularMediaBanca(avaliacoes, grupoAtual);
-      setBancaConsolidada(consolidada);
+      setAvaliacoesFirestoreGrupo(avaliacoes);
     });
     return () => unsub();
   }, [rotaAtual, grupoAtual?.id]);
@@ -592,6 +690,9 @@ export function App() {
 
   const handleAuditarAgora = async (grupoIds?: string[] | null, turma?: string | null) => {
     setAviso(null);
+    if (grupoIds && grupoIds.length > 0) {
+      grupoIds.forEach((gid) => limparTodosDraftsGrupoLocalStorage(gid));
+    }
     try {
       await api.auditarBancas({
         grupo_ids: grupoIds ?? null,
@@ -600,7 +701,11 @@ export function App() {
         sincronizar_firebase: true,
       });
       const st = await api.getStatus();
+      prevStatusEstadoRef.current = st.estado;
       setStatus(st);
+      if (st.estado === 'success') {
+        await carregarTudo();
+      }
     } catch (err) {
       setAviso({
         tipo: 'erro',
@@ -1588,6 +1693,62 @@ export function App() {
                   </div>
                 </div>
 
+                {/* Banner Fixo de Barra de Carregamento da Auditoria em Andamento */}
+                {status.estado === 'running' &&
+                  (() => {
+                    const pctProgresso =
+                      status.progresso_total > 0
+                        ? Math.min(
+                            100,
+                            Math.round((status.progresso_atual / status.progresso_total) * 100),
+                          )
+                        : 12;
+                    const ultimoLog =
+                      status.logs.length > 0 ? status.logs[status.logs.length - 1] : null;
+                    return (
+                      <div className="rounded-xl border-2 border-indigo-300 bg-linear-to-r from-indigo-50 via-white to-amber-50 p-4 shadow-sm space-y-2.5">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <RefreshCw className="h-5 w-5 animate-spin text-indigo-600 shrink-0" />
+                            <div>
+                              <p className="text-xs sm:text-sm font-extrabold text-slate-900">
+                                Analisando arquivos da banca e calculando rubricas MSEP...
+                              </p>
+                              <p className="text-[11px] font-semibold text-indigo-800">
+                                {status.progresso_etapa ||
+                                  status.tarefa_atual ||
+                                  'Processando artefatos do grupo...'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {status.progresso_total > 0 && (
+                              <span className="rounded-md bg-white/90 px-2 py-0.5 font-mono text-[11px] font-bold text-slate-700 border border-indigo-200">
+                                Etapa {status.progresso_atual}/{status.progresso_total}
+                              </span>
+                            )}
+                            <span className="rounded-full bg-indigo-600 px-3 py-0.5 font-mono text-xs font-black text-white shadow-2xs">
+                              {pctProgresso}%
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-indigo-100 border border-indigo-200">
+                          <div
+                            className="h-full rounded-full bg-linear-to-r from-red-600 via-amber-500 to-emerald-500 transition-all duration-300"
+                            style={{ width: `${Math.max(8, pctProgresso)}%` }}
+                          />
+                        </div>
+
+                        {ultimoLog && (
+                          <p className="truncate font-mono text-[11px] text-slate-600">
+                            {ultimoLog}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                 {/* Barra de Filtros da Lista de Bancas (Por Turma sem dia da semana + Data com Calendário + Encolher Coluna) */}
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
                   <div className="flex flex-wrap items-center gap-2">
@@ -2183,157 +2344,193 @@ export function App() {
                             )}
 
                             {/* Mini Placar dos 4 Pilares + Média (5 Cards) */}
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                              {/* Pilar 1 */}
-                              <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <div>
-                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-slate-500">
-                                    Pilar 1 • Doc (30 pts)
-                                  </span>
-                                  <p className="mt-1 text-2xl font-extrabold text-slate-900">
-                                    {(consolidadaAtual?.media_p1 ?? grupoAtual.p1_total).toFixed(2)}
-                                    <span className="text-xs font-normal text-slate-400"> / 30</span>
-                                  </p>
-                                </div>
-                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
-                                  <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-1.5 text-left text-[11px]">
-                                    {avaliacoesIndividuaisList.map((av) => (
-                                      <div
-                                        key={av.professor_uid}
-                                        className="flex items-center justify-between text-slate-600"
-                                      >
-                                        <span
-                                          className="truncate max-w-[85px] font-medium"
-                                          title={av.professor_nome}
-                                        >
-                                          {av.professor_nome.split(' ')[0]}:
-                                        </span>
-                                        <span className="font-bold text-slate-800">
-                                          {av.p1_total.toFixed(2)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
+                            {(() => {
+                              const temAvaliacoesDocentes =
+                                bancaJaRealizadaAtual || avaliacoesIndividuaisList.length > 0;
+                              const valorP1Exibido = temAvaliacoesDocentes
+                                ? (consolidadaAtual?.media_p1 ?? grupoAtual.p1_total)
+                                : grupoAtual.p1_total;
+                              const valorP2Exibido = temAvaliacoesDocentes
+                                ? (consolidadaAtual?.media_p2 ?? grupoAtual.p2_total)
+                                : grupoAtual.p2_total;
+                              const valorP3Exibido = temAvaliacoesDocentes
+                                ? (consolidadaAtual?.media_p3 ?? grupoAtual.p3_grupo_base)
+                                : grupoAtual.p3_grupo_base;
+                              const mediaP4GrupoAtual =
+                                grupoAtual.integrantes_notas.length > 0
+                                  ? grupoAtual.integrantes_notas.reduce(
+                                      (acc, curr) => acc + curr.p4_nota,
+                                      0,
+                                    ) / grupoAtual.integrantes_notas.length
+                                  : 0;
+                              const valorP4Exibido = temAvaliacoesDocentes
+                                ? (consolidadaAtual?.media_p4 ?? mediaP4GrupoAtual)
+                                : mediaP4GrupoAtual;
+                              const nota33Atual =
+                                grupoAtual.rubricas.find((r) => r.codigo === '3.3')?.nota ??
+                                valorP3Exibido;
 
-                              {/* Pilar 2 */}
-                              <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
-                                <div>
-                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-slate-500">
-                                    Pilar 2 • Sist (40 pts)
-                                  </span>
-                                  <p className="mt-1 text-2xl font-extrabold text-slate-900">
-                                    {(consolidadaAtual?.media_p2 ?? grupoAtual.p2_total).toFixed(2)}
-                                    <span className="text-xs font-normal text-slate-400"> / 40</span>
-                                  </p>
-                                </div>
-                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
-                                  <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-1.5 text-left text-[11px]">
-                                    {avaliacoesIndividuaisList.map((av) => (
-                                      <div
-                                        key={av.professor_uid}
-                                        className="flex items-center justify-between text-slate-600"
-                                      >
-                                        <span
-                                          className="truncate max-w-[85px] font-medium"
-                                          title={av.professor_nome}
-                                        >
-                                          {av.professor_nome.split(' ')[0]}:
-                                        </span>
-                                        <span className="font-bold text-slate-800">
-                                          {av.p2_total.toFixed(2)}
-                                        </span>
+                              return (
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                                  {/* Pilar 1 */}
+                                  <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
+                                    <div>
+                                      <span className="block whitespace-nowrap text-[11px] font-semibold text-slate-500">
+                                        Pilar 1 • Doc (30 pts)
+                                      </span>
+                                      <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                                        {valorP1Exibido.toFixed(2)}
+                                        <span className="text-xs font-normal text-slate-400"> / 30</span>
+                                      </p>
+                                      <div className="mt-1.5 flex justify-center">
+                                        {badgeNivelMsep(calcularNivel(valorP1Exibido, 30))}
                                       </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Pilar 3 */}
-                              <div className="flex flex-col justify-between rounded-xl border border-amber-200 bg-amber-50/40 p-3 text-center">
-                                <div>
-                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-amber-900">
-                                    Pilar 3 • Banca (15 pts)
-                                  </span>
-                                  <p className="mt-1 text-2xl font-extrabold text-amber-800">
-                                    {(consolidadaAtual?.media_p3 ?? grupoAtual.p3_grupo_base).toFixed(2)}
-                                    <span className="text-xs font-normal text-amber-700"> / 15</span>
-                                  </p>
-                                </div>
-                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 ? (
-                                  <div className="mt-2 space-y-0.5 border-t border-amber-200/80 pt-1.5 text-left text-[11px]">
-                                    {avaliacoesIndividuaisList.map((av) => (
-                                      <div
-                                        key={av.professor_uid}
-                                        className="flex items-center justify-between text-amber-900"
-                                      >
-                                        <span
-                                          className="truncate max-w-[85px] font-medium"
-                                          title={av.professor_nome}
-                                        >
-                                          {av.professor_nome.split(' ')[0]}:
-                                        </span>
-                                        <span className="font-bold">
-                                          {av.p3_grupo_base.toFixed(2)}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : !bancaJaRealizadaAtual ? (
-                                  <span className="text-[10px] text-amber-700 font-medium">
-                                    (3.1/3.2 Ao Vivo)
-                                  </span>
-                                ) : null}
-                              </div>
-
-                              {/* Pilar 4 */}
-                              <div className="flex flex-col justify-between rounded-xl border border-indigo-200 bg-indigo-50/40 p-3 text-center">
-                                <div>
-                                  <span className="block whitespace-nowrap text-[11px] font-semibold text-indigo-900">
-                                    Pilar 4 • Sprints (15 pts)
-                                  </span>
-                                  <p className="mt-1 text-2xl font-extrabold text-indigo-800">
-                                    {(
-                                      consolidadaAtual?.media_p4 ??
-                                      (grupoAtual.integrantes_notas.length > 0
-                                        ? grupoAtual.integrantes_notas.reduce(
-                                            (acc, curr) => acc + curr.p4_nota,
-                                            0,
-                                          ) / grupoAtual.integrantes_notas.length
-                                        : 0)
-                                    ).toFixed(2)}
-                                    <span className="text-xs font-normal text-indigo-400"> / 15</span>
-                                  </p>
-                                </div>
-                                {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
-                                  <div className="mt-2 space-y-0.5 border-t border-indigo-200/80 pt-1.5 text-left text-[11px]">
-                                    {avaliacoesIndividuaisList.map((av) => {
-                                      const avP4 =
-                                        av.integrantes_notas.length > 0
-                                          ? av.integrantes_notas.reduce(
-                                              (acc, curr) => acc + curr.p4_nota,
-                                              0,
-                                            ) / av.integrantes_notas.length
-                                          : 0;
-                                      return (
-                                        <div
-                                          key={av.professor_uid}
-                                          className="flex items-center justify-between text-indigo-900"
-                                        >
-                                          <span
-                                            className="truncate max-w-[85px] font-medium"
-                                            title={av.professor_nome}
+                                    </div>
+                                    {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
+                                      <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-1.5 text-left text-[11px]">
+                                        {avaliacoesIndividuaisList.map((av) => (
+                                          <div
+                                            key={av.professor_uid}
+                                            className="flex items-center justify-between text-slate-600"
                                           >
-                                            {av.professor_nome.split(' ')[0]}:
-                                          </span>
-                                          <span className="font-bold">{avP4.toFixed(2)}</span>
-                                        </div>
-                                      );
-                                    })}
+                                            <span
+                                              className="truncate max-w-[85px] font-medium"
+                                              title={av.professor_nome}
+                                            >
+                                              {av.professor_nome.split(' ')[0]}:
+                                            </span>
+                                            <span className="font-bold text-slate-800">
+                                              {av.p1_total.toFixed(2)}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
+
+                                  {/* Pilar 2 */}
+                                  <div className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 text-center">
+                                    <div>
+                                      <span className="block whitespace-nowrap text-[11px] font-semibold text-slate-500">
+                                        Pilar 2 • Sist (40 pts)
+                                      </span>
+                                      <p className="mt-1 text-2xl font-extrabold text-slate-900">
+                                        {valorP2Exibido.toFixed(2)}
+                                        <span className="text-xs font-normal text-slate-400"> / 40</span>
+                                      </p>
+                                      <div className="mt-1.5 flex justify-center">
+                                        {badgeNivelMsep(calcularNivel(valorP2Exibido, 40))}
+                                      </div>
+                                    </div>
+                                    {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
+                                      <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-1.5 text-left text-[11px]">
+                                        {avaliacoesIndividuaisList.map((av) => (
+                                          <div
+                                            key={av.professor_uid}
+                                            className="flex items-center justify-between text-slate-600"
+                                          >
+                                            <span
+                                              className="truncate max-w-[85px] font-medium"
+                                              title={av.professor_nome}
+                                            >
+                                              {av.professor_nome.split(' ')[0]}:
+                                            </span>
+                                            <span className="font-bold text-slate-800">
+                                              {av.p2_total.toFixed(2)}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Pilar 3 */}
+                                  <div className="flex flex-col justify-between rounded-xl border border-amber-200 bg-amber-50/40 p-3 text-center">
+                                    <div>
+                                      <span className="block whitespace-nowrap text-[11px] font-semibold text-amber-900">
+                                        Pilar 3 • Banca (15 pts)
+                                      </span>
+                                      <p className="mt-1 text-2xl font-extrabold text-amber-800">
+                                        {valorP3Exibido.toFixed(2)}
+                                        <span className="text-xs font-normal text-amber-700"> / 15</span>
+                                      </p>
+                                      <div className="mt-1.5 flex justify-center">
+                                        {temAvaliacoesDocentes
+                                          ? badgeNivelMsep(calcularNivel(valorP3Exibido, 15))
+                                          : badgeNivelMsep(
+                                              calcularNivel(nota33Atual, 4),
+                                              'Slides 3.3',
+                                            )}
+                                      </div>
+                                    </div>
+                                    {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 ? (
+                                      <div className="mt-2 space-y-0.5 border-t border-amber-200/80 pt-1.5 text-left text-[11px]">
+                                        {avaliacoesIndividuaisList.map((av) => (
+                                          <div
+                                            key={av.professor_uid}
+                                            className="flex items-center justify-between text-amber-900"
+                                          >
+                                            <span
+                                              className="truncate max-w-[85px] font-medium"
+                                              title={av.professor_nome}
+                                            >
+                                              {av.professor_nome.split(' ')[0]}:
+                                            </span>
+                                            <span className="font-bold">
+                                              {av.p3_grupo_base.toFixed(2)}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : !bancaJaRealizadaAtual ? (
+                                      <span className="mt-1 text-[10px] text-amber-700 font-medium">
+                                        (3.1/3.2 Ao Vivo)
+                                      </span>
+                                    ) : null}
+                                  </div>
+
+                                  {/* Pilar 4 */}
+                                  <div className="flex flex-col justify-between rounded-xl border border-indigo-200 bg-indigo-50/40 p-3 text-center">
+                                    <div>
+                                      <span className="block whitespace-nowrap text-[11px] font-semibold text-indigo-900">
+                                        Pilar 4 • Sprints (15 pts)
+                                      </span>
+                                      <p className="mt-1 text-2xl font-extrabold text-indigo-800">
+                                        {valorP4Exibido.toFixed(2)}
+                                        <span className="text-xs font-normal text-indigo-400"> / 15</span>
+                                      </p>
+                                      <div className="mt-1.5 flex justify-center">
+                                        {badgeNivelMsep(calcularNivel(valorP4Exibido, 15))}
+                                      </div>
+                                    </div>
+                                    {bancaJaRealizadaAtual && avaliacoesIndividuaisList.length > 0 && (
+                                      <div className="mt-2 space-y-0.5 border-t border-indigo-200/80 pt-1.5 text-left text-[11px]">
+                                        {avaliacoesIndividuaisList.map((av) => {
+                                          const avP4 =
+                                            av.integrantes_notas.length > 0
+                                              ? av.integrantes_notas.reduce(
+                                                  (acc, curr) => acc + curr.p4_nota,
+                                                  0,
+                                                ) / av.integrantes_notas.length
+                                              : 0;
+                                          return (
+                                            <div
+                                              key={av.professor_uid}
+                                              className="flex items-center justify-between text-indigo-900"
+                                            >
+                                              <span
+                                                className="truncate max-w-[85px] font-medium"
+                                                title={av.professor_nome}
+                                              >
+                                                {av.professor_nome.split(' ')[0]}:
+                                              </span>
+                                              <span className="font-bold">{avP4.toFixed(2)}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
 
                               {/* Média Final */}
                               <div className="flex flex-col justify-between rounded-xl border border-red-200 bg-red-50/50 p-3 text-center">
@@ -2367,6 +2564,8 @@ export function App() {
                                 )}
                               </div>
                             </div>
+                              );
+                            })()}
 
                             {/* Bloco da Ata da Banca Realizada: Pareceres Oficiais, Avaliadores, Data/Hora e Duração */}
                             {bancaJaRealizadaAtual && (
@@ -4085,13 +4284,18 @@ export function App() {
                         key={bloco.pilar}
                         className="overflow-hidden rounded-xl border border-slate-200"
                       >
-                        <div className="flex items-center justify-between bg-slate-900 px-4 py-2.5 text-white">
+                        <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-900 px-4 py-2.5 text-white">
                           <span className="text-xs font-bold uppercase tracking-wider">
                             {bloco.titulo}
                           </span>
-                          <span className="rounded bg-red-600 px-2.5 py-0.5 text-xs font-bold">
-                            Subtotal Coletivo: {bloco.total.toFixed(2)} / {bloco.max},00
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {bloco.pilar === 3 && rubrica32?.nivel === 'Pendente'
+                              ? badgeNivelMsep(calcularNivel(nota33, 4), '3.3 Slides')
+                              : badgeNivelMsep(calcularNivel(bloco.total, bloco.max))}
+                            <span className="rounded bg-red-600 px-2.5 py-0.5 text-xs font-bold">
+                              Subtotal Coletivo: {bloco.total.toFixed(2)} / {bloco.max},00
+                            </span>
+                          </div>
                         </div>
                         <table className="w-full text-left text-xs">
                           <thead>
@@ -4357,10 +4561,16 @@ export function App() {
                                     </span>
                                   </td>
                                   <td className="p-3 text-center font-mono">
-                                    {p1TotalEdit.toFixed(2)}
+                                    <div>{p1TotalEdit.toFixed(2)}</div>
+                                    <span className="block text-[9px] font-bold text-slate-500">
+                                      ({calcularNivel(p1TotalEdit, 30)})
+                                    </span>
                                   </td>
                                   <td className="p-3 text-center font-mono">
-                                    {p2TotalEdit.toFixed(2)}
+                                    <div>{p2TotalEdit.toFixed(2)}</div>
+                                    <span className="block text-[9px] font-bold text-slate-500">
+                                      ({calcularNivel(p2TotalEdit, 40)})
+                                    </span>
                                   </td>
 
                                   {/* Item 3.1 Arguição Individual — Vazio e Chamativo quando Pendente + Botões Rest./Insu/Plen/Avan */}
@@ -4454,7 +4664,14 @@ export function App() {
                                   </td>
 
                                   <td className="p-3 text-center font-mono font-semibold">
-                                    {calc.p3.toFixed(2)}
+                                    <div>{calc.p3.toFixed(2)}</div>
+                                    <span className="block text-[9px] font-bold text-slate-500">
+                                      (
+                                      {pendente31 || rubrica32?.nivel === 'Pendente'
+                                        ? `${calcularNivel(nota33, 4)} 3.3`
+                                        : calcularNivel(calc.p3, 15)}
+                                      )
+                                    </span>
                                   </td>
 
                                   {/* 4.1 Sprints com opção Rest. */}
@@ -4564,7 +4781,10 @@ export function App() {
                                   </td>
 
                                   <td className="p-3 text-center font-mono font-semibold">
-                                    {calc.p4.toFixed(2)}
+                                    <div>{calc.p4.toFixed(2)}</div>
+                                    <span className="block text-[9px] font-bold text-slate-500">
+                                      ({calcularNivel(calc.p4, 15)})
+                                    </span>
                                   </td>
                                   <td className="p-3 text-center font-mono text-sm font-black text-slate-900">
                                     {calc.nf.toFixed(2)} pts
@@ -5342,6 +5562,7 @@ export function App() {
           abaInicial={abaModalArquivos}
           bancaConcluida={bancaJaRealizadaAtual}
           auditoriaEmAndamento={status.estado === 'running'}
+          statusAuditoria={status}
           isProfessorTitular={isProfessorTitular}
           professorNome={
             usuarioAuth?.displayName ||
