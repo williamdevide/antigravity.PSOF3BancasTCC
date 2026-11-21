@@ -648,7 +648,7 @@ export async function resetarBancaGrupo(
 export async function recalcularEConsolidarBancaAposEdicao(
   grupoId: string,
   grupoBase: AvaliacaoGrupo,
-): Promise<{ ok: boolean; mensagem: string }> {
+): Promise<{ ok: boolean; mensagem: string; consolidada?: BancaConsolidada }> {
   try {
     const colRef = collection(db, COLECAO_AVALIACOES_PROFESSORES);
     const q = query(colRef, where('grupo_id', '==', grupoId));
@@ -676,6 +676,7 @@ export async function recalcularEConsolidarBancaAposEdicao(
     return {
       ok: true,
       mensagem: 'Médias e pareceres da banca reconsolidados com sucesso no Firebase!',
+      consolidada,
     };
   } catch (err: unknown) {
     return { ok: false, mensagem: formatarErroFirestore(err, 'recalcular e consolidar banca após edição') };

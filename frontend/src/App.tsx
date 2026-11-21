@@ -142,6 +142,56 @@ function normalizarRubricasComNivel(rubricas: RubricaItemAvaliacao[]): RubricaIt
   });
 }
 
+function mesclarRubricasSoberanasComBase(
+  soberanas: RubricaItemAvaliacao[],
+  base: RubricaItemAvaliacao[],
+): RubricaItemAvaliacao[] {
+  if (!base || base.length === 0) {
+    return normalizarRubricasComNivel(soberanas.map((r) => ({ ...r })));
+  }
+  const mapaSoberanas = new Map(soberanas.map((r) => [r.codigo, r]));
+  const mescladas = base.map((b) => {
+    const s = mapaSoberanas.get(b.codigo);
+    if (!s) return { ...b };
+    return {
+      ...b,
+      ...s,
+      nota: Number(s.nota ?? b.nota ?? 0),
+      nota_sugerida_ia: b.nota_sugerida_ia ?? s.nota_sugerida_ia,
+      nivel_sugerido_ia: b.nivel_sugerido_ia ?? s.nivel_sugerido_ia,
+      evidencias: s.evidencias && s.evidencias.length > 0 ? s.evidencias : b.evidencias,
+      justificativa_ia: s.justificativa_ia || b.justificativa_ia,
+    };
+  });
+  return normalizarRubricasComNivel(mescladas);
+}
+
+function mesclarIntegrantesSoberanosComBase(
+  soberanos: NotaIndividualIntegrante[],
+  base: NotaIndividualIntegrante[],
+): NotaIndividualIntegrante[] {
+  if (!base || base.length === 0) {
+    return soberanos.map((i) => ({ ...i }));
+  }
+  const mapaSoberanos = new Map(soberanos.map((i) => [i.nome, i]));
+  return base.map((b) => {
+    const s = mapaSoberanos.get(b.nome);
+    if (!s) return { ...b };
+    return {
+      ...b,
+      ...s,
+      nome_completo_planilha: s.nome_completo_planilha || b.nome_completo_planilha,
+      matricula: s.matricula || b.matricula,
+      nota_3_1_sugerida: b.nota_3_1_sugerida ?? s.nota_3_1_sugerida ?? 0,
+      nivel_3_1_sugerido: b.nivel_3_1_sugerido ?? s.nivel_3_1_sugerido ?? 'Pendente',
+      nota_4_1_sugerida: b.nota_4_1_sugerida ?? s.nota_4_1_sugerida,
+      nivel_4_1_sugerido: b.nivel_4_1_sugerido ?? s.nivel_4_1_sugerido,
+      nota_4_2_sugerida: b.nota_4_2_sugerida ?? s.nota_4_2_sugerida,
+      nivel_4_2_sugerido: b.nivel_4_2_sugerido ?? s.nivel_4_2_sugerido,
+    };
+  });
+}
+
 function badgeNivelMsep(nivel: NivelMSEP, prefixo?: string) {
   const estilo =
     nivel === 'Avançado'
@@ -151,11 +201,13 @@ function badgeNivelMsep(nivel: NivelMSEP, prefixo?: string) {
       : nivel === 'Insuficiente'
       ? 'border-red-300 bg-red-100 text-red-800'
       : 'border-amber-300 bg-amber-100 text-amber-900';
+  const rotulo = prefixo ? `${prefixo} • ${nivel}` : nivel;
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${estilo}`}
+      title={`Nível MSEP: ${nivel}`}
+      className={`inline-flex max-w-full items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-tight leading-none ${estilo}`}
     >
-      {prefixo ? `${prefixo}: ` : ''}MSEP: {nivel}
+      {rotulo}
     </span>
   );
 }
@@ -234,6 +286,7 @@ export function App() {
   const [sessoesAtivas, setSessoesAtivas] = useState<SessaoBancaAoVivo[]>([]);
   const [mapaSessoesBanca, setMapaSessoesBanca] = useState<Record<string, SessaoBancaAoVivo>>({});
   const ultimoGrupoSyncIdRef = useRef<string | null>(null);
+  const chaveEdicaoAtivaRef = useRef<string>('');
   const prevStatusEstadoRef = useRef<AgentStatus['estado']>('idle');
 
   // Estados editáveis da Ficha MSEP do grupo selecionado
@@ -400,6 +453,19 @@ export function App() {
     : null;
   const euJaEncerreiMinhaAvaliacao = Boolean(minhaAvaliacaoNaSessao?.concluido);
 
+  const minhaAvaliacaoSalvaFirestore: AvaliacaoProfessorIndividual | null = useMemo(() => {
+    if (!usuarioAuth?.uid) return null;
+    return (
+      avaliacoesFirestoreGrupo.find((a) => a.professor_uid === usuarioAuth.uid) ||
+      sessaoAtual?.banca_consolidada?.avaliacoes_individuais?.[usuarioAuth.uid] ||
+      null
+    );
+  }, [usuarioAuth?.uid, avaliacoesFirestoreGrupo, sessaoAtual?.banca_consolidada]);
+
+  const consolidadaSoberanaAtual: BancaConsolidada | null =
+    sessaoAtual?.banca_consolidada ||
+    (avaliacoesFirestoreGrupo.length > 0 ? bancaConsolidada : null);
+
   // Regra de bloqueio de edição na Ficha MSEP:
   // NENHUM valor é alterado simplesmente por acessar a guia.
   // - Se 'aguardando_inicio': somente leitura (exige iniciar a banca ao vivo)
@@ -442,50 +508,208 @@ export function App() {
     }
   }, [rotaAtual, usuarioAuth?.uid, grupoAtual?.id, grupoAtual?.media_nota_final_grupo]);
 
-  // Sincronizar estados editáveis com draft de localStorage ou dados recalculados do grupo
+  // Sincronizar estados da Ficha MSEP respeitando a soberania absoluta das notas da banca concluída
   useEffect(() => {
-    if (grupoAtual?.id !== ultimoGrupoSyncIdRef.current) {
-      ultimoGrupoSyncIdRef.current = grupoAtual?.id || null;
+    if (!grupoAtual) return;
+
+    if (grupoAtual.id !== ultimoGrupoSyncIdRef.current) {
+      ultimoGrupoSyncIdRef.current = grupoAtual.id;
+      chaveEdicaoAtivaRef.current = '';
       setModoEdicaoReaberto(false);
     }
-    if (grupoAtual && usuarioAuth) {
-      const draft = carregarDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
-      const draftP1 = draft
-        ? draft.rubricas.filter((r) => r.pilar === 1).reduce((a, r) => a + Number(r.nota || 0), 0)
-        : 0;
-      const draftP2 = draft
-        ? draft.rubricas.filter((r) => r.pilar === 2).reduce((a, r) => a + Number(r.nota || 0), 0)
-        : 0;
-      const grupoAuditadoComNotas =
-        grupoAtual.p1_total > 0 || grupoAtual.p2_total > 0 || grupoAtual.p3_grupo_base > 0;
-      const draftPreAuditoriaZerado = grupoAuditadoComNotas && draftP1 === 0 && draftP2 === 0;
-      const draftDesatualizadoPorAuditoria = Boolean(
-        draft &&
-          grupoAtual.auditado_em &&
-          draft.auditado_em_base &&
-          draft.auditado_em_base !== grupoAtual.auditado_em,
-      );
-      const draftMaisAntigoQueAuditoria = Boolean(
-        draft &&
-          grupoAtual.auditado_em &&
-          !draft.auditado_em_base &&
-          draft.salvo_em &&
-          new Date(draft.salvo_em).getTime() < new Date(grupoAtual.auditado_em).getTime(),
-      );
 
-      if (
-        draft &&
+    const modoFichaAtual =
+      statusSessaoBancaAtual === 'concluida'
+        ? modoEdicaoReaberto
+          ? 'concluida_editando'
+          : 'concluida_leitura'
+        : statusSessaoBancaAtual === 'em_andamento'
+        ? 'andamento_editando'
+        : 'aguardando';
+
+    // 1. Banca concluída (modo leitura): carrega SEMPRE a Média Consolidada Oficial (Firestore soberano sobre IA e localStorage)
+    if (modoFichaAtual === 'concluida_leitura') {
+      chaveEdicaoAtivaRef.current = '';
+      if (consolidadaSoberanaAtual && consolidadaSoberanaAtual.rubricas_medias?.length > 0) {
+        setRubricasEdit(
+          mesclarRubricasSoberanasComBase(
+            consolidadaSoberanaAtual.rubricas_medias,
+            grupoAtual.rubricas,
+          ),
+        );
+        setIntegrantesEdit(
+          mesclarIntegrantesSoberanosComBase(
+            consolidadaSoberanaAtual.integrantes_medias || [],
+            grupoAtual.integrantes_notas,
+          ),
+        );
+        const parecerConsolidado =
+          minhaAvaliacaoSalvaFirestore?.parecer_tecnico ||
+          consolidadaSoberanaAtual.pareceres_professores
+            .map((p) => (p.parecer ? `${p.professor_nome}: ${p.parecer}` : ''))
+            .filter(Boolean)
+            .join('\n\n') ||
+          '';
+        setParecerEdit(parecerConsolidado);
+        setStatusManualLiberacao(
+          sessaoAtual?.status_liberacao_final ||
+            consolidadaSoberanaAtual.status_liberacao_manual ||
+            null,
+        );
+        setAvaliadorEdit(
+          consolidadaSoberanaAtual.avaliadores_concluidos.join(' / ') ||
+            usuarioAuth?.displayName ||
+            grupoAtual.avaliador ||
+            env.avaliador_padrao,
+        );
+        return;
+      }
+
+      if (minhaAvaliacaoSalvaFirestore) {
+        setRubricasEdit(
+          mesclarRubricasSoberanasComBase(
+            minhaAvaliacaoSalvaFirestore.rubricas,
+            grupoAtual.rubricas,
+          ),
+        );
+        setIntegrantesEdit(
+          mesclarIntegrantesSoberanosComBase(
+            minhaAvaliacaoSalvaFirestore.integrantes_notas,
+            grupoAtual.integrantes_notas,
+          ),
+        );
+        setParecerEdit(minhaAvaliacaoSalvaFirestore.parecer_tecnico || '');
+        setStatusManualLiberacao(
+          sessaoAtual?.status_liberacao_final ||
+            minhaAvaliacaoSalvaFirestore.status_liberacao_manual ||
+            null,
+        );
+        setAvaliadorEdit(
+          minhaAvaliacaoSalvaFirestore.professor_nome ||
+            usuarioAuth?.displayName ||
+            grupoAtual.avaliador ||
+            env.avaliador_padrao,
+        );
+        return;
+      }
+    }
+
+    // 2. Banca concluída em edição ("Editar Minha Avaliação / Editar Banca"): carrega as notas individuais salvas do professor (fallback consolidada)
+    if (modoFichaAtual === 'concluida_editando') {
+      const chaveEdicao = `${grupoAtual.id}|concluida_editando|${usuarioAuth?.uid || ''}|${
+        minhaAvaliacaoSalvaFirestore?.atualizado_em ||
+        consolidadaSoberanaAtual?.media_final ||
+        'none'
+      }`;
+      if (chaveEdicaoAtivaRef.current === chaveEdicao) return;
+      chaveEdicaoAtivaRef.current = chaveEdicao;
+
+      const rubSoberanas =
+        minhaAvaliacaoSalvaFirestore?.rubricas?.length
+          ? minhaAvaliacaoSalvaFirestore.rubricas
+          : consolidadaSoberanaAtual?.rubricas_medias || [];
+      const intSoberanos =
+        minhaAvaliacaoSalvaFirestore?.integrantes_notas?.length
+          ? minhaAvaliacaoSalvaFirestore.integrantes_notas
+          : consolidadaSoberanaAtual?.integrantes_medias || [];
+
+      if (rubSoberanas.length > 0) {
+        setRubricasEdit(mesclarRubricasSoberanasComBase(rubSoberanas, grupoAtual.rubricas));
+        setIntegrantesEdit(
+          mesclarIntegrantesSoberanosComBase(intSoberanos, grupoAtual.integrantes_notas),
+        );
+        setParecerEdit(minhaAvaliacaoSalvaFirestore?.parecer_tecnico || '');
+        setStatusManualLiberacao(
+          minhaAvaliacaoSalvaFirestore?.status_liberacao_manual ??
+            consolidadaSoberanaAtual?.status_liberacao_manual ??
+            sessaoAtual?.status_liberacao_final ??
+            null,
+        );
+      } else {
+        setRubricasEdit(normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r }))));
+        setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
+        setParecerEdit('');
+        setStatusManualLiberacao(null);
+      }
+      setAvaliadorEdit(usuarioAuth?.displayName || grupoAtual.avaliador || env.avaliador_padrao);
+      return;
+    }
+
+    // Helper comum para validar se um rascunho local ainda é válido frente à auditoria mais recente
+    const draft = usuarioAuth ? carregarDraftLocalStorage(grupoAtual.id, usuarioAuth.uid) : null;
+    const draftP1 = draft
+      ? draft.rubricas.filter((r) => r.pilar === 1).reduce((a, r) => a + Number(r.nota || 0), 0)
+      : 0;
+    const draftP2 = draft
+      ? draft.rubricas.filter((r) => r.pilar === 2).reduce((a, r) => a + Number(r.nota || 0), 0)
+      : 0;
+    const grupoAuditadoComNotas =
+      grupoAtual.p1_total > 0 || grupoAtual.p2_total > 0 || grupoAtual.p3_grupo_base > 0;
+    const draftPreAuditoriaZerado = grupoAuditadoComNotas && draftP1 === 0 && draftP2 === 0;
+    const draftDesatualizadoPorAuditoria = Boolean(
+      draft &&
+        grupoAtual.auditado_em &&
+        draft.auditado_em_base &&
+        draft.auditado_em_base !== grupoAtual.auditado_em,
+    );
+    const draftMaisAntigoQueAuditoria = Boolean(
+      draft &&
+        grupoAtual.auditado_em &&
+        !draft.auditado_em_base &&
+        draft.salvo_em &&
+        new Date(draft.salvo_em).getTime() < new Date(grupoAtual.auditado_em).getTime(),
+    );
+    const draftValido = Boolean(
+      draft &&
         draft.rubricas.length > 0 &&
         !draftPreAuditoriaZerado &&
         !draftDesatualizadoPorAuditoria &&
-        !draftMaisAntigoQueAuditoria
-      ) {
-        setRubricasEdit(normalizarRubricasComNivel(draft.rubricas));
-        setIntegrantesEdit(draft.integrantes_notas);
+        !draftMaisAntigoQueAuditoria,
+    );
+
+    // 3. Banca em andamento: preserva edições ao vivo; prioriza avaliação salva mais recente no Firestore sobre rascunho antigo
+    if (modoFichaAtual === 'andamento_editando') {
+      const chaveEdicao = `${grupoAtual.id}|andamento|${usuarioAuth?.uid || ''}|${
+        minhaAvaliacaoSalvaFirestore?.atualizado_em || 'none'
+      }`;
+      if (chaveEdicaoAtivaRef.current === chaveEdicao) return;
+      chaveEdicaoAtivaRef.current = chaveEdicao;
+
+      const firestoreMaisRecenteQueDraft = Boolean(
+        minhaAvaliacaoSalvaFirestore &&
+          (!draftValido ||
+            !draft?.salvo_em ||
+            new Date(minhaAvaliacaoSalvaFirestore.atualizado_em).getTime() >=
+              new Date(draft.salvo_em).getTime()),
+      );
+
+      if (minhaAvaliacaoSalvaFirestore && firestoreMaisRecenteQueDraft) {
+        setRubricasEdit(
+          mesclarRubricasSoberanasComBase(
+            minhaAvaliacaoSalvaFirestore.rubricas,
+            grupoAtual.rubricas,
+          ),
+        );
+        setIntegrantesEdit(
+          mesclarIntegrantesSoberanosComBase(
+            minhaAvaliacaoSalvaFirestore.integrantes_notas,
+            grupoAtual.integrantes_notas,
+          ),
+        );
+        setParecerEdit(minhaAvaliacaoSalvaFirestore.parecer_tecnico || '');
+        setStatusManualLiberacao(minhaAvaliacaoSalvaFirestore.status_liberacao_manual || null);
+      } else if (draftValido && draft) {
+        setRubricasEdit(mesclarRubricasSoberanasComBase(draft.rubricas, grupoAtual.rubricas));
+        setIntegrantesEdit(
+          mesclarIntegrantesSoberanosComBase(
+            draft.integrantes_notas,
+            grupoAtual.integrantes_notas,
+          ),
+        );
         setParecerEdit(draft.parecer_tecnico);
         setStatusManualLiberacao(draft.status_liberacao_manual || null);
       } else {
-        if (draft) {
+        if (draft && usuarioAuth) {
           limparDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
         }
         setRubricasEdit(normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r }))));
@@ -493,13 +717,42 @@ export function App() {
         setParecerEdit('');
         setStatusManualLiberacao(null);
       }
-      setAvaliadorEdit(usuarioAuth.displayName || grupoAtual.avaliador || env.avaliador_padrao);
-    } else if (grupoAtual) {
+      setAvaliadorEdit(usuarioAuth?.displayName || grupoAtual.avaliador || env.avaliador_padrao);
+      return;
+    }
+
+    // 4. Banca aguardando início (inclui banca reaberta com avaliação anterior salva ou recém-auditada)
+    chaveEdicaoAtivaRef.current = '';
+    if (minhaAvaliacaoSalvaFirestore) {
+      setRubricasEdit(
+        mesclarRubricasSoberanasComBase(
+          minhaAvaliacaoSalvaFirestore.rubricas,
+          grupoAtual.rubricas,
+        ),
+      );
+      setIntegrantesEdit(
+        mesclarIntegrantesSoberanosComBase(
+          minhaAvaliacaoSalvaFirestore.integrantes_notas,
+          grupoAtual.integrantes_notas,
+        ),
+      );
+      setParecerEdit(minhaAvaliacaoSalvaFirestore.parecer_tecnico || '');
+      setStatusManualLiberacao(minhaAvaliacaoSalvaFirestore.status_liberacao_manual || null);
+      setAvaliadorEdit(
+        minhaAvaliacaoSalvaFirestore.professor_nome ||
+          usuarioAuth?.displayName ||
+          grupoAtual.avaliador ||
+          env.avaliador_padrao,
+      );
+    } else {
+      if (draft && !draftValido && usuarioAuth) {
+        limparDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
+      }
       setRubricasEdit(normalizarRubricasComNivel(grupoAtual.rubricas.map((r) => ({ ...r }))));
       setIntegrantesEdit(grupoAtual.integrantes_notas.map((i) => ({ ...i })));
       setParecerEdit('');
       setStatusManualLiberacao(null);
-      setAvaliadorEdit(grupoAtual.avaliador || env.avaliador_padrao);
+      setAvaliadorEdit(usuarioAuth?.displayName || grupoAtual.avaliador || env.avaliador_padrao);
     }
   }, [
     grupoAtual?.id,
@@ -509,11 +762,21 @@ export function App() {
     grupoAtual?.p2_total,
     grupoAtual?.p3_grupo_base,
     usuarioAuth?.uid,
+    statusSessaoBancaAtual,
+    modoEdicaoReaberto,
+    minhaAvaliacaoSalvaFirestore,
+    consolidadaSoberanaAtual,
   ]);
 
-  // Auto-save local em tempo real no localStorage APENAS quando a edição for ativamente permitida
+  // Auto-save local em tempo real no localStorage APENAS enquanto a banca ao vivo está aberta (nunca sobrescreve banca concluída)
   useEffect(() => {
-    if (podeEditarFicha && grupoAtual && usuarioAuth && rubricasEdit.length > 0) {
+    if (
+      podeEditarFicha &&
+      statusSessaoBancaAtual !== 'concluida' &&
+      grupoAtual &&
+      usuarioAuth &&
+      rubricasEdit.length > 0
+    ) {
       salvarDraftLocalStorage({
         grupo_id: grupoAtual.id,
         professor_uid: usuarioAuth.uid,
@@ -525,7 +788,17 @@ export function App() {
         salvo_em: new Date().toISOString(),
       });
     }
-  }, [podeEditarFicha, grupoAtual?.id, grupoAtual?.auditado_em, usuarioAuth?.uid, rubricasEdit, integrantesEdit, parecerEdit, statusManualLiberacao]);
+  }, [
+    podeEditarFicha,
+    statusSessaoBancaAtual,
+    grupoAtual?.id,
+    grupoAtual?.auditado_em,
+    usuarioAuth?.uid,
+    rubricasEdit,
+    integrantesEdit,
+    parecerEdit,
+    statusManualLiberacao,
+  ]);
 
   // Escutar avaliações dos 2 professores no Firestore em tempo real (sem closure obsoleta de grupoAtual)
   useEffect(() => {
@@ -744,6 +1017,48 @@ export function App() {
     }
   };
 
+  const sincronizarConsolidadaNoBackend = async (
+    grupoAlvo: AvaliacaoGrupo,
+    sessaoAlvo?: SessaoBancaAoVivo | null,
+    consAlvo?: BancaConsolidada | null,
+  ): Promise<AvaliacaoGrupo> => {
+    if (sessaoAlvo && sessaoAlvo.status !== 'concluida' && !consAlvo) {
+      return grupoAlvo;
+    }
+    const cons = consAlvo || sessaoAlvo?.banca_consolidada;
+    if (!cons || !cons.rubricas_medias?.length) {
+      return grupoAlvo;
+    }
+    const rubricasFinais = mesclarRubricasSoberanasComBase(
+      cons.rubricas_medias,
+      grupoAlvo.rubricas,
+    );
+    const integrantesFinais = mesclarIntegrantesSoberanosComBase(
+      cons.integrantes_medias || [],
+      grupoAlvo.integrantes_notas,
+    );
+    const parecerConsolidado =
+      cons.pareceres_professores
+        .map((p) => (p.parecer ? `${p.professor_nome}: ${p.parecer}` : ''))
+        .filter(Boolean)
+        .join('\n\n') || grupoAlvo.parecer_tecnico;
+
+    const atualizado = await api.salvarAvaliacao(grupoAlvo.id, {
+      avaliador: cons.avaliadores_concluidos.join(' / ') || grupoAlvo.avaliador,
+      rubricas: rubricasFinais,
+      integrantes_notas: integrantesFinais,
+      parecer_tecnico: parecerConsolidado,
+      status_liberacao_manual:
+        sessaoAlvo?.status_liberacao_final ||
+        cons.status_liberacao_manual ||
+        cons.status_liberacao_final ||
+        null,
+      sincronizar_firebase: false,
+    });
+    setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
+    return atualizado;
+  };
+
   const handleSalvarFicha = async () => {
     if (!grupoAtual) return;
     if (!usuarioAuth) {
@@ -802,23 +1117,42 @@ export function App() {
 
       await salvarAvaliacaoNoFirestore(avaliacaoIndividual);
 
-      // Se a banca já estava concluída e foi editada, recalcula a consolidação oficial no Firestore
+      // Se a banca já estava concluída e foi editada, recalcula a consolidação oficial no Firestore e replica a consolidada soberana no backend
+      let atualizado: AvaliacaoGrupo;
       if (sessaoAtual?.status === 'concluida') {
-        await recalcularEConsolidarBancaAposEdicao(grupoAtual.id, grupoAtual);
+        const resRecons = await recalcularEConsolidarBancaAposEdicao(grupoAtual.id, grupoAtual);
+        limparDraftLocalStorage(grupoAtual.id, usuarioAuth.uid);
+        chaveEdicaoAtivaRef.current = '';
+        setModoEdicaoReaberto(false);
+        if (resRecons.consolidada) {
+          atualizado = await sincronizarConsolidadaNoBackend(
+            grupoAtual,
+            sessaoAtual,
+            resRecons.consolidada,
+          );
+        } else {
+          atualizado = await api.salvarAvaliacao(grupoAtual.id, {
+            avaliador: nomeProfessor,
+            rubricas: rubricasEdit,
+            integrantes_notas: recalculados,
+            parecer_tecnico: parecerEdit,
+            status_liberacao_manual: statusManualLiberacao,
+            sincronizar_firebase: true,
+          });
+          setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
+        }
+      } else {
+        setModoEdicaoReaberto(false);
+        atualizado = await api.salvarAvaliacao(grupoAtual.id, {
+          avaliador: nomeProfessor,
+          rubricas: rubricasEdit,
+          integrantes_notas: recalculados,
+          parecer_tecnico: parecerEdit,
+          status_liberacao_manual: statusManualLiberacao,
+          sincronizar_firebase: true,
+        });
+        setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
       }
-      setModoEdicaoReaberto(false);
-
-      // 2. Salvar também no backend FastAPI (para relatórios em PDF, Dossiês e XLSX)
-      const atualizado = await api.salvarAvaliacao(grupoAtual.id, {
-        avaliador: nomeProfessor,
-        rubricas: rubricasEdit,
-        integrantes_notas: recalculados,
-        parecer_tecnico: parecerEdit,
-        status_liberacao_manual: statusManualLiberacao,
-        sincronizar_firebase: true,
-      });
-
-      setBancas((prev) => prev.map((b) => (b.id === atualizado.id ? atualizado : b)));
       setAviso({
         tipo: 'ok',
         texto: sessaoAtual?.status === 'concluida'
@@ -953,6 +1287,35 @@ export function App() {
         contingencia,
         justificativa,
       );
+      if (res.ok) {
+        limparTodosDraftsGrupoLocalStorage(grupoAtual.id);
+        chaveEdicaoAtivaRef.current = '';
+        await sincronizarConsolidadaNoBackend(
+          grupoAtual,
+          {
+            ...(sessaoAoVivo ||
+              sessaoAtual || {
+                grupo_id: grupoAtual.id,
+                turma: grupoAtual.turma,
+                projeto: grupoAtual.projeto,
+                status: 'concluida',
+                titular_uid: usuarioAuth.uid,
+                titular_nome: usuarioAuth.displayName || 'Prof. Titular',
+                iniciado_em: null,
+                encerrado_em: new Date().toISOString(),
+                duracao_segundos: 0,
+                duracao_formatada: '00:00',
+                avaliadores_presentes: [],
+                avaliacoes_concluidas: [],
+                atualizado_em: new Date().toISOString(),
+              }),
+            status: 'concluida',
+            status_liberacao_final: bancaConsolidada.status_liberacao_final,
+            banca_consolidada: bancaConsolidada,
+          },
+          bancaConsolidada,
+        );
+      }
       setAviso({
         tipo: res.ok ? 'ok' : 'erro',
         texto: res.mensagem,
@@ -1059,10 +1422,22 @@ export function App() {
     }
   };
 
+  const sincronizarBancaSeNecessarioAntesDeExportar = async (grupoId: string) => {
+    const sessaoAlvo = mapaSessoesBanca[grupoId];
+    const bAlvo = bancas.find((b) => b.id === grupoId);
+    if (!bAlvo || sessaoAlvo?.status !== 'concluida' || !sessaoAlvo.banca_consolidada) return;
+    const mediaCons =
+      sessaoAlvo.media_final_consolidada ?? sessaoAlvo.banca_consolidada.media_final;
+    if (!bAlvo.banca_realizada || Math.abs(bAlvo.media_nota_final_grupo - mediaCons) > 0.05) {
+      await sincronizarConsolidadaNoBackend(bAlvo, sessaoAlvo);
+    }
+  };
+
   const handleExportarFichaPdf = async (grupoId: string) => {
     setExportandoPdf(true);
     setAviso(null);
     try {
+      await sincronizarBancaSeNecessarioAntesDeExportar(grupoId);
       const res = await api.exportarFichaPdf(grupoId);
       setAviso({ tipo: 'ok', texto: res.mensagem });
       window.open(api.getDownloadUrl(res.arquivo), '_blank');
@@ -1080,6 +1455,7 @@ export function App() {
     setExportandoDossie(true);
     setAviso(null);
     try {
+      await sincronizarBancaSeNecessarioAntesDeExportar(grupoId);
       const res = await api.exportarDossie(grupoId);
       setAviso({ tipo: 'ok', texto: res.mensagem });
       window.open(api.getDownloadUrl(res.arquivo_pdf), '_blank');
@@ -1097,6 +1473,10 @@ export function App() {
     setExportandoXlsx(true);
     setAviso(null);
     try {
+      const elegiveis = bancas.filter((b) => !turma || turma === 'Todas' || b.turma === turma);
+      for (const bAlvo of elegiveis) {
+        await sincronizarBancaSeNecessarioAntesDeExportar(bAlvo.id);
+      }
       const res = await api.exportarConsolidadoXlsx(turma);
       setAviso({ tipo: 'ok', texto: res.mensagem });
       window.open(api.getDownloadUrl(res.arquivo), '_blank');
@@ -2459,7 +2839,7 @@ export function App() {
                                           ? badgeNivelMsep(calcularNivel(valorP3Exibido, 15))
                                           : badgeNivelMsep(
                                               calcularNivel(nota33Atual, 4),
-                                              'Slides 3.3',
+                                              '3.3',
                                             )}
                                       </div>
                                     </div>
@@ -3925,59 +4305,77 @@ export function App() {
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-slate-200/70">
-                                        {grupoAtual.integrantes_notas.map((ind) => (
-                                          <tr key={ind.nome}>
-                                            <td className="py-2">
-                                              <p className="font-bold text-slate-900">{ind.nome}</p>
-                                              <p className="text-[10px] text-slate-500">
-                                                {ind.nome_completo_planilha} • Mat. {ind.matricula}
-                                              </p>
-                                            </td>
-                                            <td className="py-2 text-center">
-                                              <span
-                                                className={`font-mono font-bold ${
-                                                  ind.nivel_4_1 === 'Insuficiente'
-                                                    ? 'text-red-600'
-                                                    : 'text-slate-900'
-                                                }`}
-                                              >
-                                                {ind.nota_4_1_sprints.toFixed(2)} / 8.00
-                                              </span>
-                                              <span className="block text-[10px] text-slate-500">
-                                                {ind.relatorios_entregues}/{ind.total_relatorios}{' '}
-                                                entregues ({ind.nivel_4_1})
-                                              </span>
-                                            </td>
-                                            <td className="py-2 text-center">
-                                              <span className="font-mono font-bold text-slate-900">
-                                                {ind.nota_4_2_participacao.toFixed(2)} / 7.00
-                                              </span>
-                                              <span className="block text-[10px] text-slate-500">
-                                                {ind.aulas_participadas}/{ind.total_aulas_turma} aulas (
-                                                {ind.nivel_4_2})
-                                              </span>
-                                            </td>
-                                            <td className="py-2 text-center font-mono font-extrabold text-sm text-indigo-700 w-28 min-w-[100px]">
-                                              {ind.p4_nota.toFixed(2)} / 15.0
-                                            </td>
-                                            <td className="py-2 text-center font-mono text-sm font-black text-slate-900">
-                                              {ind.nota_final.toFixed(2)} pts
-                                            </td>
-                                            <td className="py-2 text-center">
-                                              <span
-                                                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold whitespace-nowrap ${
-                                                  ind.resultado === 'Aprovado'
-                                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                    : ind.resultado === 'Nota Retida (Pendências)' || ind.resultado === 'Nota Retida'
-                                                    ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                                                    : 'bg-red-100 text-red-800 border border-red-200'
-                                                }`}
-                                              >
-                                                {ind.resultado === 'Aprovado' ? 'Aprovado' : ind.resultado === 'Nota Retida (Pendências)' ? 'Nota Retida' : 'Nova Chance'}
-                                              </span>
-                                            </td>
-                                          </tr>
-                                        ))}
+                                        {(bancaJaRealizadaAtual &&
+                                        consolidadaAtual?.integrantes_medias?.length
+                                          ? mesclarIntegrantesSoberanosComBase(
+                                              consolidadaAtual.integrantes_medias,
+                                              grupoAtual.integrantes_notas,
+                                            )
+                                          : grupoAtual.integrantes_notas
+                                        ).map((ind) => {
+                                          const resultadoSoberano = bancaJaRealizadaAtual
+                                            ? statusFinalGrupoAtual
+                                            : ind.resultado;
+                                          return (
+                                            <tr key={ind.nome}>
+                                              <td className="py-2">
+                                                <p className="font-bold text-slate-900">{ind.nome}</p>
+                                                <p className="text-[10px] text-slate-500">
+                                                  {ind.nome_completo_planilha} • Mat. {ind.matricula}
+                                                </p>
+                                              </td>
+                                              <td className="py-2 text-center">
+                                                <span
+                                                  className={`font-mono font-bold ${
+                                                    ind.nivel_4_1 === 'Insuficiente'
+                                                      ? 'text-red-600'
+                                                      : 'text-slate-900'
+                                                  }`}
+                                                >
+                                                  {ind.nota_4_1_sprints.toFixed(2)} / 8.00
+                                                </span>
+                                                <span className="block text-[10px] text-slate-500">
+                                                  {ind.relatorios_entregues}/{ind.total_relatorios}{' '}
+                                                  entregues ({ind.nivel_4_1})
+                                                </span>
+                                              </td>
+                                              <td className="py-2 text-center">
+                                                <span className="font-mono font-bold text-slate-900">
+                                                  {ind.nota_4_2_participacao.toFixed(2)} / 7.00
+                                                </span>
+                                                <span className="block text-[10px] text-slate-500">
+                                                  {ind.aulas_participadas}/{ind.total_aulas_turma} aulas (
+                                                  {ind.nivel_4_2})
+                                                </span>
+                                              </td>
+                                              <td className="py-2 text-center font-mono font-extrabold text-sm text-indigo-700 w-28 min-w-[100px]">
+                                                {ind.p4_nota.toFixed(2)} / 15.0
+                                              </td>
+                                              <td className="py-2 text-center font-mono text-sm font-black text-slate-900">
+                                                {ind.nota_final.toFixed(2)} pts
+                                              </td>
+                                              <td className="py-2 text-center">
+                                                <span
+                                                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold whitespace-nowrap ${
+                                                    resultadoSoberano === 'Aprovado'
+                                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                      : resultadoSoberano === 'Nota Retida (Pendências)' ||
+                                                        resultadoSoberano === 'Nota Retida'
+                                                      ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                                                      : 'bg-red-100 text-red-800 border border-red-200'
+                                                  }`}
+                                                >
+                                                  {resultadoSoberano === 'Aprovado'
+                                                    ? 'Aprovado'
+                                                    : resultadoSoberano === 'Nota Retida (Pendências)' ||
+                                                      resultadoSoberano === 'Nota Retida'
+                                                    ? 'Nota Retida'
+                                                    : 'Nova Chance'}
+                                                </span>
+                                              </td>
+                                            </tr>
+                                          );
+                                        })}
                                       </tbody>
                                     </table>
                                   </div>
@@ -4033,16 +4431,27 @@ export function App() {
                     >
                       {[...bancas]
                         .sort(compararBancasTurmaDataHorario)
-                        .map((b) => (
-                          <option key={b.id} value={b.id}>
-                            [{b.turma}] #{b.ordem_apresentacao}º • {b.data_banca} ({b.horario}) — {b.grupo}:{' '}
-                            {b.projeto} (
-                            {b.entregue_na_pasta
-                              ? `Entregue • ${b.media_nota_final_grupo.toFixed(1)} pts`
-                              : 'Pendente'}
-                            )
-                          </option>
-                        ))}
+                        .map((b) => {
+                          const sessaoB = mapaSessoesBanca[b.id];
+                          const concluidaB = sessaoB?.status === 'concluida';
+                          const mediaExibidaSel = concluidaB
+                            ? (sessaoB.media_final_consolidada ??
+                              sessaoB.banca_consolidada?.media_final ??
+                              b.media_nota_final_grupo)
+                            : b.media_nota_final_grupo;
+                          return (
+                            <option key={b.id} value={b.id}>
+                              [{b.turma}] #{b.ordem_apresentacao}º • {b.data_banca} ({b.horario}) — {b.grupo}:{' '}
+                              {b.projeto} (
+                              {concluidaB
+                                ? `Concluída • ${mediaExibidaSel.toFixed(1)} pts`
+                                : b.entregue_na_pasta
+                                ? `Entregue • ${mediaExibidaSel.toFixed(1)} pts`
+                                : 'Pendente'}
+                              )
+                            </option>
+                          );
+                        })}
                     </select>
                   </div>
 
@@ -4218,17 +4627,25 @@ export function App() {
                     </div>
                     <div className="col-span-3 flex flex-col items-center justify-center border-l border-slate-700 bg-white p-3 text-slate-900">
                       <span className="text-[11px] font-bold uppercase text-slate-500">
-                        Média Calculada
+                        {bancaJaRealizadaAtual && !modoEdicaoReaberto
+                          ? 'Média Oficial Consolidada'
+                          : 'Média Calculada'}
                       </span>
                       <span className="text-2xl font-black text-red-600">
-                        {(
-                          integrantesEdit.reduce(
-                            (acc, ind) => acc + calcularStatusFinalAluno(ind).nf,
-                            0,
-                          ) / Math.max(1, integrantesEdit.length)
+                        {(bancaJaRealizadaAtual && !modoEdicaoReaberto
+                          ? mediaFinalGrupoAtual
+                          : integrantesEdit.reduce(
+                              (acc, ind) => acc + calcularStatusFinalAluno(ind).nf,
+                              0,
+                            ) / Math.max(1, integrantesEdit.length)
                         ).toFixed(2)}{' '}
                         pts
                       </span>
+                      {bancaJaRealizadaAtual && !modoEdicaoReaberto && (
+                        <span className="mt-0.5 text-[10px] font-bold text-indigo-700">
+                          Notas soberanas da banca
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -4290,7 +4707,7 @@ export function App() {
                           </span>
                           <div className="flex flex-wrap items-center gap-2">
                             {bloco.pilar === 3 && rubrica32?.nivel === 'Pendente'
-                              ? badgeNivelMsep(calcularNivel(nota33, 4), '3.3 Slides')
+                              ? badgeNivelMsep(calcularNivel(nota33, 4), '3.3')
                               : badgeNivelMsep(calcularNivel(bloco.total, bloco.max))}
                             <span className="rounded bg-red-600 px-2.5 py-0.5 text-xs font-bold">
                               Subtotal Coletivo: {bloco.total.toFixed(2)} / {bloco.max},00
@@ -5256,82 +5673,108 @@ export function App() {
                         {[...bancas]
                           .filter((b) => turmaFiltro === 'Todas' || b.turma === turmaFiltro)
                           .sort(compararBancasTurmaDataHorario)
-                          .flatMap((b) =>
-                            b.integrantes_notas.map((ind, iIdx) => (
-                              <tr
-                                key={`${b.id}_${ind.nome}`}
-                                className={
-                                  b.entregue_na_pasta
-                                    ? 'bg-emerald-50/20 hover:bg-emerald-50/50'
-                                    : 'hover:bg-slate-50'
-                                }
-                              >
-                                <td className="p-3 font-mono font-bold text-slate-500">
-                                  #{b.ordem_apresentacao}º
-                                </td>
-                                <td className="p-3 font-bold text-slate-800">{b.turma}</td>
-                                <td className="p-3 text-slate-600">{b.data_banca}</td>
-                                <td className="p-3 font-semibold text-slate-700">{b.grupo}</td>
-                                <td className="p-3 font-bold text-slate-900">{b.projeto}</td>
-                                <td className="p-3">
-                                  <span className="font-semibold text-slate-900">{ind.nome}</span>
-                                  <span className="block text-[10px] text-slate-500">
-                                    Rel: {ind.relatorios_entregues}/{ind.total_relatorios} • Aulas:{' '}
-                                    {ind.aulas_participadas}/{ind.total_aulas_turma}
-                                  </span>
-                                </td>
-                                <td className="p-3 text-center">
-                                  {b.entregue_na_pasta ? (
-                                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                                      Entregue
+                          .flatMap((b) => {
+                            const sessaoB = mapaSessoesBanca[b.id];
+                            const bancaConcluidaB = sessaoB?.status === 'concluida';
+                            const consB = bancaConcluidaB ? sessaoB.banca_consolidada : null;
+                            const integrantesSoberanosB =
+                              consB?.integrantes_medias?.length
+                                ? mesclarIntegrantesSoberanosComBase(
+                                    consB.integrantes_medias,
+                                    b.integrantes_notas,
+                                  )
+                                : b.integrantes_notas;
+                            const statusSoberanoB = bancaConcluidaB
+                              ? (sessaoB.status_liberacao_final ??
+                                consB?.status_liberacao_final ??
+                                b.status_liberacao_nota)
+                              : null;
+
+                            return integrantesSoberanosB.map((ind, iIdx) => {
+                              const resultadoEfetivo = statusSoberanoB || ind.resultado;
+                              const exibirNotasCompletas = bancaConcluidaB || b.entregue_na_pasta;
+                              return (
+                                <tr
+                                  key={`${b.id}_${ind.nome}`}
+                                  className={
+                                    bancaConcluidaB
+                                      ? 'bg-purple-50/20 hover:bg-purple-50/40'
+                                      : b.entregue_na_pasta
+                                      ? 'bg-emerald-50/20 hover:bg-emerald-50/50'
+                                      : 'hover:bg-slate-50'
+                                  }
+                                >
+                                  <td className="p-3 font-mono font-bold text-slate-500">
+                                    #{b.ordem_apresentacao}º
+                                  </td>
+                                  <td className="p-3 font-bold text-slate-800">{b.turma}</td>
+                                  <td className="p-3 text-slate-600">{b.data_banca}</td>
+                                  <td className="p-3 font-semibold text-slate-700">{b.grupo}</td>
+                                  <td className="p-3 font-bold text-slate-900">{b.projeto}</td>
+                                  <td className="p-3">
+                                    <span className="font-semibold text-slate-900">{ind.nome}</span>
+                                    <span className="block text-[10px] text-slate-500">
+                                      Rel: {ind.relatorios_entregues}/{ind.total_relatorios} • Aulas:{' '}
+                                      {ind.aulas_participadas}/{ind.total_aulas_turma}
                                     </span>
-                                  ) : (
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                                      Pendente
-                                    </span>
-                                  )}
-                                </td>
-                                <td className="p-3 text-center font-mono">
-                                  {b.entregue_na_pasta ? ind.p1_nota.toFixed(2) : '—'}
-                                </td>
-                                <td className="p-3 text-center font-mono">
-                                  {b.entregue_na_pasta ? ind.p2_nota.toFixed(2) : '—'}
-                                </td>
-                                <td className="p-3 text-center font-mono">
-                                  {b.entregue_na_pasta ? ind.p3_nota.toFixed(2) : '—'}
-                                </td>
-                                <td className="p-3 text-center font-mono font-bold text-indigo-700">
-                                  {ind.p4_nota.toFixed(2)}
-                                </td>
-                                <td className="p-3 text-center font-mono font-black text-slate-900">
-                                  {b.entregue_na_pasta
-                                    ? `${ind.nota_final.toFixed(2)} pts`
-                                    : `${ind.p4_nota.toFixed(2)} pts (P4)`}
-                                </td>
-                                <td className="p-3 text-center">
-                                  {b.entregue_na_pasta ? (
-                                    badgeResultadoFinal(ind.resultado)
-                                  ) : (
-                                    <span className="text-[11px] text-slate-400">Aguardando</span>
-                                  )}
-                                </td>
-                                <td className="p-3 text-center">
-                                  {iIdx === 0 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setGrupoSelecionadoId(b.id);
-                                        setAbaAtiva('ficha');
-                                      }}
-                                      className="rounded border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
-                                    >
-                                      Ficha
-                                    </button>
-                                  )}
-                                </td>
-                              </tr>
-                            )),
-                          )}
+                                  </td>
+                                  <td className="p-3 text-center">
+                                    {bancaConcluidaB ? (
+                                      <span className="rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                                        Concluída
+                                      </span>
+                                    ) : b.entregue_na_pasta ? (
+                                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                        Entregue
+                                      </span>
+                                    ) : (
+                                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                                        Pendente
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 text-center font-mono">
+                                    {exibirNotasCompletas ? ind.p1_nota.toFixed(2) : '—'}
+                                  </td>
+                                  <td className="p-3 text-center font-mono">
+                                    {exibirNotasCompletas ? ind.p2_nota.toFixed(2) : '—'}
+                                  </td>
+                                  <td className="p-3 text-center font-mono">
+                                    {exibirNotasCompletas ? ind.p3_nota.toFixed(2) : '—'}
+                                  </td>
+                                  <td className="p-3 text-center font-mono font-bold text-indigo-700">
+                                    {ind.p4_nota.toFixed(2)}
+                                  </td>
+                                  <td className="p-3 text-center font-mono font-black text-slate-900">
+                                    {exibirNotasCompletas
+                                      ? `${ind.nota_final.toFixed(2)} pts`
+                                      : `${ind.p4_nota.toFixed(2)} pts (P4)`}
+                                  </td>
+                                  <td className="p-3 text-center">
+                                    {exibirNotasCompletas ? (
+                                      badgeResultadoFinal(resultadoEfetivo)
+                                    ) : (
+                                      <span className="text-[11px] text-slate-400">Aguardando</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 text-center">
+                                    {iIdx === 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setGrupoSelecionadoId(b.id);
+                                          setAbaAtiva('ficha');
+                                        }}
+                                        className="rounded border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                                      >
+                                        Ficha
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            });
+                          })}
                       </tbody>
                     </table>
                   </div>

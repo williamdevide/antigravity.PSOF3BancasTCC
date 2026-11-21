@@ -766,6 +766,24 @@ na barra de navegação ao lado do botão configurações crie um botão para o 
 2. **Atribuição e Exibição do Nível MSEP nas Parciais:**
    - Sincronização automática do nível MSEP e nota em todos os subitens (`1.1–1.8`, `2.1–2.5`, `3.3`) dentro da *Ficha MSEP & Arguição* após a auditoria (eliminando estado obsoleto em `rubricasEdit` / rascunhos pré-auditoria e closure obsoleto em `bancaConsolidada`), além de exibir badges de **Nível MSEP** (`Insuficiente` / `Pleno` / `Avançado`) nos cards dos 4 Pilares em *Auditoria & Bancas* e nos cabeçalhos/tabela de consolidação da *Ficha MSEP & Arguição*.
 
+---
+
+## Sessão 32 — 21/11/2026 (14:26)
+
+### Prompt 32 (21/11/2026 - 14:26)
+```text
+/agente-orquestrador /grill-me /goal conforme a imagem, quando  o msep é insufficiente esta ficando em 2 linhas, corrija essa estetica.
+por algum motivo não esta carregando nas bancas concluidas as notas que alteramos em relação ao processamento automatico, preciso que elas sejam soberanas sobre o calculo automatico
+```
+
+### Entrevista de Alinhamento (`/grill-me`) — Sessão 32
+1. **Estética em 1 Linha dos Badges de Nível MSEP:**
+   - Badges compactos em linha única (`AVANÇADO`, `PLENO`, `INSUFICIENTE`, e `3.3 • AVANÇADO` / `3.3 • PLENO` / `3.3 • INSUFICIENTE` para o Pilar 3 antes da defesa) com `whitespace-nowrap` e tooltip explicativo (`title="Nível MSEP: ..."`), sem quebra em 2 linhas.
+2. **Soberania Total das Notas Alteradas pelos Professores nas Bancas Concluídas:**
+   - Em leitura na *Ficha MSEP & Arguição* concluída, carrega sempre a **Média Consolidada Oficial da Banca** (Firestore `banca_consolidada`) sobrepondo o cálculo automático da IA e qualquer `localStorage` obsoleto.
+   - Ao clicar em *"Editar Minha Avaliação / Editar Banca"*, carrega automaticamente as notas e pareceres individuais salvos pelo avaliador logado no Firestore (com fallback para a consolidada) e, ao salvar/consolidar/exportar PDF ou XLSX, replica os dados consolidados soberanos para o backend FastAPI (`PUT /api/bancas/{id}/avaliacao`) e para todas as visões (*Auditoria & Bancas*, *Consolidado Turmas*, seletores e cabeçalho da Ficha).
+
+
 
 
 
