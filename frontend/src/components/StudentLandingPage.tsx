@@ -533,7 +533,8 @@ export function StudentLandingPage({
 
               <div className="space-y-4">
                 {secaoTurma.itens.map((banca) => {
-                  const info = resolverDadosBancaRealizada(banca, mapaSessoesBanca[banca.id]);
+                  const sessao = mapaSessoesBanca[banca.id];
+                  const info = resolverDadosBancaRealizada(banca, sessao);
                   const arquivosEncontrados = banca.arquivos_entregues.filter((a) => a.encontrado);
                   const mostraArquivos = Boolean(expandidosArquivos[banca.id]);
                   const classeBordaStatus = info.emAndamento

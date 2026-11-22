@@ -928,3 +928,21 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
    - Proteger `sincronizar_e_obter_todas_bancas` em `backend/app/tcc_auditor.py` com lock reentrante (`_AUDITOR_SYNC_LOCK`) para evitar auditorias concorrentes duplicadas ou sobrescrita de `avaliacoes.json` sob requisições simultâneas.
 
 
+---
+
+## Sessão 40 — Correção de Tela em Branco Pós-Carregamento (`ReferenceError: sessao is not defined` em `StudentLandingPage.tsx`) (21/11/2026)
+
+### Prompt 40
+```text
+/agente-orquestrador /grill-me /goal o site das bancas abre e depois fica inteiro em branco
+```
+
+### Decisões Consolidadas (/grill-me)
+1. **Correção de Escopo de `sessao` em `StudentLandingPage.tsx`:**
+   - Declarar `const sessao = mapaSessoesBanca[banca.id];` no escopo de `.map((banca) => ...)` em `StudentLandingPage.tsx` para eliminar o `ReferenceError: sessao is not defined` que desmontava a árvore React ao renderizar os cards das bancas já realizadas.
+2. **Trava Obrigatória `tsc -b` no Build de Produção:**
+   - Atualizar o script `"build"` em `frontend/package.json` para `"tsc -b && vite build"`, garantindo que o compilador TypeScript valide todas as referências de `tsconfig.app.json` antes de gerar o bundle de produção.
+
+
+
+
