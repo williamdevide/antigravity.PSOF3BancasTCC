@@ -1199,6 +1199,71 @@ def test_autenticacao_titular_e_convidados_autorizados_backend(monkeypatch):
     assert str(user_t["email"]).lower() == fb_svc.EMAIL_PROFESSOR_TITULAR
 
 
+def test_escrita_atomica_e_autocura_avaliacoes_json_corrompido(tmp_path, monkeypatch):
+    """
+    Garante que escritas concorrentes em avaliacoes.json sejam atômicas e que,
+    caso o arquivo sofra truncamento/corrupção ('Extra data'), ler_avaliacoes_salvas()
+    recupere automaticamente os grupos a partir do backup e dos blocos JSON íntegros.
+    """
+    import json
+    import threading
+    from backend.app import config_manager as cfg_mgr
+
+    monkeypatch.setattr(cfg_mgr, "obter_pasta_data", lambda: tmp_path)
+
+    mapa_inicial = {
+        "I2DEV-A_Grupo03": {"id": "I2DEV-A_Grupo03", "projeto": "Fitlink", "banca_realizada": True, "media_nota_final_grupo": 95.87},
+        "I2DEV-B_Grupo08": {"id": "I2DEV-B_Grupo08", "projeto": "OrganizAI", "banca_realizada": True, "media_nota_final_grupo": 82.38},
+    }
+    cfg_mgr.salvar_avaliacoes_salvas(mapa_inicial)
+
+    arq_principal = tmp_path / "avaliacoes.json"
+    arq_backup = tmp_path / "avaliacoes.backup.json"
+    assert arq_principal.exists()
+    assert arq_backup.exists()
+
+    # Simular corrupção "Extra data" no arquivo principal + um novo grupo válido no trecho extra
+    bloco_g08 = json.dumps({"I2DEV-B_Grupo08": mapa_inicial["I2DEV-B_Grupo08"]}, ensure_ascii=False, indent=2)
+    bloco_ecoa = '"I2DEV-B_Grupo09": ' + json.dumps(
+        {"id": "I2DEV-B_Grupo09", "projeto": "ECOA", "banca_realizada": False, "media_nota_final_grupo": 82.13},
+        ensure_ascii=False,
+    )
+    arq_principal.write_text(bloco_g08 + "....lixo_intermediario...." + bloco_ecoa, encoding="utf-8")
+
+    recuperado = cfg_mgr.ler_avaliacoes_salvas()
+    assert "I2DEV-A_Grupo03" in recuperado
+    assert "I2DEV-B_Grupo08" in recuperado
+    assert "I2DEV-B_Grupo09" in recuperado
+    assert recuperado["I2DEV-B_Grupo09"]["projeto"] == "ECOA"
+
+    # O arquivo principal deve ter sido autocurado para JSON 100% válido
+    re_lido = json.loads(arq_principal.read_text(encoding="utf-8"))
+    assert len(re_lido) == 3
+
+    # Testar escritas concorrentes em múltiplas threads sem corromper o JSON
+    erros: list[Exception] = []
+
+    def _writer(idx: int) -> None:
+        try:
+            for _ in range(5):
+                m = dict(recuperado)
+                m[f"I2DEV-A_Grupo{idx:02d}"] = {"id": f"I2DEV-A_Grupo{idx:02d}", "projeto": f"Proj{idx}"}
+                cfg_mgr.salvar_avaliacoes_salvas(m)
+                lido = cfg_mgr.ler_avaliacoes_salvas()
+                assert isinstance(lido, dict) and len(lido) >= 3
+        except Exception as exc:
+            erros.append(exc)
+
+    threads = [threading.Thread(target=_writer, args=(i,)) for i in range(1, 6)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert erros == []
+
+
+
 
 
 

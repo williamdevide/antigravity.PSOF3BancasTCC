@@ -20,6 +20,9 @@ frontend/dist/
 *.pem
 deploy_bancas.tar.gz
 backend/data/app_window_profile/
+backend/data/avaliacoes.backup.json
+backend/data/*.tmp
+backend/data/.*.tmp
 
 # Logs e arquivos temporários
 *.log

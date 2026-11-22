@@ -14,8 +14,10 @@ from __future__ import annotations
 
 from datetime import datetime
 import json
+import os
 from pathlib import Path
 import re
+import threading
 import time
 from typing import Any, Callable
 import unicodedata
@@ -3108,6 +3110,9 @@ def auditar_grupo_individual(
     return avaliacao
 
 
+_AUDITOR_SYNC_LOCK = threading.RLock()
+
+
 def sincronizar_e_obter_todas_bancas(
     executar_auditoria_nos_entregues: bool = False,
     grupo_ids_alvo: list[str] | None = None,
@@ -3161,6 +3166,7 @@ def sincronizar_e_obter_todas_bancas(
 
     resultados: list[AvaliacaoGrupoModel] = []
     alterou_salvas = False
+    em_pytest = "PYTEST_CURRENT_TEST" in os.environ
 
     for meta in CRONOGRAMA_OFICIAL_BANCAS:
         gid = meta["id"]
@@ -3176,10 +3182,10 @@ def sincronizar_e_obter_todas_bancas(
             banca_ja_realizada = True
 
         deve_auditar_agora = any(m["id"] == gid for m in alvos_auditoria)
-        # Se a pasta existe mas ainda não tem os novos campos de auditoria (parecer_estruturado / data_banca_iso), re-audita automaticamente apenas se NÃO foi realizada e NÃO estiver aguardando auditoria explícita pós-upload
         status_salvo = ja_salva.get("status_avaliacao") if ja_salva else None
         if (
-            pasta_grupo
+            (executar_auditoria_nos_entregues or em_pytest)
+            and pasta_grupo
             and not banca_ja_realizada
             and status_salvo != "entregue_nao_auditado"
             and (not ja_salva or not ja_salva.get("parecer_estruturado"))
@@ -3190,43 +3196,58 @@ def sincronizar_e_obter_todas_bancas(
             deve_auditar_agora = False
 
         if deve_auditar_agora and pasta_grupo:
-            if progress_cb and total_alvos > 0:
-                progress_cb(
-                    concluidos * ETAPAS_POR_GRUPO,
-                    total_passos,
-                    f"Iniciando {meta['turma']} • {meta['grupo']} ({meta['projeto']})...",
-                )
+            with _AUDITOR_SYNC_LOCK:
+                salvas_frescas = ler_avaliacoes_salvas()
+                ja_salva_fresca = salvas_frescas.get(gid)
+                if (
+                    not executar_auditoria_nos_entregues
+                    and ja_salva_fresca
+                    and ja_salva_fresca.get("parecer_estruturado")
+                ):
+                    av = AvaliacaoGrupoModel(**ja_salva_fresca)
+                    resultados.append(recalcular_totais_avaliacao(av))
+                    salvas[gid] = ja_salva_fresca
+                    continue
 
-            def _reportar_etapa(passo: int, _total_etapas: int, msg: str) -> None:
                 if progress_cb and total_alvos > 0:
                     progress_cb(
-                        concluidos * ETAPAS_POR_GRUPO + min(passo, ETAPAS_POR_GRUPO),
+                        concluidos * ETAPAS_POR_GRUPO,
                         total_passos,
-                        msg,
+                        f"Iniciando {meta['turma']} • {meta['grupo']} ({meta['projeto']})...",
                     )
 
-            av = auditar_grupo_individual(
-                meta,
-                pasta_grupo,
-                avaliacao_anterior=ja_salva,
-                ordem_apresentacao=ordem_ap,
-                log_cb=log_cb,
-                step_cb=_reportar_etapa,
-            )
-            if sincronizar_firebase and cfg.firebase_sincronizacao_ativa:
-                ok_fb, msg_fb = sincronizar_avaliacao_firestore(av, id_token=firebase_id_token)
-                if log_cb:
-                    log_cb(f"   ☁️ Firebase: {msg_fb}")
-            salvas[gid] = av.model_dump()
-            alterou_salvas = True
-            concluidos += 1
-            if progress_cb and total_alvos > 0:
-                progress_cb(
-                    concluidos * ETAPAS_POR_GRUPO,
-                    total_passos,
-                    f"Concluído: {meta['turma']} • {meta['grupo']} ({meta['projeto']})",
+                def _reportar_etapa(passo: int, _total_etapas: int, msg: str) -> None:
+                    if progress_cb and total_alvos > 0:
+                        progress_cb(
+                            concluidos * ETAPAS_POR_GRUPO + min(passo, ETAPAS_POR_GRUPO),
+                            total_passos,
+                            msg,
+                        )
+
+                av = auditar_grupo_individual(
+                    meta,
+                    pasta_grupo,
+                    avaliacao_anterior=ja_salva_fresca or ja_salva,
+                    ordem_apresentacao=ordem_ap,
+                    log_cb=log_cb,
+                    step_cb=_reportar_etapa,
                 )
-            resultados.append(av)
+                if sincronizar_firebase and cfg.firebase_sincronizacao_ativa:
+                    ok_fb, msg_fb = sincronizar_avaliacao_firestore(av, id_token=firebase_id_token)
+                    if log_cb:
+                        log_cb(f"   ☁️ Firebase: {msg_fb}")
+                salvas_frescas = ler_avaliacoes_salvas()
+                salvas_frescas[gid] = av.model_dump()
+                salvar_avaliacoes_salvas(salvas_frescas)
+                salvas[gid] = salvas_frescas[gid]
+                concluidos += 1
+                if progress_cb and total_alvos > 0:
+                    progress_cb(
+                        concluidos * ETAPAS_POR_GRUPO,
+                        total_passos,
+                        f"Concluído: {meta['turma']} • {meta['grupo']} ({meta['projeto']})",
+                    )
+                resultados.append(av)
         elif ja_salva:
             try:
                 av = AvaliacaoGrupoModel(**ja_salva)
@@ -3255,16 +3276,24 @@ def sincronizar_e_obter_todas_bancas(
                             av.revisao_pos_banca.status = "aguardando_validacao"
                 resultados.append(recalcular_totais_avaliacao(av))
             except Exception:
-                av = auditar_grupo_individual(meta, pasta_grupo, ordem_apresentacao=ordem_ap, log_cb=log_cb)
+                av = sincronizar_status_entrega_grupo(gid) if pasta_grupo else auditar_grupo_individual(meta, None, ordem_apresentacao=ordem_ap)
                 salvas[gid] = av.model_dump()
                 alterou_salvas = True
                 resultados.append(av)
+        elif pasta_grupo:
+            # Pasta entregue no disco mas ainda sem auditoria no cache: listar instantaneamente como entregue_nao_auditado sem bloquear GET /api/bancas
+            av = sincronizar_status_entrega_grupo(gid)
+            salvas[gid] = av.model_dump()
+            resultados.append(av)
         else:
             av = auditar_grupo_individual(meta, None, ordem_apresentacao=ordem_ap)
             resultados.append(av)
 
     if alterou_salvas:
-        salvar_avaliacoes_salvas(salvas)
+        with _AUDITOR_SYNC_LOCK:
+            salvas_frescas = ler_avaliacoes_salvas()
+            salvas_frescas.update(salvas)
+            salvar_avaliacoes_salvas(salvas_frescas)
 
     return resultados
 

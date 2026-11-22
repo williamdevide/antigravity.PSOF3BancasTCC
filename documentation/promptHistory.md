@@ -907,3 +907,24 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
 2. **Tooltip Flutuante com Nomes nos Cards (Professor e Alunos) + Auto-Cura:**
    - Adicionar tooltip flutuante estilizado no hover (`group-hover`) e atributo nativo `title` na tag de avaliadores nos cards de `Auditoria & Bancas` (`App.tsx`) e nos cards concluídos do `Portal dos Alunos` (`StudentLandingPage.tsx`).
    - Atualizar `consolidadaDivergeDeSessao` e as funções de consolidação em `bancaMultiAvaliador.ts` para auto-curar `avaliadores_presentes` no Cloud Firestore quando houver divergência.
+
+
+---
+
+## Sessão 39 — Diagnóstico e Recuperação de Serviço na VM Oracle (`app-bancas.service`) e Proteção Anti-Bloqueio de `/api/bancas` (21/11/2026)
+
+### Prompt 39
+```text
+/agente-orquestrador /grill-me /goal reiniciei o serviço na vmoracle, o projeto das bancas estava parado e eu dei iniciar, e agora não esta exibindo nenhum agendamento e banca, verifique
+```
+
+### Decisões Consolidadas (/grill-me)
+1. **Unificação no Serviço `app-bancas.service` do Painel da VM Oracle:**
+   - Remover o serviço duplicado `psof3-bancas.service` e manter unificado no `app-bancas.service` (`A.C.O. Managed Service (bancas)`), eliminando o conflito `[Errno 98] address already in use` na porta `8001` e garantindo que o status exibido no painel da VM reflita o processo real.
+2. **Restauração Íntegra do `avaliacoes.json` + Escrita Atômica + Autocura via Firestore:**
+   - Restaurar `backend/data/avaliacoes.json` combinando as 6 bancas concluídas do Cloud Firestore (`psof3_avaliacoes_tcc` / `psof3_sessoes_banca`) e a auditoria íntegra recuperada do `I2DEV-B_Grupo09` (ECOA).
+   - Blindar `ler_avaliacoes_salvas` e `salvar_avaliacoes_salvas` em `backend/app/config_manager.py` com `threading.RLock()`, escrita atômica via arquivo temporário (`Path.replace`), backup espelhado (`avaliacoes.backup.json`), extração de objetos válidos e restauração automática a partir do Cloud Firestore caso o arquivo local esteja ausente ou corrompido.
+3. **Serialização Thread-Safe no Motor de Sincronização de Bancas:**
+   - Proteger `sincronizar_e_obter_todas_bancas` em `backend/app/tcc_auditor.py` com lock reentrante (`_AUDITOR_SYNC_LOCK`) para evitar auditorias concorrentes duplicadas ou sobrescrita de `avaliacoes.json` sob requisições simultâneas.
+
+

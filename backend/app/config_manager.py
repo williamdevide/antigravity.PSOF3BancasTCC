@@ -6,11 +6,49 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import re
 import sys
+import threading
 from typing import Any
 from dotenv import dotenv_values
 
 from .models import ConfigEnvModel, ExecucaoHistorico
+
+
+_FILE_LOCK = threading.RLock()
+
+
+def _escrita_atomica_json(arq: Path, dados: Any) -> None:
+    """Grava JSON de forma atômica e thread-safe via arquivo temporário e Path.replace."""
+    with _FILE_LOCK:
+        arq.parent.mkdir(parents=True, exist_ok=True)
+        conteudo = json.dumps(dados, ensure_ascii=False, indent=2)
+        tmp = arq.with_name(f".{arq.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+        try:
+            tmp.write_text(conteudo, encoding="utf-8")
+            tmp.replace(arq)
+        finally:
+            tmp.unlink(missing_ok=True)
+
+
+def _extrair_objetos_recuperaveis_json(texto_bruto: str) -> dict[str, dict[str, Any]]:
+    """Recupera objetos individuais de grupo ('I2DEV-A_Grupo..', 'I2DEV-B_Grupo..') de um JSON truncado/corrompido."""
+    recuperados: dict[str, dict[str, Any]] = {}
+    if not texto_bruto:
+        return recuperados
+    dec = json.JSONDecoder()
+    for match in re.finditer(r'"(I2DEV-[AB]_Grupo\d+)"\s*:\s*\{', texto_bruto):
+        gid = match.group(1)
+        inicio_obj = texto_bruto.find("{", match.start())
+        if inicio_obj == -1:
+            continue
+        try:
+            obj, _ = dec.raw_decode(texto_bruto, inicio_obj)
+            if isinstance(obj, dict) and obj.get("id") == gid:
+                recuperados[gid] = obj
+        except Exception:
+            continue
+    return recuperados
 
 
 def obter_raiz_projeto() -> Path:
@@ -124,50 +162,105 @@ def salvar_env(cfg: ConfigEnvModel, novo_github_token: str | None = None) -> Non
 
 
 def ler_state() -> dict[str, Any]:
-    arq = obter_pasta_data() / "state.json"
-    if arq.exists():
-        try:
-            return json.loads(arq.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    return {
-        "ultima_execucao_em": None,
-        "historico_execucoes": [],
-    }
+    with _FILE_LOCK:
+        arq = obter_pasta_data() / "state.json"
+        if arq.exists():
+            try:
+                dados = json.loads(arq.read_text(encoding="utf-8"))
+                if isinstance(dados, dict):
+                    return dados
+            except Exception:
+                pass
+        return {
+            "ultima_execucao_em": None,
+            "historico_execucoes": [],
+        }
 
 
 def salvar_state(dados: dict[str, Any]) -> None:
     arq = obter_pasta_data() / "state.json"
-    arq.write_text(json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")
+    _escrita_atomica_json(arq, dados)
 
 
 def registrar_execucao(exec_item: ExecucaoHistorico) -> None:
-    estado = ler_state()
-    historico: list[dict[str, Any]] = estado.get("historico_execucoes", [])
-    substituido = False
-    for idx, item in enumerate(historico):
-        if item.get("id") == exec_item.id:
-            historico[idx] = exec_item.model_dump()
-            substituido = True
-            break
-    if not substituido:
-        historico.insert(0, exec_item.model_dump())
-    estado["historico_execucoes"] = historico[:100]
-    if exec_item.status == "success":
-        estado["ultima_execucao_em"] = exec_item.finalizado_em or exec_item.iniciado_em
-    salvar_state(estado)
+    with _FILE_LOCK:
+        estado = ler_state()
+        historico: list[dict[str, Any]] = estado.get("historico_execucoes", [])
+        substituido = False
+        for idx, item in enumerate(historico):
+            if item.get("id") == exec_item.id:
+                historico[idx] = exec_item.model_dump()
+                substituido = True
+                break
+        if not substituido:
+            historico.insert(0, exec_item.model_dump())
+        estado["historico_execucoes"] = historico[:100]
+        if exec_item.status == "success":
+            estado["ultima_execucao_em"] = exec_item.finalizado_em or exec_item.iniciado_em
+        salvar_state(estado)
 
 
 def ler_avaliacoes_salvas() -> dict[str, dict[str, Any]]:
-    arq = obter_pasta_data() / "avaliacoes.json"
-    if arq.exists():
-        try:
-            return json.loads(arq.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-    return {}
+    with _FILE_LOCK:
+        pasta = obter_pasta_data()
+        arq = pasta / "avaliacoes.json"
+        arq_backup = pasta / "avaliacoes.backup.json"
+        texto_bruto = ""
+        corrompido = False
+
+        if arq.exists():
+            try:
+                texto_bruto = arq.read_text(encoding="utf-8", errors="replace")
+                dados = json.loads(texto_bruto)
+                if isinstance(dados, dict) and dados:
+                    return dados
+            except Exception:
+                corrompido = True
+
+        recuperado: dict[str, dict[str, Any]] = {}
+
+        # 1. Tentar carregar do backup local íntegro
+        if arq_backup.exists():
+            try:
+                dados_bkp = json.loads(arq_backup.read_text(encoding="utf-8", errors="replace"))
+                if isinstance(dados_bkp, dict):
+                    recuperado.update(dados_bkp)
+            except Exception:
+                pass
+
+        # 2. Extrair objetos JSON válidos do próprio arquivo corrompido
+        if corrompido and texto_bruto:
+            parciais = _extrair_objetos_recuperaveis_json(texto_bruto)
+            for gid, obj in parciais.items():
+                if gid not in recuperado or obj.get("banca_realizada"):
+                    recuperado[gid] = obj
+
+        # 3. Restaurar dados soberanos do Cloud Firestore (psof3_avaliacoes_tcc) fora de suíte unitária isolada
+        if "PYTEST_CURRENT_TEST" not in os.environ:
+            try:
+                from .firebase_service import listar_avaliacoes_firestore
+
+                ok_fb, mapa_fb, _ = listar_avaliacoes_firestore()
+                if ok_fb and isinstance(mapa_fb, dict):
+                    for gid, obj_fb in mapa_fb.items():
+                        if isinstance(obj_fb, dict) and obj_fb.get("id"):
+                            recuperado[gid] = obj_fb
+            except Exception:
+                pass
+
+        if recuperado:
+            _escrita_atomica_json(arq, recuperado)
+            _escrita_atomica_json(arq_backup, recuperado)
+            return recuperado
+
+        return {}
 
 
 def salvar_avaliacoes_salvas(mapa: dict[str, dict[str, Any]]) -> None:
-    arq = obter_pasta_data() / "avaliacoes.json"
-    arq.write_text(json.dumps(mapa, ensure_ascii=False, indent=2), encoding="utf-8")
+    with _FILE_LOCK:
+        pasta = obter_pasta_data()
+        arq = pasta / "avaliacoes.json"
+        _escrita_atomica_json(arq, mapa)
+        if isinstance(mapa, dict) and len(mapa) > 0:
+            arq_backup = pasta / "avaliacoes.backup.json"
+            _escrita_atomica_json(arq_backup, mapa)
