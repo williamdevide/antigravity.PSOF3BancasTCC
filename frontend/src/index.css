@@ -5,3 +5,62 @@ body {
   background-color: #f8fafc;
   color: #0f172a;
 }
+
+/* Animações modernas para o Portal do Aluno (respeitando prefers-reduced-motion) */
+@keyframes studentFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes studentModalOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes studentModalScale {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.student-card-enter {
+  animation: studentFadeUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.student-modal-overlay {
+  animation: studentModalOverlay 0.2s ease-out both;
+}
+
+.student-modal-panel {
+  animation: studentModalScale 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.student-hero-grid {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-card-enter,
+  .student-modal-overlay,
+  .student-modal-panel {
+    animation: none !important;
+    transition: none !important;
+  }
+}

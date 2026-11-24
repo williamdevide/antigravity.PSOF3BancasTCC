@@ -943,6 +943,50 @@ por algum motivo não esta carregando nas bancas concluidas as notas que alteram
 2. **Trava Obrigatória `tsc -b` no Build de Produção:**
    - Atualizar o script `"build"` em `frontend/package.json` para `"tsc -b && vite build"`, garantindo que o compilador TypeScript valide todas as referências de `tsconfig.app.json` antes de gerar o bundle de produção.
 
+---
+
+## Sessão 41 — Redesign Moderno da Página do Aluno (Cards Compactos 3 Colunas + Modal Expandido + Critérios MSEP) (24/11/2026)
+
+### Prompt 41 (24/11/2026 - 12:50)
+```text
+/agente-orquestrador /grill-me /goal quero uma mudança na página onde os alunos vem suas notas. ao invés de já abrir o card com tantas ainformações, quero cards meros (talvez 3 por coluna) com as informações principais do grupo (todos os cards com o mesmo tamanho) e focado em exibir o estado atual da banca e caso já tenha nota liberada qual o valor da nota do grupo. deixe 2 botões em cada card (expandir) sendo que  somente para bancas já realizadas. o expandir mostra o card como esta agora, com os detalhes por integrante e tudo mais. dai na tablea onde aparecem as notas de ccada integrante deve ter um botão Critérios MSEP e ao clicar exibe todas as parciais que o aluno obteve em cada item, inclusive com o crtério msep (Insuficiente, Pleno, Avançado).
+melhore no geral a visualização da página para ser mais moderna e atrativa, com efeitos modernos. 
+não altere nada fora da pagina do aluno, o restante deve manter-se igual.
+```
+
+### Decisões Consolidadas (/grill-me) e Implementação:
+1. **Grade Simétrica de 3 Cards Compactos por Linha (`StudentLandingPage.tsx`):**
+   - Todos os cards com altura uniforme (`h-full flex flex-col`) exibindo ordem, grupo, projeto, tema, data/horário/sala, integrantes e destaque visual do estado atual da banca.
+   - A nota numérica do grupo em destaque no card compacto é exibida **somente** quando a nota está liberada (`Aprovado`), acompanhada de barra de progresso até 100 pts; nos demais casos (Retida, Nova Apresentação, Ao Vivo, Data Futura, Aguardando), o card destaca o selo/estado atual.
+2. **Botões no Rodapé dos Cards:**
+   - **Bancas já realizadas:** 2 botões lado a lado — **`Expandir`** (abre modal amplo com todos os detalhes) e **`Critérios MSEP`** (abre diretamente o boletim detalhado MSEP do grupo/integrantes).
+   - **Bancas pendentes:** sem botão Expandir; exibe **`Ver Checklist de Arquivos`** (modal compacto) quando os arquivos já foram entregues, ou status discreto mantendo a mesma altura.
+3. **Modal Amplo (Expandir) + Modal de Critérios MSEP por Integrante:**
+   - O botão `Expandir` abre um modal amplo com todas as informações completas (placar P1–P4, média do grupo, tabela de notas individuais, considerações dos professores, painel de pendências/histórico e revisão pós-banca).
+   - Na tabela de integrantes, cada aluno possui o botão **`Critérios MSEP`**, que abre o boletim completo dos 4 Pilares e todos os itens (1.1 a 4.2), combinando itens coletivos e individuais (`3.1`, `4.1`, `4.2`) com nota/peso, barra de aproveitamento e badge do critério (`Avançado`, `Pleno`, `Insuficiente`), além de abas rápidas para alternar entre integrantes do grupo.
+4. **Identidade Visual Moderna Institucional SENAI (`StudentLandingPage.tsx` + `index.css`):**
+   - Hero escuro de alto impacto (`slate-950` + textura sutil + acento vermelho SENAI), grade clara limpa, animações de entrada escalonadas, elevação suave no hover, modais com blur/transição suave e suporte completo a `prefers-reduced-motion` (zero uso de roxo/violeta e nenhuma alteração fora da página do aluno).
+
+---
+
+## Sessão 42 — Reparo do Git Local, Publicação no GitHub e Deploy na VM Oracle Cloud (24/11/2026)
+
+### Prompt 42 (24/11/2026 - 13:04)
+```text
+/grill-me /goal atualize nosso github e deploy
+```
+
+### Decisões Consolidadas (/grill-me) e Ações Executadas:
+1. **Reparo Determinístico do `.git` Local:**
+   - Detectados objetos soltos de 0 bytes corrompidos em `.git/objects/` (e `calculoBanca.ts` com 0 bytes), restaurados integralmente via clone `--no-checkout` de `bancas_remote` preservando todas as alterações locais.
+2. **Commit Seletivo e Push Multi-Remote:**
+   - Commit exclusivo das alterações da página do aluno (`frontend/src/components/StudentLandingPage.tsx`, `frontend/src/index.css`) e atualização do `documentation/promptHistory.md`.
+   - Push sincronizado para `origin` (`master` e `main`) e `bancas_remote` (`master` e `main`).
+3. **Deploy na VM Oracle Cloud (`147.15.2.73`):**
+   - Disparo do webhook de auto-deploy A.C.O. (`POST https://147.15.2.73.sslip.io/api/webhooks/github/bancas`) e validação ao vivo da página de produção e `/api/health`.
+
+
+
 
 
 
